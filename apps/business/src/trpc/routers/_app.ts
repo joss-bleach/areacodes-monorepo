@@ -1,11 +1,8 @@
 import { baseProcedure, createTRPCRouter } from "../init";
-import { getAllIndustries } from "db";
+import { businessRouter } from "@/modules/business/server/procedures";
 
 export const appRouter = createTRPCRouter({
-  getIndustries: baseProcedure.query(async () => {
-    const industries = await getAllIndustries();
-    return industries;
-  }),
+  business: businessRouter,
 });
 
 export type AppRouter = typeof appRouter;
