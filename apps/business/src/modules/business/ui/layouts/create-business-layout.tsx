@@ -3,5 +3,9 @@ export const CreateBusinessLayout = ({
 }: {
   children: React.ReactNode;
 }) => {
-  return <div>{children}</div>;
+  return (
+    <main className="w-screen h-screen flex items-center justify-center">
+      <div className="w-[380px]">{children}</div>
+    </main>
+  );
 };

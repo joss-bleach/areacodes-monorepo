@@ -37,7 +37,9 @@
     "client-only": "^0.0.1",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
+    "nuqs": "^2.7.2",
     "postgres": "^3.4.7",
+    "react-error-boundary": "^6.0.0",
     "server-only": "^0.0.1",
     "superjson": "^2.2.3",
     "zod": "^4.1.12"
