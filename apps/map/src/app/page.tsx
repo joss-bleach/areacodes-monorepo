@@ -1,5 +1,8 @@
 import { caller } from "@/trpc/server";
 
+// Force dynamic rendering to avoid build-time database queries
+export const dynamic = "force-dynamic";
+
 const Page = async () => {
   const industries = await caller.getIndustries();
   return (
