@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "buildCommand": "cd ../.. && bun run build --filter=marketing",
+  "installCommand": "cd ../.. && bun install",
+  "framework": null,
+  "outputDirectory": "dist"
+}

@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "buildCommand": "cd ../.. && bun run build --filter=map",
+  "installCommand": "cd ../.. && bun install",
+  "framework": "nextjs",
+  "outputDirectory": ".next"
+}
