@@ -4,7 +4,7 @@ const Page = async () => {
   const industries = await caller.getIndustries();
   return (
     <div>
-      This is the map site <p>{JSON.stringify(industries)}</p>
+      This is the maps site <p>{JSON.stringify(industries)}</p>
     </div>
   );
 };
