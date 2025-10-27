@@ -16,6 +16,26 @@
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "db:check": {
+      "dependsOn": ["^db:check"],
+      "cache": false
+    },
+    "db:generate": {
+      "dependsOn": ["^db:generate"],
+      "cache": false
+    },
+    "db:migrate": {
+      "dependsOn": ["^db:migrate"],
+      "cache": false
+    },
+    "db:seed": {
+      "dependsOn": ["^db:seed"],
+      "cache": false
+    },
+    "db:update-slugs": {
+      "dependsOn": ["^db:update-slugs"],
+      "cache": false
     }
   }
 }
