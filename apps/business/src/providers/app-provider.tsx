@@ -1,5 +1,10 @@
 import { TRPCReactProvider } from "@/trpc/client";
+import { ClerkProvider } from "@clerk/nextjs";
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
-  return <TRPCReactProvider>{children}</TRPCReactProvider>;
+  return (
+    <ClerkProvider>
+      <TRPCReactProvider>{children}</TRPCReactProvider>
+    </ClerkProvider>
+  );
 };

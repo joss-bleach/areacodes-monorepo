@@ -28,6 +28,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "@clerk/nextjs": "^6.34.0",
     "@t3-oss/env-nextjs": "^0.13.8",
     "@tanstack/react-query": "^5.90.5",
     "@trpc/client": "^11.7.0",
