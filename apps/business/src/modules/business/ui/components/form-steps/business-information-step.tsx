@@ -59,7 +59,7 @@ const BusinessInformationStepSuspense = () => {
         />
       </div>
       <div className="flex flex-col gap-2 w-full">
-        <Label htmlFor="name">Business description</Label>
+        <Label htmlFor="description">Business description</Label>
         <Textarea
           id="description"
           placeholder="Tell us a bit about your business"
