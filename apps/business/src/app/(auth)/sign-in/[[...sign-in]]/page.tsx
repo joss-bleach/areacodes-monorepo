@@ -1,12 +1,8 @@
-import { redirect } from "next/navigation";
-import { auth } from "@clerk/nextjs/server";
+import { requiresNoAuthentication } from "@/lib/access";
 import { SignIn } from "@clerk/nextjs";
 
 const Page = async () => {
-  const { userId } = await auth();
-  if (userId) {
-    redirect("/");
-  }
+  await requiresNoAuthentication();
   return <SignIn />;
 };
 
