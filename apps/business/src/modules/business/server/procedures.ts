@@ -3,7 +3,12 @@ import {
   createTRPCRouter,
   protectedProcedure,
 } from "@/trpc/init";
-import { createBusiness, getAllIndustries, getBusinessByClerkUserId } from "db";
+import {
+  createBusiness,
+  getAllIndustries,
+  getBusinessByClerkUserId,
+  getBusinessBySlug,
+} from "db";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { createBusinessProfileInputSchema } from "@/modules/business/schemas/create-business-profile-schema";
@@ -32,6 +37,12 @@ export const businessRouter = createTRPCRouter({
         latitude: input.latitude,
         logoUrl: input.logoUrl,
       });
+      return business;
+    }),
+  getBusinessBySlug: baseProcedure
+    .input(z.object({ slug: z.string() }))
+    .query(async ({ input }) => {
+      const business = await getBusinessBySlug(input.slug);
       return business;
     }),
 });

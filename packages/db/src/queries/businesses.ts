@@ -18,3 +18,14 @@ export async function createBusiness(business: NewBusiness): Promise<Business> {
   const [inserted] = await db.insert(businesses).values(business).returning();
   return inserted;
 }
+
+export async function getBusinessBySlug(
+  slug: string
+): Promise<Business | undefined> {
+  const [business] = await db
+    .select()
+    .from(businesses)
+    .where(eq(businesses.slug, slug))
+    .limit(1);
+  return business as Business | undefined;
+}
