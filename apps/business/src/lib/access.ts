@@ -17,10 +17,27 @@ export async function hasAuthentication(): Promise<string> {
 
 /**
  * Checks if the user already has a business.
- * Redirects to /b/[slug] if they have a business.
+ * If slug is provided, verifies that the business belongs to the authenticated user.
+ * Redirects to /b/[slug] if they have a business (and slug matches if provided).
  * Returns nothing if they don't have a business (allows flow to continue).
+ * @param slug Optional slug to verify ownership of a specific business
  */
-export async function hasBusiness(): Promise<void> {
+export async function hasBusiness(slug?: string): Promise<void> {
+  const userId = await hasAuthentication();
+  
+  // If slug is provided, verify that the business belongs to the authenticated user
+  if (slug) {
+    const business = await caller.business.getBusinessBySlug({ slug });
+    if (!business) {
+      redirect("/");
+    }
+    if (business.clerkUserId !== userId) {
+      redirect("/");
+    }
+    return;
+  }
+  
+  // Original behavior: redirect if user has any business
   const businesses = await caller.business.getBusinessByClerkUserId();
   if (businesses && businesses.length > 0) {
     redirect(`/b/${businesses[0].slug}`);

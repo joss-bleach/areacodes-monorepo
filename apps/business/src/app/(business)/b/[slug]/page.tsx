@@ -1,11 +1,11 @@
-import { hasAuthentication, hasBusiness } from "@/lib/access";
+import { hasBusiness } from "@/lib/access";
 import { BusinessDashboardView } from "@/modules/business/ui/views/business-dashboard-view";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
 
-const Page = async ({ params }: { params: { slug: string } }) => {
-  await hasAuthentication();
-  await hasBusiness();
-  prefetch(trpc.business.getBusinessBySlug.queryOptions({ slug: params.slug }));
+const Page = async ({ params }: { params: Promise<{ slug: string }> }) => {
+  const { slug } = await params;
+  await hasBusiness(slug);
+  prefetch(trpc.business.getBusinessBySlug.queryOptions({ slug }));
   return (
     <HydrateClient>
       <BusinessDashboardView />
