@@ -23,7 +23,7 @@ import {
   updateVoucherSchema,
 } from "@/modules/business/schemas/create-voucher-schema";
 import { getVouchersByBusinessSlug } from "db";
-import { extractFilePathFromUrl } from "@/lib/storage";
+import { extractFilePathFromUrl, deleteFileServer } from "@/lib/storage";
 
 export const businessRouter = createTRPCRouter({
   getAllIndustries: baseProcedure.query(async () => {
@@ -144,23 +144,19 @@ export const businessRouter = createTRPCRouter({
           // Voucher images should be in the images/ folder
           if (filePath.startsWith("images/")) {
             try {
-              const deleteResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/storage/delete`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    bucket: "vouchers",
-                    path: filePath,
-                  }),
-                }
-              );
-              if (!deleteResponse.ok) {
+              // Call deleteFileServer directly since we're already on the server
+              const deleteResult = await deleteFileServer("vouchers", filePath);
+              if (!deleteResult.success) {
                 console.error(
-                  "Failed to delete old image, continuing with update"
+                  "Failed to delete old image:",
+                  deleteResult.error,
+                  "Path:",
+                  filePath,
+                  "URL:",
+                  voucher.voucherImgUrl
                 );
+              } else {
+                console.log("Successfully deleted old image:", filePath);
               }
             } catch (error) {
               console.error("Error deleting old image:", error);
@@ -171,6 +167,10 @@ export const businessRouter = createTRPCRouter({
               `Skipping deletion of file with unexpected path: ${filePath}`
             );
           }
+        } else {
+          console.warn(
+            `Could not extract file path from URL: ${voucher.voucherImgUrl}`
+          );
         }
       }
 
@@ -214,23 +214,19 @@ export const businessRouter = createTRPCRouter({
           // Voucher images should be in the images/ folder
           if (filePath.startsWith("images/")) {
             try {
-              const deleteResponse = await fetch(
-                `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/storage/delete`,
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({
-                    bucket: "vouchers",
-                    path: filePath,
-                  }),
-                }
-              );
-              if (!deleteResponse.ok) {
+              // Call deleteFileServer directly since we're already on the server
+              const deleteResult = await deleteFileServer("vouchers", filePath);
+              if (!deleteResult.success) {
                 console.error(
-                  "Failed to delete image, continuing with voucher deletion"
+                  "Failed to delete image:",
+                  deleteResult.error,
+                  "Path:",
+                  filePath,
+                  "URL:",
+                  voucher.voucherImgUrl
                 );
+              } else {
+                console.log("Successfully deleted image:", filePath);
               }
             } catch (error) {
               console.error("Error deleting image:", error);
@@ -241,6 +237,10 @@ export const businessRouter = createTRPCRouter({
               `Skipping deletion of file with unexpected path: ${filePath}`
             );
           }
+        } else {
+          console.warn(
+            `Could not extract file path from URL: ${voucher.voucherImgUrl}`
+          );
         }
       }
 

@@ -195,16 +195,35 @@ export async function deleteFileServer(
     }
 
     const adminClient = getAdminSupabaseClient();
-    const { error } = await adminClient.storage.from(bucket).remove([path]);
+    
+    console.log(`Attempting to delete file from bucket "${bucket}" with path: "${path}"`);
+    
+    const { data, error } = await adminClient.storage.from(bucket).remove([path]);
 
     if (error) {
       console.error('Supabase delete error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        statusCode: error.statusCode,
+        error: error.error,
+        bucket,
+        path,
+      });
       return {
         success: false,
-        error: error.message,
+        error: error.message || 'Unknown error occurred',
       };
     }
 
+    // Check if deletion was successful
+    // If data is null or empty array, the file might not have existed
+    if (data === null || (Array.isArray(data) && data.length === 0)) {
+      console.warn(`File may not exist or was already deleted: ${path}`);
+      // Still return success as the file is effectively gone
+      return { success: true };
+    }
+
+    console.log(`Successfully deleted file: ${path}`);
     return { success: true };
   } catch (error) {
     console.error('Delete file server error:', error);
