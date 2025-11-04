@@ -23,6 +23,15 @@ export async function createVoucher(voucher: NewVoucher): Promise<Voucher> {
   return inserted;
 }
 
+export async function getVoucherById(id: string): Promise<Voucher | null> {
+  const [voucher] = await db
+    .select()
+    .from(vouchers)
+    .where(eq(vouchers.id, id))
+    .limit(1);
+  return voucher || null;
+}
+
 export async function updateVoucher(voucher: Voucher): Promise<Voucher> {
   const [updated] = await db
     .update(vouchers)

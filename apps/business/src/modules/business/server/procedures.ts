@@ -11,12 +11,19 @@ import {
   getBusinessBySlug,
   getActiveVouchersByBusinessSlug,
   getExpiringVouchersByBusinessSlug,
+  getVoucherById,
+  updateVoucher,
+  deleteVoucher,
 } from "db";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { createBusinessProfileInputSchema } from "@/modules/business/schemas/create-business-profile-schema";
-import { createVoucherSchema } from "@/modules/business/schemas/create-voucher-schema";
+import {
+  createVoucherSchema,
+  updateVoucherSchema,
+} from "@/modules/business/schemas/create-voucher-schema";
 import { getVouchersByBusinessSlug } from "db";
+import { extractFilePathFromUrl } from "@/lib/storage";
 
 export const businessRouter = createTRPCRouter({
   getAllIndustries: baseProcedure.query(async () => {
@@ -91,5 +98,153 @@ export const businessRouter = createTRPCRouter({
         voucherValidTo: input.voucherValidTo,
       });
       return voucher;
+    }),
+  getVoucherById: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const voucher = await getVoucherById(input.id);
+      if (!voucher) {
+        throw new Error("Voucher not found");
+      }
+      if (voucher.clerkUserId !== ctx.auth) {
+        throw new Error("Unauthorized: You do not own this voucher");
+      }
+      return voucher;
+    }),
+  updateVoucher: protectedProcedure
+    .input(updateVoucherSchema)
+    .mutation(async ({ ctx, input }) => {
+      const voucher = await getVoucherById(input.id);
+      if (!voucher) {
+        throw new Error("Voucher not found");
+      }
+      if (voucher.clerkUserId !== ctx.auth) {
+        throw new Error("Unauthorized: You do not own this voucher");
+      }
+
+      const business = await getBusinessBySlug(input.businessSlug);
+      if (!business) {
+        throw new Error("Business not found");
+      }
+      if (business.clerkUserId !== ctx.auth) {
+        throw new Error("Unauthorized: You do not own this business");
+      }
+
+      // Handle image deletion if image URL changed
+      if (
+        voucher.voucherImgUrl &&
+        voucher.voucherImgUrl !== input.voucherImgUrl
+      ) {
+        const filePath = extractFilePathFromUrl(
+          voucher.voucherImgUrl,
+          "vouchers"
+        );
+        if (filePath) {
+          // Double-check that we're only deleting voucher images
+          // Voucher images should be in the images/ folder
+          if (filePath.startsWith("images/")) {
+            try {
+              const deleteResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/storage/delete`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    bucket: "vouchers",
+                    path: filePath,
+                  }),
+                }
+              );
+              if (!deleteResponse.ok) {
+                console.error(
+                  "Failed to delete old image, continuing with update"
+                );
+              }
+            } catch (error) {
+              console.error("Error deleting old image:", error);
+              // Continue with update even if image deletion fails
+            }
+          } else {
+            console.warn(
+              `Skipping deletion of file with unexpected path: ${filePath}`
+            );
+          }
+        }
+      }
+
+      const updated = await updateVoucher({
+        id: input.id,
+        businessId: business.id,
+        clerkUserId: ctx.auth,
+        title: input.title,
+        description: input.description,
+        voucherFormat: input.voucherFormat,
+        voucherImgUrl: input.voucherImgUrl || null,
+        voucherGenCode: input.voucherGenCode || null,
+        voucherTerms: input.voucherTerms || null,
+        voucherValidFrom: input.voucherValidFrom,
+        voucherValidTo: input.voucherValidTo,
+        createdAt: voucher.createdAt,
+        updatedAt: new Date(),
+        deletedAt: voucher.deletedAt,
+      });
+      return updated;
+    }),
+  deleteVoucher: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const voucher = await getVoucherById(input.id);
+      if (!voucher) {
+        throw new Error("Voucher not found");
+      }
+      if (voucher.clerkUserId !== ctx.auth) {
+        throw new Error("Unauthorized: You do not own this voucher");
+      }
+
+      // Delete associated image if it exists
+      if (voucher.voucherImgUrl) {
+        const filePath = extractFilePathFromUrl(
+          voucher.voucherImgUrl,
+          "vouchers"
+        );
+        if (filePath) {
+          // Double-check that we're only deleting voucher images
+          // Voucher images should be in the images/ folder
+          if (filePath.startsWith("images/")) {
+            try {
+              const deleteResponse = await fetch(
+                `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/storage/delete`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    bucket: "vouchers",
+                    path: filePath,
+                  }),
+                }
+              );
+              if (!deleteResponse.ok) {
+                console.error(
+                  "Failed to delete image, continuing with voucher deletion"
+                );
+              }
+            } catch (error) {
+              console.error("Error deleting image:", error);
+              // Continue with voucher deletion even if image deletion fails
+            }
+          } else {
+            console.warn(
+              `Skipping deletion of file with unexpected path: ${filePath}`
+            );
+          }
+        }
+      }
+
+      await deleteVoucher(input.id);
+      return { success: true };
     }),
 });

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ClipboardIcon,
   Upload,
@@ -11,8 +11,9 @@ import {
 import { useParams } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useAddVoucher } from "../../hooks/use-add-voucher";
+import { useEditVoucher } from "../../hooks/use-edit-voucher";
 import { useFileUpload } from "@/modules/business/hooks/use-file-upload";
 
 import {
@@ -52,12 +53,17 @@ import {
 export const NewVoucherModal = () => {
   const { slug } = useParams();
   const { isOpen, setIsOpen } = useAddVoucher();
+  const { editVoucherId, setEditVoucherId } = useEditVoucher();
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
   const [generatedCode, setGeneratedCode] = useState("");
   const [isCopied, setIsCopied] = useState(false);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isEditMode = !!editVoucherId;
 
   const form = useForm<VoucherFormValues>({
     resolver: zodResolver(voucherFormSchema),
@@ -72,6 +78,62 @@ export const NewVoucherModal = () => {
     },
     mode: "onBlur",
   });
+
+  const { data: voucherData } = useQuery({
+    ...trpc.business.getVoucherById.queryOptions({ id: editVoucherId! }),
+    enabled: isEditMode && !!editVoucherId,
+  });
+
+  // Populate form when voucher data is loaded in edit mode
+  useEffect(() => {
+    if (isEditMode && voucherData) {
+      const formFormat =
+        voucherData.voucherFormat === "qr_code"
+          ? "qr-code"
+          : voucherData.voucherFormat === "barcode"
+            ? "barcode"
+            : "generated-text";
+
+      form.reset({
+        title: voucherData.title,
+        description: voucherData.description,
+        voucherFormat: formFormat,
+        voucherGenCode: voucherData.voucherGenCode || "",
+        voucherTerms: voucherData.voucherTerms || "",
+        voucherValidFrom: new Date(voucherData.voucherValidFrom),
+        voucherValidTo: new Date(voucherData.voucherValidTo),
+      });
+
+      if (voucherData.voucherGenCode) {
+        setGeneratedCode(voucherData.voucherGenCode);
+      }
+
+      if (voucherData.voucherImgUrl) {
+        setExistingImageUrl(voucherData.voucherImgUrl);
+      }
+    } else if (!isEditMode) {
+      // Reset form when switching to create mode
+      form.reset({
+        title: "",
+        description: "",
+        voucherFormat: "qr-code",
+        voucherGenCode: "",
+        voucherTerms: "",
+        voucherValidFrom: undefined,
+        voucherValidTo: undefined,
+      });
+      setGeneratedCode("");
+      setExistingImageUrl(null);
+    }
+  }, [voucherData, isEditMode, form]);
+
+  // Reset edit mode when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setEditVoucherId(null);
+      setIsSubmitting(false);
+    }
+  }, [isOpen, setEditVoucherId]);
 
   const voucherFormat = form.watch("voucherFormat");
 
@@ -101,12 +163,17 @@ export const NewVoucherModal = () => {
     multiple: false,
   });
 
-  const qrPreviewUrl = qrFiles[0]?.preview || null;
-  const barcodePreviewUrl = barcodeFiles[0]?.preview || null;
+  const qrPreviewUrl =
+    qrFiles[0]?.preview ||
+    (voucherFormat === "qr-code" && existingImageUrl ? existingImageUrl : null);
+  const barcodePreviewUrl =
+    barcodeFiles[0]?.preview ||
+    (voucherFormat === "barcode" && existingImageUrl ? existingImageUrl : null);
 
   const createVoucherMutation = useMutation({
     ...trpc.business.createVoucher.mutationOptions({}),
     onSuccess: () => {
+      setIsSubmitting(false);
       toast.success("Voucher created successfully");
       queryClient.invalidateQueries(
         trpc.business.getVouchersByBusinessSlug.queryOptions({
@@ -129,7 +196,41 @@ export const NewVoucherModal = () => {
       setIsOpen(false);
     },
     onError: () => {
+      setIsSubmitting(false);
       toast.error("Failed to create voucher");
+    },
+  });
+
+  const updateVoucherMutation = useMutation({
+    ...trpc.business.updateVoucher.mutationOptions({}),
+    onSuccess: () => {
+      setIsSubmitting(false);
+      toast.success("Voucher updated successfully");
+      queryClient.invalidateQueries(
+        trpc.business.getVouchersByBusinessSlug.queryOptions({
+          slug: slug as string,
+        })
+      );
+      queryClient.invalidateQueries(
+        trpc.business.getActiveVouchersByBusinessSlug.queryOptions({
+          slug: slug as string,
+        })
+      );
+      queryClient.invalidateQueries(
+        trpc.business.getExpiringVouchersByBusinessSlug.queryOptions({
+          slug: slug as string,
+        })
+      );
+      form.reset();
+      setGeneratedCode("");
+      setIsCopied(false);
+      setExistingImageUrl(null);
+      setEditVoucherId(null);
+      setIsOpen(false);
+    },
+    onError: () => {
+      setIsSubmitting(false);
+      toast.error("Failed to update voucher");
     },
   });
 
@@ -158,20 +259,54 @@ export const NewVoucherModal = () => {
   };
 
   const onSubmit = async (data: VoucherFormValues) => {
+    // Prevent double submission
+    if (
+      isSubmitting ||
+      createVoucherMutation.isPending ||
+      updateVoucherMutation.isPending
+    ) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
     // Validate file uploads based on voucher format
     const qrFile = qrFiles[0]?.file instanceof File ? qrFiles[0].file : null;
     const barcodeFile =
       barcodeFiles[0]?.file instanceof File ? barcodeFiles[0].file : null;
 
-    if (data.voucherFormat === "qr-code" && !qrFile) {
-      toast.error("Please upload a QR code image");
-      return;
+    // In edit mode, allow existing images; in create mode, require upload
+    if (!isEditMode) {
+      if (data.voucherFormat === "qr-code" && !qrFile) {
+        setIsSubmitting(false);
+        toast.error("Please upload a QR code image");
+        return;
+      }
+      if (data.voucherFormat === "barcode" && !barcodeFile) {
+        setIsSubmitting(false);
+        toast.error("Please upload a barcode image");
+        return;
+      }
+    } else {
+      // In edit mode, require image if format needs it and no existing image
+      if (data.voucherFormat === "qr-code" && !qrFile && !existingImageUrl) {
+        setIsSubmitting(false);
+        toast.error("Please upload a QR code image");
+        return;
+      }
+      if (
+        data.voucherFormat === "barcode" &&
+        !barcodeFile &&
+        !existingImageUrl
+      ) {
+        setIsSubmitting(false);
+        toast.error("Please upload a barcode image");
+        return;
+      }
     }
-    if (data.voucherFormat === "barcode" && !barcodeFile) {
-      toast.error("Please upload a barcode image");
-      return;
-    }
+
     if (data.voucherFormat === "generated-text" && !data.voucherGenCode) {
+      setIsSubmitting(false);
       toast.error("Please generate a voucher code");
       return;
     }
@@ -180,7 +315,7 @@ export const NewVoucherModal = () => {
       let qrCodeUrl: string | undefined;
       let barcodeUrl: string | undefined;
 
-      // Upload files if needed via API route (server-side)
+      // Upload files if new files are provided
       if (data.voucherFormat === "qr-code" && qrFile) {
         const formData = new FormData();
         formData.append("file", qrFile);
@@ -196,6 +331,7 @@ export const NewVoucherModal = () => {
           const errorData = await uploadResponse
             .json()
             .catch(() => ({ error: "Unknown error" }));
+          setIsSubmitting(false);
           toast.error(
             `Failed to upload QR code image: ${errorData.error || "Unknown error"}`
           );
@@ -204,6 +340,13 @@ export const NewVoucherModal = () => {
 
         const uploadData = await uploadResponse.json();
         qrCodeUrl = uploadData.url;
+      } else if (
+        data.voucherFormat === "qr-code" &&
+        isEditMode &&
+        existingImageUrl
+      ) {
+        // Use existing image if no new file uploaded
+        qrCodeUrl = existingImageUrl;
       }
 
       if (data.voucherFormat === "barcode" && barcodeFile) {
@@ -221,6 +364,7 @@ export const NewVoucherModal = () => {
           const errorData = await uploadResponse
             .json()
             .catch(() => ({ error: "Unknown error" }));
+          setIsSubmitting(false);
           toast.error(
             `Failed to upload barcode image: ${errorData.error || "Unknown error"}`
           );
@@ -229,6 +373,13 @@ export const NewVoucherModal = () => {
 
         const uploadData = await uploadResponse.json();
         barcodeUrl = uploadData.url;
+      } else if (
+        data.voucherFormat === "barcode" &&
+        isEditMode &&
+        existingImageUrl
+      ) {
+        // Use existing image if no new file uploaded
+        barcodeUrl = existingImageUrl;
       }
 
       // Convert voucher format from form to API format
@@ -259,19 +410,40 @@ export const NewVoucherModal = () => {
         voucherValidTo: data.voucherValidTo,
       };
 
-      createVoucherMutation.mutate(mutationInput);
+      if (isEditMode && editVoucherId) {
+        updateVoucherMutation.mutate({
+          ...mutationInput,
+          id: editVoucherId,
+        });
+      } else {
+        createVoucherMutation.mutate(mutationInput);
+      }
     } catch (error) {
-      toast.error("Failed to create voucher");
+      setIsSubmitting(false);
+      toast.error(
+        isEditMode ? "Failed to update voucher" : "Failed to create voucher"
+      );
+    }
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setEditVoucherId(null);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen || isEditMode} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-[500px] rounded-none border-none border-border max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New Voucher</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? "Edit Voucher" : "Create New Voucher"}
+          </DialogTitle>
           <DialogDescription>
-            Add a new voucher code for your customers to use
+            {isEditMode
+              ? "Update your voucher details"
+              : "Add a new voucher code for your customers to use"}
           </DialogDescription>
         </DialogHeader>
 
@@ -542,6 +714,8 @@ export const NewVoucherModal = () => {
                             e.stopPropagation();
                             if (qrFiles[0]?.id) {
                               removeQrFile(qrFiles[0].id);
+                            } else {
+                              setExistingImageUrl(null);
                             }
                           }}
                           aria-label="Remove QR code"
@@ -625,6 +799,8 @@ export const NewVoucherModal = () => {
                             e.stopPropagation();
                             if (barcodeFiles[0]?.id) {
                               removeBarcodeFile(barcodeFiles[0].id);
+                            } else {
+                              setExistingImageUrl(null);
                             }
                           }}
                           aria-label="Remove barcode"
@@ -730,13 +906,20 @@ export const NewVoucherModal = () => {
               type="submit"
               form="create-voucher-form"
               className="w-full sm:w-auto"
-              disabled={createVoucherMutation.isPending}
+              disabled={
+                isSubmitting ||
+                (isEditMode
+                  ? updateVoucherMutation.isPending
+                  : createVoucherMutation.isPending)
+              }
             >
               <div className="flex items-center gap-2 justify-center">
-                {createVoucherMutation.isPending && (
+                {(isEditMode
+                  ? updateVoucherMutation.isPending
+                  : createVoucherMutation.isPending) && (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 )}
-                Create Voucher
+                {isEditMode ? "Update" : "Create"} Voucher
               </div>
             </Button>
           </DialogFooter>

@@ -24,7 +24,7 @@ export const CreateBusinessForm = () => {
   const router = useRouter();
   const trpc = useTRPC();
   const logoFileRef = useRef<File | null>(null);
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { stepName, isFirstStep, isLastStep, nextStep, prevStep } =
     useCreateBusinessForm();
 
@@ -84,10 +84,12 @@ export const CreateBusinessForm = () => {
   const createBusinessMutation = useMutation({
     ...trpc.business.create.mutationOptions({}),
     onSuccess: (business) => {
+      setIsSubmitting(false);
       toast.success("Business created successfully");
       router.push(`/b/${business.slug}`);
     },
     onError: () => {
+      setIsSubmitting(false);
       toast.error("Failed to create business");
     },
   });
@@ -133,10 +135,17 @@ export const CreateBusinessForm = () => {
   };
 
   const onSubmit = async (data: FormValues) => {
+    // Prevent double submission
+    if (isSubmittingRef.current || createBusinessMutation.isPending || isUploadingLogo) {
+      return;
+    }
+
     // Validate that a logo file is selected
     if (!logoFileRef.current) {
       return;
     }
+
+    isSubmittingRef.current = true;
 
     try {
       // Upload the logo file first
@@ -152,6 +161,7 @@ export const CreateBusinessForm = () => {
 
       if (uploadResult.error || !uploadResult.url) {
         toast.error("Failed to create business");
+        isSubmittingRef.current = false;
         return;
       }
 
@@ -177,6 +187,7 @@ export const CreateBusinessForm = () => {
 
         if (!coordinates) {
           toast.error("Failed to create business");
+          isSubmittingRef.current = false;
           return;
         }
 
@@ -200,6 +211,7 @@ export const CreateBusinessForm = () => {
       createBusinessMutation.mutate(mutationInput);
     } catch (error) {
       setIsUploadingLogo(false);
+      isSubmittingRef.current = false;
       toast.error("Failed to create business");
     }
   };
@@ -237,7 +249,7 @@ export const CreateBusinessForm = () => {
               size="sm"
               type="submit"
               form="create-business-form"
-              disabled={createBusinessMutation.isPending}
+              disabled={isSubmitting || createBusinessMutation.isPending}
               className="relative"
             >
               <div className="flex items-center gap-2 justify-center min-w-[80px]">

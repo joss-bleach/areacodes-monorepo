@@ -141,6 +141,81 @@ export async function uploadFile(
 }
 
 /**
+ * Extracts file path from Supabase storage URL
+ * Example: https://xxx.supabase.co/storage/v1/object/vouchers/images/file.png -> images/file.png
+ */
+export function extractFilePathFromUrl(url: string, bucket: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    // Supabase storage URLs have format: /storage/v1/object/{bucket}/{path}
+    const pathMatch = urlObj.pathname.match(new RegExp(`/storage/v1/object/${bucket}/(.+)`));
+    if (pathMatch && pathMatch[1]) {
+      const extractedPath = decodeURIComponent(pathMatch[1]);
+      // Validate that the path is not empty and doesn't contain dangerous patterns
+      if (extractedPath && extractedPath.length > 0 && !extractedPath.includes('..')) {
+        return extractedPath;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Deletes a file from Supabase Storage (server-side)
+ * Uses admin client with service role key to bypass RLS
+ */
+export async function deleteFileServer(
+  bucket: string,
+  path: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+      return {
+        success: false,
+        error: 'SUPABASE_SERVICE_ROLE_KEY is not configured',
+      };
+    }
+
+    // Validate path to prevent accidental deletion of multiple files
+    if (!path || path.length === 0 || path.includes('..') || path.startsWith('/')) {
+      return {
+        success: false,
+        error: 'Invalid file path provided',
+      };
+    }
+
+    // Ensure we're only deleting from the vouchers bucket, not company-logos
+    if (bucket !== 'vouchers') {
+      return {
+        success: false,
+        error: `Cannot delete from bucket ${bucket}. Only vouchers bucket is allowed.`,
+      };
+    }
+
+    const adminClient = getAdminSupabaseClient();
+    const { error } = await adminClient.storage.from(bucket).remove([path]);
+
+    if (error) {
+      console.error('Supabase delete error:', error);
+      return {
+        success: false,
+        error: error.message,
+      };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error('Delete file server error:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
+    };
+  }
+}
+
+/**
  * Deletes a file from Supabase Storage
  */
 export async function deleteFile(

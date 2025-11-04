@@ -27,3 +27,10 @@ export const createVoucherSchema = z
       path: ["voucherValidTo"],
     }
   );
+
+export const updateVoucherSchema = createVoucherSchema.safeExtend({
+  id: z.string().min(1),
+});
+
+export type CreateVoucherInput = z.infer<typeof createVoucherSchema>;
+export type UpdateVoucherInput = z.infer<typeof updateVoucherSchema>;

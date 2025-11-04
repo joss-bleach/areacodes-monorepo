@@ -3,7 +3,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { Suspense } from "react";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useSuspenseQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { ErrorBoundary } from "react-error-boundary";
 import {
   Card,
@@ -14,11 +18,16 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { NewVoucherButton } from "../components/new-voucher-button";
-import { MoreVertical, Eye, Edit, Trash2 } from "lucide-react";
+import { MoreVertical, Edit, Trash2 } from "lucide-react";
 import { BoundaryAlert } from "@/components/boundary-alert";
 import { useTRPC } from "@/trpc/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import type { Voucher } from "db";
+import { useEditVoucher } from "../../hooks/use-edit-voucher";
+import { useAddVoucher } from "../../hooks/use-add-voucher";
+import { cn } from "@/lib/utils";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 
 const getStatusColor = (status: "active" | "inactive") => {
   switch (status) {
@@ -99,7 +108,27 @@ type VoucherActionsDropdownProps = {
 
 const VoucherActionsDropdown = ({ voucher }: VoucherActionsDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [positionAbove, setPositionAbove] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const { slug } = useParams();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { setEditVoucherId } = useEditVoucher();
+  const { setIsOpen: setIsModalOpen } = useAddVoucher();
+
+  const handleToggle = () => {
+    if (!isOpen && dropdownRef.current) {
+      // Check position before opening
+      const rect = dropdownRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const spaceBelow = viewportHeight - rect.bottom;
+      const menuHeight = 140; // Approximate height of menu
+      setPositionAbove(spaceBelow < menuHeight);
+    }
+    setIsOpen(!isOpen);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -120,19 +149,46 @@ const VoucherActionsDropdown = ({ voucher }: VoucherActionsDropdownProps) => {
     };
   }, [isOpen]);
 
-  const handlePreview = () => {
-    console.log("Preview voucher:", voucher.id);
-    setIsOpen(false);
-  };
+  const deleteVoucherMutation = useMutation({
+    ...trpc.business.deleteVoucher.mutationOptions({}),
+    onSuccess: () => {
+      toast.success("Voucher deleted successfully");
+      queryClient.invalidateQueries(
+        trpc.business.getVouchersByBusinessSlug.queryOptions({
+          slug: slug as string,
+        })
+      );
+      queryClient.invalidateQueries(
+        trpc.business.getActiveVouchersByBusinessSlug.queryOptions({
+          slug: slug as string,
+        })
+      );
+      queryClient.invalidateQueries(
+        trpc.business.getExpiringVouchersByBusinessSlug.queryOptions({
+          slug: slug as string,
+        })
+      );
+      setIsOpen(false);
+      setShowDeleteDialog(false);
+    },
+    onError: () => {
+      toast.error("Failed to delete voucher");
+    },
+  });
 
   const handleEdit = () => {
-    console.log("Edit voucher:", voucher.id);
+    setEditVoucherId(voucher.id);
+    setIsModalOpen(true);
     setIsOpen(false);
   };
 
-  const handleDelete = () => {
-    console.log("Delete voucher:", voucher.id);
+  const handleDeleteClick = () => {
     setIsOpen(false);
+    setShowDeleteDialog(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteVoucherMutation.mutate({ id: voucher.id });
   };
 
   return (
@@ -140,22 +196,21 @@ const VoucherActionsDropdown = ({ voucher }: VoucherActionsDropdownProps) => {
       <Button
         variant="ghost"
         size="icon-sm"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
         className="h-8 w-8"
       >
         <MoreVertical className="h-4 w-4" />
         <span className="sr-only">Open menu</span>
       </Button>
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-none border-none bg-background shadow-lg focus:outline-none">
+        <div
+          ref={menuRef}
+          className={cn(
+            "absolute right-0 z-50 w-48 origin-top-right rounded-none border-none bg-background shadow-lg focus:outline-none",
+            positionAbove ? "bottom-full mb-2" : "top-full mt-2"
+          )}
+        >
           <div className="py-1">
-            <button
-              onClick={handlePreview}
-              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-accent cursor-pointer"
-            >
-              <Eye className="h-4 w-4" />
-              Preview
-            </button>
             <button
               onClick={handleEdit}
               className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-accent cursor-pointer"
@@ -164,8 +219,9 @@ const VoucherActionsDropdown = ({ voucher }: VoucherActionsDropdownProps) => {
               Edit
             </button>
             <button
-              onClick={handleDelete}
-              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 cursor-pointer"
+              onClick={handleDeleteClick}
+              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={deleteVoucherMutation.isPending}
             >
               <Trash2 className="h-4 w-4" />
               Delete
@@ -173,6 +229,17 @@ const VoucherActionsDropdown = ({ voucher }: VoucherActionsDropdownProps) => {
           </div>
         </div>
       )}
+      <ConfirmationDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        title="Delete Voucher"
+        description={`Are you sure you want to delete "${voucher.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+        isLoading={deleteVoucherMutation.isPending}
+      />
     </div>
   );
 };
