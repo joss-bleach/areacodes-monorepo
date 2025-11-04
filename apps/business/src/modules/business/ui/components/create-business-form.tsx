@@ -84,13 +84,11 @@ export const CreateBusinessForm = () => {
   const createBusinessMutation = useMutation({
     ...trpc.business.create.mutationOptions({}),
     onSuccess: (business) => {
-      toast.success("Business created successfully!");
+      toast.success("Business created successfully");
       router.push(`/b/${business.slug}`);
     },
-    onError: (error) => {
-      toast.error("Failed to create business", {
-        description: error.message,
-      });
+    onError: () => {
+      toast.error("Failed to create business");
     },
   });
 
@@ -153,9 +151,7 @@ export const CreateBusinessForm = () => {
       setIsUploadingLogo(false);
 
       if (uploadResult.error || !uploadResult.url) {
-        toast.error("Failed to create business", {
-          description: uploadResult.error || "Failed to upload logo",
-        });
+        toast.error("Failed to create business");
         return;
       }
 
@@ -180,9 +176,7 @@ export const CreateBusinessForm = () => {
         const coordinates = await geocodeAddress(address);
 
         if (!coordinates) {
-          toast.error("Failed to create business", {
-            description: "Unable to determine location coordinates",
-          });
+          toast.error("Failed to create business");
           return;
         }
 
@@ -206,9 +200,7 @@ export const CreateBusinessForm = () => {
       createBusinessMutation.mutate(mutationInput);
     } catch (error) {
       setIsUploadingLogo(false);
-      toast.error("Failed to create business", {
-        description: error instanceof Error ? error.message : "An unexpected error occurred",
-      });
+      toast.error("Failed to create business");
     }
   };
 
@@ -245,25 +237,21 @@ export const CreateBusinessForm = () => {
               size="sm"
               type="submit"
               form="create-business-form"
-              disabled={createBusinessMutation.isPending || isUploadingLogo}
+              disabled={createBusinessMutation.isPending}
               className="relative"
             >
               <div className="flex items-center gap-2 justify-center min-w-[80px]">
-                {(createBusinessMutation.isPending || isUploadingLogo) && (
+                {createBusinessMutation.isPending && (
                   <Loader2 className="size-4 animate-spin shrink-0" />
                 )}
                 <motion.span
                   animate={{
-                    x: createBusinessMutation.isPending || isUploadingLogo ? -4 : 0,
+                    x: createBusinessMutation.isPending ? -4 : 0,
                   }}
                   transition={{ duration: 0.2, ease: "easeOut" }}
                   className="inline-block"
                 >
-                  {isUploadingLogo
-                    ? "Creating..."
-                    : createBusinessMutation.isPending
-                      ? "Creating..."
-                      : "Create"}
+                  {createBusinessMutation.isPending ? "Creating..." : "Create"}
                 </motion.span>
               </div>
             </Button>

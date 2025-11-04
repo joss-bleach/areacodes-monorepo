@@ -17,11 +17,6 @@ export const voucherFormatEnum = pgEnum("voucher_type", [
   "qr_code",
   "generated_text",
 ]);
-export const voucherStatusEnum = pgEnum("voucher_status", [
-  "active",
-  "inactive",
-  "expired",
-]);
 
 export const vouchers = pgTable(
   "vouchers",
@@ -32,11 +27,9 @@ export const vouchers = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     voucherFormat: voucherFormatEnum("voucher_format").notNull(),
+    voucherImgUrl: text("voucher_img_url"),
     voucherGenCode: text("voucher_gen_code"),
     voucherTerms: text("voucher_terms"),
-    voucherStatus: voucherStatusEnum("voucher_status")
-      .notNull()
-      .default("active"),
     voucherValidFrom: timestamp("voucher_valid_from").notNull(),
     voucherValidTo: timestamp("voucher_valid_to").notNull(),
     ...timestamps,

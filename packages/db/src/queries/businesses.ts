@@ -29,3 +29,27 @@ export async function getBusinessBySlug(
     .limit(1);
   return business as Business | undefined;
 }
+
+export async function getBusinessIdBySlug(
+  slug: string
+): Promise<string | undefined> {
+  const [business] = await db
+    .select({ id: businesses.id })
+    .from(businesses)
+    .where(eq(businesses.slug, slug))
+    .limit(1);
+  return business?.id as string | undefined;
+}
+
+export async function deleteBusiness(id: string): Promise<void> {
+  await db.delete(businesses).where(eq(businesses.id, id));
+}
+
+export async function updateBusiness(business: Business): Promise<Business> {
+  const [updated] = await db
+    .update(businesses)
+    .set(business)
+    .where(eq(businesses.id, business.id))
+    .returning();
+  return updated;
+}

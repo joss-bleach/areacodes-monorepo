@@ -3,23 +3,53 @@ import { CountUp } from "use-count-up";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClockIcon, Ticket } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
-const cards = [
-  {
-    title: "Active Vouchers",
-    icon: Ticket,
-    value: 2,
-    description: "Currently available for use",
-  },
-  {
-    title: "Expiring Soon",
-    icon: ClockIcon,
-    value: 4,
-    description: "Within 30 days",
-  },
-];
+import { useParams } from "next/navigation";
+import { Suspense } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { ErrorBoundary } from "react-error-boundary";
+import { useTRPC } from "@/trpc/client";
+import { BoundaryAlert } from "@/components/boundary-alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export const StatsSection = () => {
+  return (
+    <Suspense fallback={<StatsSectionLoading />}>
+      <ErrorBoundary fallback={<StatsSectionError />}>
+        <StatsSectionSuspense />
+      </ErrorBoundary>
+    </Suspense>
+  );
+};
+
+const StatsSectionSuspense = () => {
+  const { slug } = useParams();
+  const trpc = useTRPC();
+  const { data: activeVouchers } = useSuspenseQuery(
+    trpc.business.getActiveVouchersByBusinessSlug.queryOptions({
+      slug: slug as string,
+    })
+  );
+  const { data: expiringVouchers } = useSuspenseQuery(
+    trpc.business.getExpiringVouchersByBusinessSlug.queryOptions({
+      slug: slug as string,
+    })
+  );
+
+  const cards = [
+    {
+      title: "Active Vouchers",
+      icon: Ticket,
+      value: activeVouchers?.length || 0,
+      description: "Currently available for use",
+    },
+    {
+      title: "Expiring Soon",
+      icon: ClockIcon,
+      value: expiringVouchers?.length || 0,
+      description: "Within 30 days",
+    },
+  ];
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const isDraggingRef = useRef(false);
@@ -194,6 +224,36 @@ export const StatsSection = () => {
             }`}
             aria-label={`Go to card ${index + 1}`}
           />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const StatsSectionError = () => {
+  return (
+    <BoundaryAlert title="Error" description="Error loading voucher statistics." />
+  );
+};
+
+const StatsSectionLoading = () => {
+  return (
+    <div className="my-8">
+      <div className="flex gap-6 md:grid md:grid-cols-2">
+        {[1, 2].map((index) => (
+          <Card
+            key={index}
+            className="border-none rounded-none shrink-0 w-full md:shrink"
+          >
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-4 w-4" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-9 w-16 mb-1" />
+              <Skeleton className="h-3 w-40" />
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>
