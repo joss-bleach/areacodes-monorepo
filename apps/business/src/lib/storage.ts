@@ -204,7 +204,6 @@ export async function deleteFileServer(
       console.error('Supabase delete error:', error);
       console.error('Error details:', {
         message: error.message,
-        error: error.error,
         bucket,
         path,
       });
