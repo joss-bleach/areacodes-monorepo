@@ -162,7 +162,7 @@ const StatsSectionSuspense = () => {
   };
 
   return (
-    <div className="my-8">
+    <section className="my-8">
       <div
         ref={scrollContainerRef}
         className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide md:grid md:grid-cols-2 md:overflow-visible cursor-grab active:cursor-grabbing select-none md:cursor-default md:select-auto"
@@ -226,7 +226,7 @@ const StatsSectionSuspense = () => {
           />
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 
@@ -238,7 +238,7 @@ const StatsSectionError = () => {
 
 const StatsSectionLoading = () => {
   return (
-    <div className="my-8">
+    <section className="my-8">
       <div className="flex gap-6 md:grid md:grid-cols-2">
         {[1, 2].map((index) => (
           <Card
@@ -256,6 +256,6 @@ const StatsSectionLoading = () => {
           </Card>
         ))}
       </div>
-    </div>
+    </section>
   );
 };

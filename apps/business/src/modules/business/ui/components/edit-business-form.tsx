@@ -8,7 +8,6 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { EditBusinessInformationStep } from "./form-steps/edit-business-information-step";
@@ -191,7 +190,7 @@ export const EditBusinessForm = () => {
       <div className="flex flex-col gap-6">
         <Card className="rounded-none border-none">
           <CardHeader>
-            <CardTitle>Business Information</CardTitle>
+            <h2 className="text-lg font-semibold leading-none">Business Information</h2>
             <CardDescription>Update your business details</CardDescription>
             <CardContent className="p-4">
               <EditBusinessInformationStep form={form} />
@@ -201,7 +200,7 @@ export const EditBusinessForm = () => {
 
         <Card className="rounded-none border-none">
           <CardHeader>
-            <CardTitle>Business Location</CardTitle>
+            <h2 className="text-lg font-semibold leading-none">Business Location</h2>
             <CardDescription>
               Update your business address and location
             </CardDescription>
@@ -213,7 +212,7 @@ export const EditBusinessForm = () => {
 
         <Card className="rounded-none border-none">
           <CardHeader>
-            <CardTitle>Business Image</CardTitle>
+            <h2 className="text-lg font-semibold leading-none">Business Image</h2>
             <CardDescription>Update your business logo</CardDescription>
             <CardContent className="p-4">
               <EditBusinessImageStep

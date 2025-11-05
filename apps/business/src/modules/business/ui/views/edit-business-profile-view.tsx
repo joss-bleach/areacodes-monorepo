@@ -33,6 +33,9 @@ export const EditBusinessProfileView = () => {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+        <h1 className="text-2xl font-semibold text-foreground mb-6">
+          Edit Business Profile
+        </h1>
         <EditBusinessProfileForm />
         <DeleteBusiness />
       </div>
