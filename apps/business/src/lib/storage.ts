@@ -186,11 +186,11 @@ export async function deleteFileServer(
       };
     }
 
-    // Ensure we're only deleting from the vouchers bucket, not company-logos
-    if (bucket !== 'vouchers') {
+    // Ensure we're only deleting from allowed buckets
+    if (bucket !== 'vouchers' && bucket !== 'company-logos') {
       return {
         success: false,
-        error: `Cannot delete from bucket ${bucket}. Only vouchers bucket is allowed.`,
+        error: `Cannot delete from bucket ${bucket}. Only vouchers and company-logos buckets are allowed.`,
       };
     }
 

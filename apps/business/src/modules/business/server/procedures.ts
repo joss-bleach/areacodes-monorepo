@@ -14,10 +14,14 @@ import {
   getVoucherById,
   updateVoucher,
   deleteVoucher,
+  updateBusiness,
+  deleteBusiness,
 } from "db";
 import { slugify } from "@/lib/utils";
 import { z } from "zod";
 import { createBusinessProfileInputSchema } from "@/modules/business/schemas/create-business-profile-schema";
+import { updateBusinessProfileInputSchema } from "@/modules/business/schemas/update-business-profile-schema";
+import { updateSlugWithPreservedCode } from "@/lib/slug-utils";
 import {
   createVoucherSchema,
   updateVoucherSchema,
@@ -245,6 +249,140 @@ export const businessRouter = createTRPCRouter({
       }
 
       await deleteVoucher(input.id);
+      return { success: true };
+    }),
+  update: protectedProcedure
+    .input(updateBusinessProfileInputSchema)
+    .mutation(async ({ ctx, input }) => {
+      const business = await getBusinessBySlug(input.slug);
+      if (!business) {
+        throw new Error("Business not found");
+      }
+      if (business.clerkUserId !== ctx.auth) {
+        throw new Error("Unauthorized: You do not own this business");
+      }
+
+      // Handle logo deletion if logo URL changed
+      if (
+        business.logoUrl &&
+        business.logoUrl !== input.logoUrl
+      ) {
+        const filePath = extractFilePathFromUrl(
+          business.logoUrl,
+          "company-logos"
+        );
+        if (filePath) {
+          // Ensure we're only deleting from company-logos bucket
+          // Logo files should be in the logos/ folder
+          if (filePath.startsWith("logos/")) {
+            try {
+              // Call deleteFileServer directly since we're already on the server
+              // Note: We need to update deleteFileServer to allow company-logos bucket
+              const deleteResult = await deleteFileServer("company-logos", filePath);
+              if (!deleteResult.success) {
+                console.error(
+                  "Failed to delete old logo:",
+                  deleteResult.error,
+                  "Path:",
+                  filePath,
+                  "URL:",
+                  business.logoUrl
+                );
+              } else {
+                console.log("Successfully deleted old logo:", filePath);
+              }
+            } catch (error) {
+              console.error("Error deleting old logo:", error);
+              // Continue with update even if logo deletion fails
+            }
+          } else {
+            console.warn(
+              `Skipping deletion of file with unexpected path: ${filePath}`
+            );
+          }
+        } else {
+          console.warn(
+            `Could not extract file path from URL: ${business.logoUrl}`
+          );
+        }
+      }
+
+      // Determine new slug if name changed
+      let newSlug = business.slug;
+      if (business.name !== input.name) {
+        newSlug = updateSlugWithPreservedCode(business.slug, input.name);
+      }
+
+      const updated = await updateBusiness({
+        id: business.id,
+        clerkUserId: business.clerkUserId,
+        name: input.name,
+        slug: newSlug,
+        description: input.description,
+        websiteUrl: input.websiteUrl,
+        industryId: input.industryId,
+        address: input.address,
+        longitude: input.longitude,
+        latitude: input.latitude,
+        logoUrl: input.logoUrl,
+        createdAt: business.createdAt,
+        updatedAt: new Date(),
+        deletedAt: business.deletedAt,
+      });
+      return updated;
+    }),
+  delete: protectedProcedure
+    .input(z.object({ slug: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const business = await getBusinessBySlug(input.slug);
+      if (!business) {
+        throw new Error("Business not found");
+      }
+      if (business.clerkUserId !== ctx.auth) {
+        throw new Error("Unauthorized: You do not own this business");
+      }
+
+      // Delete associated logo if it exists
+      if (business.logoUrl) {
+        const filePath = extractFilePathFromUrl(
+          business.logoUrl,
+          "company-logos"
+        );
+        if (filePath) {
+          // Ensure we're only deleting from company-logos bucket
+          // Logo files should be in the logos/ folder
+          if (filePath.startsWith("logos/")) {
+            try {
+              const deleteResult = await deleteFileServer("company-logos", filePath);
+              if (!deleteResult.success) {
+                console.error(
+                  "Failed to delete logo:",
+                  deleteResult.error,
+                  "Path:",
+                  filePath,
+                  "URL:",
+                  business.logoUrl
+                );
+              } else {
+                console.log("Successfully deleted logo:", filePath);
+              }
+            } catch (error) {
+              console.error("Error deleting logo:", error);
+              // Continue with business deletion even if logo deletion fails
+            }
+          } else {
+            console.warn(
+              `Skipping deletion of file with unexpected path: ${filePath}`
+            );
+          }
+        } else {
+          console.warn(
+            `Could not extract file path from URL: ${business.logoUrl}`
+          );
+        }
+      }
+
+      await deleteBusiness(business.id);
       return { success: true };
     }),
 });
