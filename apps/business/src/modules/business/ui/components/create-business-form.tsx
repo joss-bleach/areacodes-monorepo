@@ -15,7 +15,7 @@ import { useTRPC } from "@/trpc/client";
 import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { uploadFile } from "@/lib/storage";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import {
   Stepper,
   StepperList,
@@ -257,12 +257,13 @@ export const CreateBusinessForm = () => {
         onValueChange={(value) => setCurrentStep(value as StepValue)}
         onValidate={validateStep}
         activationMode="manual"
+        className="px-4 md:px-0"
       >
         <StepperList>
           <StepperItem value="business-information">
             <StepperTrigger>
-              <StepperIndicator />
-              <div className="flex flex-col items-start">
+              <StepperIndicator>{(state) => state === "completed" ? <Check className="size-4" /> : 1}</StepperIndicator>
+              <div className="flex flex-col items-start hidden md:flex">
                 <StepperTitle>Information</StepperTitle>
               </div>
             </StepperTrigger>
@@ -270,8 +271,8 @@ export const CreateBusinessForm = () => {
           </StepperItem>
           <StepperItem value="business-location">
             <StepperTrigger>
-              <StepperIndicator />
-              <div className="flex flex-col items-start">
+              <StepperIndicator>{(state) => state === "completed" ? <Check className="size-4" /> : 2}</StepperIndicator>
+              <div className="flex flex-col items-start hidden md:flex">
                 <StepperTitle>Location</StepperTitle>
               </div>
             </StepperTrigger>
@@ -279,37 +280,41 @@ export const CreateBusinessForm = () => {
           </StepperItem>
           <StepperItem value="business-image">
             <StepperTrigger>
-              <StepperIndicator />
-              <div className="flex flex-col items-start">
+              <StepperIndicator>{(state) => state === "completed" ? <Check className="size-4" /> : 3}</StepperIndicator>
+              <div className="flex flex-col items-start hidden md:flex">
                 <StepperTitle>Logo</StepperTitle>
               </div>
             </StepperTrigger>
           </StepperItem>
         </StepperList>
 
-        <form
-          id="create-business-form"
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="contents"
-        >
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={currentStep}
-              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 24 }}
-              animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
-              exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -24 }}
-              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}
-            >
-              <StepperContent value={currentStep}>
-                {renderStep()}
-              </StepperContent>
-            </motion.div>
-          </AnimatePresence>
-          <div className="flex flex-row justify-end items-center gap-4 mt-6">
+        <div className="flex flex-col">
+          <form
+            id="create-business-form"
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="contents"
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={currentStep}
+                className="min-h-[610px] md:min-h-[501px]"
+                initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 24 }}
+                animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+                exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -24 }}
+                transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}
+              >
+                <StepperContent value={currentStep}>
+                  {renderStep()}
+                </StepperContent>
+              </motion.div>
+            </AnimatePresence>
+          </form>
+          <div className="flex flex-row justify-end items-center gap-4 mt-6 w-full md:w-auto">
             <Button
               type="button"
               variant="outline"
               size="sm"
+              className="flex-1 md:flex-none"
               onClick={() => {
                 const currentIndex = STEP_VALUES.indexOf(currentStep);
                 if (currentIndex > 0) {
@@ -326,7 +331,7 @@ export const CreateBusinessForm = () => {
                 type="submit"
                 form="create-business-form"
                 disabled={isSubmitting || createBusinessMutation.isPending}
-                className="relative"
+                className="relative flex-1 md:flex-none"
               >
                 <div className="flex items-center gap-2 justify-center min-w-[80px]">
                   {createBusinessMutation.isPending && (
@@ -349,6 +354,7 @@ export const CreateBusinessForm = () => {
               <Button
                 size="sm"
                 type="button"
+                className="flex-1 md:flex-none"
                 onClick={async () => {
                   const ok = await validateStep(currentStep, "next");
                   if (!ok) {
@@ -364,7 +370,7 @@ export const CreateBusinessForm = () => {
               </Button>
             )}
           </div>
-        </form>
+        </div>
       </Stepper>
     </div>
   );
