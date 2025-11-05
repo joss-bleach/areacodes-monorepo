@@ -7,12 +7,8 @@ export const voucherFormSchema = z
     voucherFormat: z.enum(["qr-code", "barcode", "generated-text"]),
     voucherGenCode: z.string().optional(),
     voucherTerms: z.string().optional(),
-    voucherValidFrom: z.date({
-      required_error: "Start date is required",
-    }),
-    voucherValidTo: z.date({
-      required_error: "End date is required",
-    }),
+    voucherValidFrom: z.date(),
+    voucherValidTo: z.date(),
   })
   .refine(
     (data) => data.voucherValidTo >= data.voucherValidFrom,

@@ -141,6 +141,7 @@ export const NewVoucherModal = () => {
     { files: qrFiles, errors: qrErrors },
     {
       removeFile: removeQrFile,
+      clearFiles: clearQrFiles,
       openFileDialog: openQrDialog,
       getInputProps: getQrInputProps,
     },
@@ -154,6 +155,7 @@ export const NewVoucherModal = () => {
     { files: barcodeFiles, errors: barcodeErrors },
     {
       removeFile: removeBarcodeFile,
+      clearFiles: clearBarcodeFiles,
       openFileDialog: openBarcodeDialog,
       getInputProps: getBarcodeInputProps,
     },
@@ -430,6 +432,11 @@ export const NewVoucherModal = () => {
     setIsOpen(open);
     if (!open) {
       setEditVoucherId(null);
+      clearQrFiles();
+      clearBarcodeFiles();
+      setExistingImageUrl(null);
+      setGeneratedCode("");
+      setIsSubmitting(false);
     }
   };
 

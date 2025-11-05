@@ -63,18 +63,9 @@ const DashboardTopError = () => {
 
 const DashboardTopLoading = () => {
   return (
-    <div className="flex flex-col">
-      <div className="flex flex-col mb-6">
-        <Skeleton className="h-9 w-64 mb-3" />
-        <Skeleton className="h-5 w-96" />
-      </div>
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex flex-col">
-          <Skeleton className="h-8 w-48 mb-2" />
-          <Skeleton className="h-4 w-64" />
-        </div>
-        <Skeleton className="h-10 w-40" />
-      </div>
+    <div className="flex flex-col mb-6">
+      <Skeleton className="h-9 w-64 mb-3" />
+      <Skeleton className="h-5 w-96" />
     </div>
   );
 };
