@@ -44,7 +44,7 @@ export const DeleteBusiness = () => {
     onSuccess: () => {
       toast.success("Business deleted successfully");
       setIsOpen(false);
-      router.push("/");
+      router.push("/b/create");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to delete business");
