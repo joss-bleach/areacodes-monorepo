@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { ErrorBoundary } from "react-error-boundary";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useTRPC } from "@/trpc/client";
+import { useExploreFilters } from "@/modules/explore/hooks/use-explore-filters";
 import { BoundaryAlert } from "@/components/boundary-alert";
 import type { Business } from "db";
 
@@ -190,18 +191,16 @@ function BusinessMarker({ business }: { business: Business }) {
   );
 }
 
-const MapSuspense = ({
-  scrollWheelZoom = true,
+// Stable map container component that doesn't recreate on data changes
+const MapContainerWrapper = ({
+  businesses,
+  scrollWheelZoom,
 }: {
-  scrollWheelZoom?: boolean;
+  businesses: Business[];
+  scrollWheelZoom: boolean;
 }) => {
   const [isMounted, setIsMounted] = useState(false);
   const [isReady, setIsReady] = useState(false);
-  const trpc = useTRPC();
-
-  const { data: businessesWithVouchers } = useSuspenseQuery(
-    trpc.explore.getBusinessesWithVouchers.queryOptions()
-  );
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -226,22 +225,6 @@ const MapSuspense = ({
     }, 500);
   }, []);
 
-  // Extract unique businesses (one marker per business)
-  const uniqueBusinesses = businessesWithVouchers
-    ? (() => {
-        const seen = new Set<string>();
-        return businessesWithVouchers
-          .map((item) => item.business)
-          .filter((business) => {
-            if (seen.has(business.id)) {
-              return false;
-            }
-            seen.add(business.id);
-            return true;
-          });
-      })()
-    : [];
-
   // Default to Brighton, England coordinates (50°49'25.0"N 0°08'36.7"W)
   const center: [number, number] = [50.8236, -0.1435];
   const zoom = 15;
@@ -253,6 +236,7 @@ const MapSuspense = ({
   return (
     <div className="absolute inset-0">
       <MapContainer
+        key="map-container"
         center={center}
         zoom={zoom}
         scrollWheelZoom={scrollWheelZoom}
@@ -268,13 +252,53 @@ const MapSuspense = ({
             />
             <MapClickHandler />
             <MapScrollHandler scrollWheelZoom={scrollWheelZoom} />
-            {uniqueBusinesses.map((business) => (
+            {businesses.map((business) => (
               <BusinessMarker key={business.id} business={business} />
             ))}
           </>
         )}
       </MapContainer>
     </div>
+  );
+};
+
+const MapSuspense = ({
+  scrollWheelZoom = true,
+}: {
+  scrollWheelZoom?: boolean;
+}) => {
+  const trpc = useTRPC();
+  const { industryId } = useExploreFilters();
+
+  const { data: businessesWithVouchers } = useQuery({
+    ...trpc.explore.getBusinessesWithVouchers.queryOptions(
+      industryId ? { industryId } : undefined
+    ),
+    enabled: typeof window !== "undefined",
+  });
+
+  // Extract unique businesses (one marker per business)
+  const uniqueBusinesses = useMemo(() => {
+    if (!businessesWithVouchers) return [];
+    const seen = new Set<string>();
+    return businessesWithVouchers
+      .map((item) => item.business)
+      .filter((business) => {
+        if (seen.has(business.id)) {
+          return false;
+        }
+        seen.add(business.id);
+        return true;
+      });
+  }, [businessesWithVouchers]);
+
+  // Always render MapContainerWrapper to prevent recreation
+  // Pass empty array if no data yet
+  return (
+    <MapContainerWrapper
+      businesses={uniqueBusinesses}
+      scrollWheelZoom={scrollWheelZoom}
+    />
   );
 };
 
@@ -299,10 +323,8 @@ export const Map = ({
   scrollWheelZoom?: boolean;
 }) => {
   return (
-    <Suspense fallback={<MapLoading />}>
-      <ErrorBoundary fallback={<MapError />}>
-        <MapSuspense scrollWheelZoom={scrollWheelZoom} />
-      </ErrorBoundary>
-    </Suspense>
+    <ErrorBoundary fallback={<MapError />}>
+      <MapSuspense scrollWheelZoom={scrollWheelZoom} />
+    </ErrorBoundary>
   );
 };

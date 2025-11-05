@@ -60,9 +60,27 @@ export type BusinessWithVoucher = {
   business: Business;
 };
 
-export async function getBusinessesWithVouchers(): Promise<BusinessWithVoucher[]> {
+export type BusinessFilters = {
+  industryId?: string;
+  // Future: distance?: number, sortBy?: string, etc.
+};
+
+export async function getBusinessesWithVouchers(
+  filters: BusinessFilters = {}
+): Promise<BusinessWithVoucher[]> {
   const now = new Date();
   
+  // Build where conditions
+  const whereConditions = [
+    lte(vouchers.voucherValidFrom, now),
+    gte(vouchers.voucherValidTo, now),
+  ];
+
+  // Add industry filter if provided
+  if (filters.industryId) {
+    whereConditions.push(eq(businesses.industryId, filters.industryId));
+  }
+
   // Get active vouchers with their business information
   const result = await db
     .select({
@@ -101,12 +119,7 @@ export async function getBusinessesWithVouchers(): Promise<BusinessWithVoucher[]
     })
     .from(vouchers)
     .innerJoin(businesses, eq(vouchers.businessId, businesses.id))
-    .where(
-      and(
-        lte(vouchers.voucherValidFrom, now),
-        gte(vouchers.voucherValidTo, now)
-      )
-    );
+    .where(and(...whereConditions));
 
   return result as BusinessWithVoucher[];
 }
