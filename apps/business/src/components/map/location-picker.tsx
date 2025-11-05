@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import "leaflet/dist/leaflet.css";
 
 // Dynamically import MapContainer to avoid SSR issues
 const MapContainer = dynamic(
@@ -93,15 +94,10 @@ export function LocationPicker({
   
   useEffect(() => {
     setIsMounted(true);
-    // Load CSS and ensure Leaflet is ready
-    if (typeof window !== "undefined") {
-      import("leaflet/dist/leaflet.css").then(() => {
-        // Small delay to ensure Leaflet is fully initialized
-        setTimeout(() => {
-          setIsLeafletReady(true);
-        }, 100);
-      });
-    }
+    // Small delay to ensure Leaflet is fully initialized
+    setTimeout(() => {
+      setIsLeafletReady(true);
+    }, 100);
   }, []);
 
   const center: [number, number] = [latitude, longitude];
