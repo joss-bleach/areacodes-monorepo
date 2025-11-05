@@ -109,11 +109,15 @@ const BusinessListSuspense = ({
         maxHeight={maxHeight}
         initialHeight={120}
         onHeightChange={onDrawerHeightChange}
+        header={
+          <div className="px-6 pt-2 pb-4">
+            <h2 className="text-2xl font-bold text-foreground">
+              VOUCHERS NEARBY
+            </h2>
+          </div>
+        }
       >
         <div className="px-6">
-          <h2 className="text-2xl font-bold text-foreground mb-6">
-            VOUCHERS NEARBY
-          </h2>
           <div className="mb-6">
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
@@ -138,12 +142,15 @@ const BusinessListSuspense = ({
       maxHeight={maxHeight}
       initialHeight={120}
       onHeightChange={onDrawerHeightChange}
+      header={
+        <div className="px-6 pt-2 pb-4">
+          <h2 className="text-2xl font-bold text-foreground">
+            VOUCHERS NEARBY
+          </h2>
+        </div>
+      }
     >
       <div className="px-6">
-        <h2 className="text-2xl font-bold text-foreground mb-6">
-          VOUCHERS NEARBY
-        </h2>
-
         <div className="mb-6">
           {isLoading && !businessesWithVouchers ? (
             <div className="space-y-3">
@@ -239,11 +246,15 @@ const BusinessListError = ({
       maxHeight={maxHeight}
       initialHeight={120}
       onHeightChange={onDrawerHeightChange}
+      header={
+        <div className="px-6 pt-2 pb-4">
+          <h2 className="text-2xl font-bold text-foreground">
+            VOUCHERS NEARBY
+          </h2>
+        </div>
+      }
     >
       <div className="px-6">
-        <h2 className="text-2xl font-bold text-foreground mb-6">
-          VOUCHERS NEARBY
-        </h2>
         <BoundaryAlert
           title="Error"
           description="Error loading businesses. Please try again later."
