@@ -610,6 +610,9 @@ export const NewVoucherModal = () => {
                             mode="single"
                             selected={field.value}
                             captionLayout="dropdown"
+                            fromDate={new Date()}
+                            fromYear={new Date().getFullYear()}
+                            toYear={new Date().getFullYear() + 10}
                             onSelect={(date) => {
                               field.onChange(date);
                               setEndDateOpen(false);

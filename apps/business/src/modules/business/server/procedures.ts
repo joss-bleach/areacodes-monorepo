@@ -342,6 +342,44 @@ export const businessRouter = createTRPCRouter({
         throw new Error("Unauthorized: You do not own this business");
       }
 
+      // Delete all associated vouchers first (this will also delete voucher images)
+      const vouchers = await getVouchersByBusinessSlug(input.slug);
+      for (const voucher of vouchers) {
+        try {
+          // Delete associated voucher image if it exists
+          if (voucher.voucherImgUrl) {
+            const filePath = extractFilePathFromUrl(
+              voucher.voucherImgUrl,
+              "vouchers"
+            );
+            if (filePath && filePath.startsWith("images/")) {
+              try {
+                const deleteResult = await deleteFileServer("vouchers", filePath);
+                if (!deleteResult.success) {
+                  console.error(
+                    "Failed to delete voucher image:",
+                    deleteResult.error,
+                    "Path:",
+                    filePath,
+                    "URL:",
+                    voucher.voucherImgUrl
+                  );
+                } else {
+                  console.log("Successfully deleted voucher image:", filePath);
+                }
+              } catch (error) {
+                console.error("Error deleting voucher image:", error);
+                // Continue with voucher deletion even if image deletion fails
+              }
+            }
+          }
+          await deleteVoucher(voucher.id);
+        } catch (error) {
+          console.error(`Error deleting voucher ${voucher.id}:`, error);
+          // Continue with other vouchers even if one fails
+        }
+      }
+
       // Delete associated logo if it exists
       if (business.logoUrl) {
         const filePath = extractFilePathFromUrl(
