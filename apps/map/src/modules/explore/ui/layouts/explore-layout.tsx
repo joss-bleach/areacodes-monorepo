@@ -1,0 +1,10 @@
+import { BottomNav } from "@/components/bottom-nav";
+
+export const ExploreLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="h-screen w-full">
+      {children}
+      <BottomNav />
+    </div>
+  );
+};
