@@ -1,9 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, gte, and, lte, sql } from "drizzle-orm";
 import { db } from "../database";
 
 import { businesses } from "../schema";
+import { vouchers } from "../schema/vouchers";
 
-import { Business, NewBusiness } from "../types";
+import { Business, NewBusiness, Voucher } from "../types";
 
 export async function getBusinessByClerkUserId(
   clerkUserId: string
@@ -52,4 +53,73 @@ export async function updateBusiness(business: Business): Promise<Business> {
     .where(eq(businesses.id, business.id))
     .returning();
   return updated;
+}
+
+export type BusinessWithVoucher = {
+  voucher: Voucher;
+  business: Business;
+};
+
+export type BusinessFilters = {
+  industryId?: string;
+  // Future: distance?: number, sortBy?: string, etc.
+};
+
+export async function getBusinessesWithVouchers(
+  filters: BusinessFilters = {}
+): Promise<BusinessWithVoucher[]> {
+  const now = new Date();
+  
+  // Build where conditions
+  const whereConditions = [
+    lte(vouchers.voucherValidFrom, now),
+    gte(vouchers.voucherValidTo, now),
+  ];
+
+  // Add industry filter if provided
+  if (filters.industryId) {
+    whereConditions.push(eq(businesses.industryId, filters.industryId));
+  }
+
+  // Get active vouchers with their business information
+  const result = await db
+    .select({
+      voucher: {
+        id: vouchers.id,
+        businessId: vouchers.businessId,
+        clerkUserId: vouchers.clerkUserId,
+        title: vouchers.title,
+        description: vouchers.description,
+        voucherFormat: vouchers.voucherFormat,
+        voucherImgUrl: vouchers.voucherImgUrl,
+        voucherGenCode: vouchers.voucherGenCode,
+        voucherTerms: vouchers.voucherTerms,
+        voucherValidFrom: vouchers.voucherValidFrom,
+        voucherValidTo: vouchers.voucherValidTo,
+        createdAt: vouchers.createdAt,
+        updatedAt: vouchers.updatedAt,
+        deletedAt: vouchers.deletedAt,
+      },
+      business: {
+        id: businesses.id,
+        clerkUserId: businesses.clerkUserId,
+        name: businesses.name,
+        slug: businesses.slug,
+        description: businesses.description,
+        websiteUrl: businesses.websiteUrl,
+        logoUrl: businesses.logoUrl,
+        industryId: businesses.industryId,
+        address: businesses.address,
+        latitude: businesses.latitude,
+        longitude: businesses.longitude,
+        createdAt: businesses.createdAt,
+        updatedAt: businesses.updatedAt,
+        deletedAt: businesses.deletedAt,
+      },
+    })
+    .from(vouchers)
+    .innerJoin(businesses, eq(vouchers.businessId, businesses.id))
+    .where(and(...whereConditions));
+
+  return result as BusinessWithVoucher[];
 }

@@ -1,4 +1,11 @@
-import { pgTable, real, text, uuid, pgPolicy } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  real,
+  text,
+  uuid,
+  pgPolicy,
+  index,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { authenticatedRole } from "drizzle-orm/supabase";
 
@@ -22,6 +29,11 @@ export const businesses = pgTable(
     ...timestamps,
   },
   (table) => [
+    // Indexes for frequently queried columns
+    index("businesses_clerk_user_id_idx").on(table.clerkUserId),
+    index("businesses_industry_id_idx").on(table.industryId),
+    // Composite index for location-based queries (latitude, longitude)
+    index("businesses_location_idx").on(table.latitude, table.longitude),
     // Everyone can view businesses
     pgPolicy("businesses_select_policy", {
       for: "select",

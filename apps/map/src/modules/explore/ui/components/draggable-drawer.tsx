@@ -10,6 +10,7 @@ interface DraggableDrawerProps {
   maxHeight?: number;
   initialHeight?: number;
   bottomOffset?: number;
+  onHeightChange?: (height: number, isExpanded: boolean) => void;
 }
 
 export const DraggableDrawer = ({
@@ -18,6 +19,7 @@ export const DraggableDrawer = ({
   maxHeight,
   initialHeight = 400,
   bottomOffset = 0,
+  onHeightChange,
 }: DraggableDrawerProps) => {
   const [computedMaxHeight, setComputedMaxHeight] = useState(maxHeight ?? 800);
 
@@ -34,6 +36,13 @@ export const DraggableDrawer = ({
   const startY = useRef(0);
   const startHeight = useRef(0);
   const dragDirection = useRef<"up" | "down" | null>(null);
+
+  useEffect(() => {
+    if (onHeightChange) {
+      const isExpanded = height >= computedMaxHeight - 10; // 10px threshold
+      onHeightChange(height, isExpanded);
+    }
+  }, [height, computedMaxHeight, onHeightChange]);
 
   useEffect(() => {
     const handleDragEnd = () => {
@@ -53,6 +62,8 @@ export const DraggableDrawer = ({
 
     const handleTouchMove = (e: TouchEvent) => {
       if (!isDragging) return;
+
+      e.preventDefault(); // Prevent scrolling while dragging
 
       const touch = e.touches[0];
       const deltaY = startY.current - touch.clientY;
@@ -103,7 +114,7 @@ export const DraggableDrawer = ({
     };
 
     if (isDragging) {
-      document.addEventListener("touchmove", handleTouchMove);
+      document.addEventListener("touchmove", handleTouchMove, { passive: false });
       document.addEventListener("touchend", handleTouchEnd);
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
@@ -118,6 +129,11 @@ export const DraggableDrawer = ({
   }, [isDragging, minHeight, computedMaxHeight, initialHeight]);
 
   const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
+    // Prevent default to avoid scrolling conflicts on mobile
+    if ("touches" in e) {
+      e.preventDefault();
+    }
+    
     setIsDragging(true);
     startHeight.current = height;
     dragDirection.current = null;
@@ -137,11 +153,12 @@ export const DraggableDrawer = ({
     >
       {/* Drag Handle */}
       <div
-        className="flex items-center justify-center py-4 cursor-grab active:cursor-grabbing"
+        className="flex items-center justify-center py-6 cursor-grab active:cursor-grabbing select-none"
         onTouchStart={handleDragStart}
         onMouseDown={handleDragStart}
+        style={{ touchAction: "none", WebkitUserSelect: "none" }}
       >
-        <div className="w-16 h-1.5 bg-white/40 rounded-full" />
+        <div className="w-20 h-1.5 bg-foreground/20 dark:bg-foreground/40 rounded-full" />
       </div>
 
       {/* Content */}
