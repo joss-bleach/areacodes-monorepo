@@ -80,7 +80,7 @@ const EditBusinessInformationStepSuspense = ({
                 {...field}
                 id="edit-business-form-name"
                 className="w-full"
-                placeholder="Enter your business name"
+                placeholder="Enter your business name…"
                 aria-invalid={fieldState.invalid}
                 autoComplete="organization"
               />
@@ -101,7 +101,7 @@ const EditBusinessInformationStepSuspense = ({
                 {...field}
                 id="edit-business-form-description"
                 className="w-full"
-                placeholder="Tell us a bit about your business"
+                placeholder="Tell us a bit about your business…"
                 aria-invalid={fieldState.invalid}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -127,7 +127,7 @@ const EditBusinessInformationStepSuspense = ({
                   className="w-full"
                   aria-invalid={fieldState.invalid}
                 >
-                  <SelectValue placeholder="Select an industry" />
+                  <SelectValue placeholder="Select an industry…" />
                 </SelectTrigger>
                 <SelectContent side="bottom">
                   {Object.entries(industriesByCategory).map(
@@ -161,7 +161,7 @@ const EditBusinessInformationStepSuspense = ({
                 {...field}
                 id="edit-business-form-websiteUrl"
                 className="w-full"
-                placeholder="Enter your business website URL"
+                placeholder="Enter your business website URL…"
                 type="url"
                 aria-invalid={fieldState.invalid}
                 autoComplete="url"

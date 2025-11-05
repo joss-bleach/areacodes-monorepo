@@ -229,7 +229,7 @@ export const BusinessLocationStep = ({
                 }}
                 onFocus={handleInputFocus}
                 onKeyDown={handleKeyDown}
-                placeholder="Enter your business address"
+                placeholder="Enter your business address…"
                 autoComplete="street-address"
               />
               {isLoading && (
@@ -390,7 +390,7 @@ export const BusinessLocationStep = ({
                     className="w-full"
                     aria-invalid={fieldState.invalid}
                   >
-                    <SelectValue placeholder="Select a county" />
+                    <SelectValue placeholder="Select a county…" />
                   </SelectTrigger>
                   <SelectContent side="bottom">
                     {counties.map((county: string) => (

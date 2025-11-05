@@ -159,7 +159,7 @@ export const EditBusinessLocationStep = ({
                     className="w-full"
                     aria-invalid={fieldState.invalid}
                   >
-                    <SelectValue placeholder="Select a county" />
+                    <SelectValue placeholder="Select a county…" />
                   </SelectTrigger>
                   <SelectContent side="bottom">
                     {counties.map((county: string) => (

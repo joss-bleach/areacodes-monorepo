@@ -1,6 +1,11 @@
+import type { Metadata } from "next";
 import { hasBusiness } from "@/lib/access";
 import { BusinessDashboardView } from "@/modules/business/ui/views/business-dashboard-view";
 import { HydrateClient, prefetch, trpc } from "@/trpc/server";
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+};
 
 const Page = async ({ params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params;

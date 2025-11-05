@@ -268,7 +268,7 @@ const VoucherTableSuspense = () => {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="hidden md:block">
-            <CardTitle>All Vouchers</CardTitle>
+            <h2 className="text-lg font-semibold leading-none">All Vouchers</h2>
             <CardDescription>
               View and manage your voucher codes
             </CardDescription>

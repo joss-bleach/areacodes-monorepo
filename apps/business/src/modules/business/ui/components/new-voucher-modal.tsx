@@ -466,7 +466,7 @@ export const NewVoucherModal = () => {
                     <Input
                       {...field}
                       id="voucher-title"
-                      placeholder="Enter voucher title"
+                      placeholder="Enter voucher title…"
                       className="rounded-none outline-none"
                       aria-invalid={fieldState.invalid}
                     />
@@ -488,7 +488,7 @@ export const NewVoucherModal = () => {
                     <Textarea
                       {...field}
                       id="voucher-description"
-                      placeholder="Enter voucher description"
+                      placeholder="Enter voucher description…"
                       className="rounded-none outline-none"
                       aria-invalid={fieldState.invalid}
                     />
@@ -510,7 +510,7 @@ export const NewVoucherModal = () => {
                     <Textarea
                       {...field}
                       id="voucher-terms"
-                      placeholder="Enter voucher terms and conditions (optional)"
+                      placeholder="Enter voucher terms and conditions (optional)…"
                       className="rounded-none outline-none"
                       aria-invalid={fieldState.invalid}
                       rows={4}
@@ -867,7 +867,7 @@ export const NewVoucherModal = () => {
                     id="generated-code"
                     readOnly
                     type="text"
-                    placeholder="Generate your voucher"
+                    placeholder="Generate your voucher…"
                     className="font-mono pr-10 text-xs sm:text-sm"
                     value={generatedCode || ""}
                     aria-label="Generated voucher code"

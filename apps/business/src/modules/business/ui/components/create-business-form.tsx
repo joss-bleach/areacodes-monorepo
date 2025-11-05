@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { BusinessInformationStep } from "./form-steps/business-information-step";
 import { BusinessLocationStep } from "./form-steps/business-location-step";
 import { BusinessImageStep } from "./form-steps/business-image-step";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { createBusinessProfileFormSchema } from "@/modules/business/schemas/create-business-profile-schema";
 import { toast } from "sonner";
@@ -47,6 +47,7 @@ export const CreateBusinessForm = () => {
   const [currentStep, setCurrentStep] = useState<StepValue>(
     STEP_VALUES[0],
   );
+  const shouldReduceMotion = useReducedMotion();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(createBusinessProfileFormSchema),
@@ -294,10 +295,10 @@ export const CreateBusinessForm = () => {
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={currentStep}
-              initial={{ opacity: 0, x: 24 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -24 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
+              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 24 }}
+              animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
+              exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -24 }}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}
             >
               <StepperContent value={currentStep}>
                 {renderStep()}
@@ -332,10 +333,10 @@ export const CreateBusinessForm = () => {
                     <Loader2 className="size-4 animate-spin shrink-0" />
                   )}
                   <motion.span
-                    animate={{
+                    animate={shouldReduceMotion ? {} : {
                       x: createBusinessMutation.isPending ? -4 : 0,
                     }}
-                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.2, ease: "easeOut" }}
                     className="inline-block"
                   >
                     {createBusinessMutation.isPending
