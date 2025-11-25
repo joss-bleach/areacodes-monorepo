@@ -2,8 +2,9 @@ import { eq, gte, and, lte } from "drizzle-orm";
 import { db } from "../database";
 
 import { businesses } from "../schema";
+import { industries } from "../schema/industries";
 import { vouchers } from "../schema/vouchers";
-import { getBusinessIdBySlug, NewVoucher, Voucher } from "..";
+import { getBusinessIdBySlug, NewVoucher, Voucher, Business, Industry } from "..";
 
 export async function getVouchersByBusinessSlug(
   slug: string
@@ -30,6 +31,34 @@ export async function getVoucherById(id: string): Promise<Voucher | null> {
     .where(eq(vouchers.id, id))
     .limit(1);
   return voucher || null;
+}
+
+export type VoucherWithBusiness = {
+  voucher: Voucher;
+  business: Business;
+  industry: Industry | null;
+};
+
+export async function getVoucherByIdWithBusiness(
+  id: string
+): Promise<VoucherWithBusiness | null> {
+  const result = await db
+    .select({
+      voucher: vouchers,
+      business: businesses,
+      industry: industries,
+    })
+    .from(vouchers)
+    .innerJoin(businesses, eq(vouchers.businessId, businesses.id))
+    .leftJoin(industries, eq(businesses.industryId, industries.id))
+    .where(eq(vouchers.id, id))
+    .limit(1);
+
+  if (result.length === 0) {
+    return null;
+  }
+
+  return result[0] as VoucherWithBusiness;
 }
 
 export async function updateVoucher(voucher: Voucher): Promise<Voucher> {

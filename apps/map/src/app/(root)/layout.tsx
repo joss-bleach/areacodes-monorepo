@@ -1,7 +1,7 @@
-import { ExploreLayout } from "@/modules/explore/ui/layouts/explore-layout";
+import { LayoutWrapper } from "./layout-wrapper";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
-  return <ExploreLayout>{children}</ExploreLayout>;
+  return <LayoutWrapper>{children}</LayoutWrapper>;
 };
 
 export default Layout;
