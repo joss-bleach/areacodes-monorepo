@@ -164,8 +164,16 @@
   --shadow-2xl: var(--shadow-2xl);
 }
 
-/* Hide scrollbar for webkit browsers */
+/* Hide scrollbar for all browsers */
+.scrollbar-hide {
+  /* Firefox */
+  scrollbar-width: none;
+  /* IE and Edge */
+  -ms-overflow-style: none;
+}
+
 .scrollbar-hide::-webkit-scrollbar {
+  /* Chrome, Safari, Opera */
   display: none;
 }
 

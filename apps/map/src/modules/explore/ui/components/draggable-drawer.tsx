@@ -6,6 +6,7 @@ import { useRef, useState, useEffect, type ReactNode } from "react";
 
 interface DraggableDrawerProps {
   children: ReactNode;
+  header?: ReactNode;
   minHeight?: number;
   maxHeight?: number;
   initialHeight?: number;
@@ -15,6 +16,7 @@ interface DraggableDrawerProps {
 
 export const DraggableDrawer = ({
   children,
+  header,
   minHeight = 300,
   maxHeight,
   initialHeight = 400,
@@ -32,10 +34,26 @@ export const DraggableDrawer = ({
   }, [maxHeight]);
   const [height, setHeight] = useState(initialHeight);
   const [isDragging, setIsDragging] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const startY = useRef(0);
   const startHeight = useRef(0);
   const dragDirection = useRef<"up" | "down" | null>(null);
+
+  // Check for prefers-reduced-motion (Vercel guidelines: Honor prefers-reduced-motion)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      setPrefersReducedMotion(mediaQuery.matches);
+
+      const handleChange = (e: MediaQueryListEvent) => {
+        setPrefersReducedMotion(e.matches);
+      };
+
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+  }, []);
 
   useEffect(() => {
     if (onHeightChange) {
@@ -113,27 +131,82 @@ export const DraggableDrawer = ({
       }
     };
 
+    // Vercel guidelines: Clean drag interactions - disable text selection during drag
     if (isDragging) {
-      document.addEventListener("touchmove", handleTouchMove, { passive: false });
+      // Disable text selection on body while dragging
+      const originalUserSelect = document.body.style.userSelect;
+      const originalWebkitUserSelect = document.body.style.webkitUserSelect;
+      document.body.style.userSelect = "none";
+      document.body.style.webkitUserSelect = "none";
+
+      document.addEventListener("touchmove", handleTouchMove, {
+        passive: false,
+      });
       document.addEventListener("touchend", handleTouchEnd);
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
-    }
 
-    return () => {
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchend", handleTouchEnd);
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
+      return () => {
+        // Restore original text selection styles
+        document.body.style.userSelect = originalUserSelect;
+        document.body.style.webkitUserSelect = originalWebkitUserSelect;
+        document.removeEventListener("touchmove", handleTouchMove);
+        document.removeEventListener("touchend", handleTouchEnd);
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+    }
   }, [isDragging, minHeight, computedMaxHeight, initialHeight]);
 
   const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
+    // Prevent dragging if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input") ||
+      target.closest("[role='button']") ||
+      target.closest(".pointer-events-auto")
+    ) {
+      return;
+    }
+
     // Prevent default to avoid scrolling conflicts on mobile
     if ("touches" in e) {
       e.preventDefault();
     }
-    
+
+    setIsDragging(true);
+    startHeight.current = height;
+    dragDirection.current = null;
+
+    if ("touches" in e) {
+      startY.current = e.touches[0].clientY;
+    } else {
+      startY.current = e.clientY;
+    }
+  };
+
+  const handleHeaderDragStart = (e: React.TouchEvent | React.MouseEvent) => {
+    // Prevent dragging if clicking on interactive elements within header
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("a") ||
+      target.closest("input") ||
+      target.closest("[role='button']")
+    ) {
+      return;
+    }
+
+    // Stop propagation to prevent main container drag handler from firing
+    e.stopPropagation();
+
+    // Prevent default to avoid scrolling conflicts on mobile
+    if ("touches" in e) {
+      e.preventDefault();
+    }
+
     setIsDragging(true);
     startHeight.current = height;
     dragDirection.current = null;
@@ -148,22 +221,61 @@ export const DraggableDrawer = ({
   return (
     <div
       ref={drawerRef}
-      className="fixed bottom-0 left-0 right-0 bg-card text-card-foreground rounded-t-3xl border-t border-l border-r shadow-2xl transition-all duration-300 z-50"
-      style={{ height: `${height}px`, bottom: `${bottomOffset}px` }}
+      className="fixed bottom-0 left-0 right-0 bg-card text-card-foreground rounded-t-3xl border-t border-l border-r shadow-2xl z-50 cursor-grab active:cursor-grabbing"
+      style={{
+        height: `${height}px`,
+        bottom: `${bottomOffset}px`,
+        // Vercel guidelines: Never transition: all - explicitly list properties
+        // Respect prefers-reduced-motion
+        transition: prefersReducedMotion ? "none" : "height 300ms ease-out",
+        // Vercel guidelines: Overscroll behavior for drawers
+        overscrollBehavior: "contain",
+        // Vercel guidelines: Respect safe areas
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        // Vercel guidelines: Prevent double-tap zoom on controls
+        touchAction: "pan-y",
+        // Vercel guidelines: Tap highlight follows design
+        WebkitTapHighlightColor: "transparent",
+      }}
+      onTouchStart={handleDragStart}
+      onMouseDown={handleDragStart}
+      {...(isDragging && { inert: true })}
+      role="region"
+      aria-label="Business list drawer"
     >
-      {/* Drag Handle */}
-      <div
-        className="flex items-center justify-center py-6 cursor-grab active:cursor-grabbing select-none"
-        onTouchStart={handleDragStart}
-        onMouseDown={handleDragStart}
-        style={{ touchAction: "none", WebkitUserSelect: "none" }}
-      >
-        <div className="w-20 h-1.5 bg-foreground/20 dark:bg-foreground/40 rounded-full" />
-      </div>
+      <div className="flex flex-col h-full">
+        {/* Drag Handle */}
+        <div
+          className="flex items-center justify-center py-6 select-none pointer-events-none shrink-0"
+          style={{
+            touchAction: "manipulation",
+            WebkitUserSelect: "none",
+            minHeight: "44px", // Vercel guidelines: Minimum hit target on mobile (44px)
+          }}
+        >
+          <div className="w-20 h-1.5 bg-foreground/20 dark:bg-foreground/40 rounded-full" />
+        </div>
 
-      {/* Content */}
-      <div className="h-full overflow-y-auto pb-24 scrollbar-hide">
-        {children}
+        {/* Fixed Header */}
+        {header && (
+          <div
+            className="shrink-0 pointer-events-auto cursor-grab active:cursor-grabbing"
+            onTouchStart={handleHeaderDragStart}
+            onMouseDown={handleHeaderDragStart}
+          >
+            {header}
+          </div>
+        )}
+
+        {/* Scrollable Content */}
+        <div
+          className="flex-1 overflow-y-auto pb-24 scrollbar-hide pointer-events-auto"
+          style={{
+            overscrollBehavior: "contain",
+          }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

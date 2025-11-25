@@ -1,7 +1,6 @@
 import Image from "next/image";
-import { MapFilterButton } from "@/components/map-filter-button";
 
-export const Navbar = () => {
+export const VoucherNavbar = () => {
   return (
     <div className="fixed top-4 left-4 right-4 z-[60]">
       <div className="bg-black/50 backdrop-blur-md px-4 py-3 flex items-center rounded-md">
@@ -12,10 +11,8 @@ export const Navbar = () => {
           height={26}
           className="w-[26px] h-[26px]"
         />
-        <div className="ml-auto">
-          <MapFilterButton />
-        </div>
       </div>
     </div>
   );
 };
+
