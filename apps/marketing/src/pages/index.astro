@@ -2,6 +2,7 @@
 import { Navigation } from "../components/Navigation";
 import { Footer } from "../components/Footer";
 import { Button } from "../components/ui/button";
+import { CookieBanner } from "../components/CookieBanner";
 import "../styles/globals.css";
 
 const ogAltText = "Person in an orange shirt serving steaming noodles into a tray at a food stall, with people in the background. Text overlay reads: \"Find exclusive offers supporting independent businesses.\"";
@@ -38,6 +39,7 @@ const ogAltText = "Person in an orange shirt serving steaming noodles into a tra
 		<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:font-semibold">
 			Skip to content
 		</a>
+		<CookieBanner client:load />
 		<Navigation client:load />
 		<main id="main-content">
 			<!-- Hero Section -->
