@@ -16,7 +16,7 @@ export const ExploreView = () => {
   };
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <main id="main-content" className="relative h-screen w-full overflow-hidden">
       <Map scrollWheelZoom={!isDrawerExpanded} />
       <Navbar />
       
@@ -29,6 +29,6 @@ export const ExploreView = () => {
       )}
       
       <BusinessList onDrawerHeightChange={handleDrawerHeightChange} />
-    </div>
+    </main>
   );
 };

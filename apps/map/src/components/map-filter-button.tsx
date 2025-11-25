@@ -126,6 +126,7 @@ export const MapFilterButton = () => {
           variant="secondary"
           size="icon"
           className="bg-transparent shadow-none hover:bg-black/50"
+          aria-label="Sort & Filter"
         >
           <SlidersHorizontalIcon className="w-4 h-4" />
         </Button>

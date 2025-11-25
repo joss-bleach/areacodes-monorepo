@@ -3,6 +3,7 @@
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Breadcrumb,
@@ -22,12 +23,38 @@ export const VoucherView = () => {
   const params = useParams();
   const voucherId = params.id as string;
   const trpc = useTRPC();
+  const [showLoading, setShowLoading] = useState(false);
+  const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);
 
   const { data: voucher, isLoading, error } = useQuery({
     ...trpc.voucher.getVoucherById.queryOptions({ id: voucherId }),
   });
 
-  if (isLoading) {
+  // Vercel guidelines: Minimum loading-state duration
+  // Add show-delay (150-300ms) and minimum visible time (300-500ms)
+  useEffect(() => {
+    if (isLoading && !showLoading) {
+      // Show delay: wait 200ms before showing loading state
+      const showTimer = setTimeout(() => {
+        setShowLoading(true);
+        setLoadingStartTime(Date.now());
+      }, 200);
+      return () => clearTimeout(showTimer);
+    } else if (!isLoading && showLoading) {
+      // Minimum visible time: keep loading visible for at least 400ms
+      const minVisibleTime = loadingStartTime ? Math.max(0, 400 - (Date.now() - loadingStartTime)) : 400;
+      const hideTimer = setTimeout(() => {
+        setShowLoading(false);
+        setLoadingStartTime(null);
+      }, minVisibleTime);
+      return () => clearTimeout(hideTimer);
+    } else if (!isLoading) {
+      setShowLoading(false);
+      setLoadingStartTime(null);
+    }
+  }, [isLoading, showLoading, loadingStartTime]);
+
+  if (showLoading) {
     return (
       <div className="relative min-h-screen w-full">
         <VoucherNavbar />
@@ -76,7 +103,7 @@ export const VoucherView = () => {
   return (
     <div className="relative min-h-screen w-full">
       <VoucherNavbar />
-      <main className="w-screen py-6 pt-20">
+      <main id="main-content" className="w-screen py-6 pt-20">
         <div className="w-[87.5%] md:w-[692px] lg:w-[980px] mx-auto mb-6">
           <Breadcrumb>
             <BreadcrumbList>
@@ -139,6 +166,7 @@ export const VoucherView = () => {
                   value={voucher.voucher.voucherGenCode}
                   readOnly
                   className="w-full font-mono text-xs min-w-0"
+                  aria-label="Voucher code"
                   style={{ 
                     textOverflow: 'ellipsis', 
                     overflow: 'hidden',

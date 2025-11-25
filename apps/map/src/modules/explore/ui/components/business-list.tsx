@@ -46,6 +46,8 @@ const BusinessListSuspense = ({
 }) => {
   const [maxHeight, setMaxHeight] = useState(800);
   const [isMounted, setIsMounted] = useState(false);
+  const [showLoading, setShowLoading] = useState(false);
+  const [loadingStartTime, setLoadingStartTime] = useState<number | null>(null);
   const trpc = useTRPC();
   const { industryId, sortBy } = useExploreFilters();
 
@@ -55,6 +57,30 @@ const BusinessListSuspense = ({
     ),
     enabled: isMounted,
   });
+
+  // Vercel guidelines: Minimum loading-state duration
+  // Add show-delay (150-300ms) and minimum visible time (300-500ms)
+  useEffect(() => {
+    if (isLoading && !showLoading) {
+      // Show delay: wait 200ms before showing loading state
+      const showTimer = setTimeout(() => {
+        setShowLoading(true);
+        setLoadingStartTime(Date.now());
+      }, 200);
+      return () => clearTimeout(showTimer);
+    } else if (!isLoading && showLoading) {
+      // Minimum visible time: keep loading visible for at least 400ms
+      const minVisibleTime = loadingStartTime ? Math.max(0, 400 - (Date.now() - loadingStartTime)) : 400;
+      const hideTimer = setTimeout(() => {
+        setShowLoading(false);
+        setLoadingStartTime(null);
+      }, minVisibleTime);
+      return () => clearTimeout(hideTimer);
+    } else if (!isLoading) {
+      setShowLoading(false);
+      setLoadingStartTime(null);
+    }
+  }, [isLoading, showLoading, loadingStartTime]);
 
   // Fetch industries to get industry names
   const { data: industries } = useSuspenseQuery(
@@ -152,7 +178,7 @@ const BusinessListSuspense = ({
     >
       <div className="px-6">
         <div className="mb-6">
-          {isLoading && !businessesWithVouchers ? (
+          {showLoading && !businessesWithVouchers ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex gap-3 p-3 bg-muted">
@@ -212,11 +238,12 @@ const BusinessListSuspense = ({
                       {item.voucher.title}
                     </p>
 
-                    {/* View Voucher Button */}
-                    <Link href={`/v/${item.voucher.id}`}>
-                      <Button variant="secondary" className="w-full">
-                        Redeem voucher
-                      </Button>
+                    {/* View Voucher Link */}
+                    <Link
+                      href={`/v/${item.voucher.id}`}
+                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-none text-sm font-medium transition-[color,background-color,border-color,box-shadow,opacity] disabled:pointer-events-none disabled:opacity-50 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] hover:cursor-pointer [touch-action:manipulation] [-webkit-tap-highlight-color:transparent] bg-secondary text-secondary-foreground hover:bg-secondary/80 h-9 px-4 py-2 min-h-[44px] sm:min-h-[36px] w-full"
+                    >
+                      Redeem voucher
                     </Link>
                   </div>
                 );
