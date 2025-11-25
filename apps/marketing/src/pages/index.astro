@@ -1,16 +1,192 @@
 ---
+import { Navigation } from "../components/Navigation";
+import { Footer } from "../components/Footer";
+import { Button } from "../components/ui/button";
+import "../styles/globals.css";
 
+const ogAltText = "Person in an orange shirt serving steaming noodles into a tray at a food stall, with people in the background. Text overlay reads: \"Find exclusive offers supporting independent businesses.\"";
 ---
 
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<meta name="theme-color" content="#000000" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+		<title>Areacodes - Support Local. Spend Less.</title>
+		<meta name="description" content="Exclusive offers supporting independent businesses." />
+		
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="Areacodes - Support Local. Spend Less." />
+		<meta property="og:description" content="Exclusive offers supporting independent businesses." />
+		<meta property="og:image" content="/opengraph-image.png" />
+		<meta property="og:image:alt" content={ogAltText} />
+		
+		<!-- Twitter -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="Areacodes - Support Local. Spend Less." />
+		<meta name="twitter:description" content="Exclusive offers supporting independent businesses." />
+		<meta name="twitter:image" content="/opengraph-image.png" />
+		<meta name="twitter:image:alt" content={ogAltText} />
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:font-semibold">
+			Skip to content
+		</a>
+		<Navigation client:load />
+		<main id="main-content">
+			<!-- Hero Section -->
+			<section class="relative">
+				<div class="h-[90dvh] overflow-y-hidden">
+					<!-- Mobile video (sm) -->
+					<video
+						src="/video/ac-hero-sm.mp4"
+						class="relative -z-10 block md:hidden h-full w-full object-cover"
+						autoplay
+						loop
+						muted
+						playsinline
+						preload="metadata"
+						aria-label="Hero video showing local businesses"
+					></video>
+					<!-- Tablet video (md) -->
+					<video
+						src="/video/ac-hero-md.mp4"
+						class="relative -z-10 hidden md:block lg:hidden h-full w-full object-cover"
+						autoplay
+						loop
+						muted
+						playsinline
+						preload="metadata"
+						aria-label="Hero video showing local businesses"
+					></video>
+					<!-- Desktop video (lg) -->
+					<video
+						src="/video/ac-hero-lg.mp4"
+						class="relative -z-10 hidden lg:block h-full w-full object-cover"
+						autoplay
+						loop
+						muted
+						playsinline
+						preload="metadata"
+						aria-label="Hero video showing local businesses"
+					></video>
+				</div>
+				<div class="absolute top-0 left-0 flex h-[90dvh] w-full items-center">
+					<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+						<div class="flex max-w-md md:max-w-lg lg:max-w-2xl flex-col gap-2">
+							<h1 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-black text-white text-[40px] md:text-[64px] lg:text-[80px] leading-none">
+								Support Local. Spend Less.
+							</h1>
+							<h2 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-black text-white text-[19px] md:text-[24px] lg:text-[28px] leading-none">
+								Exclusive offers supporting independent businesses.
+							</h2>
+							<div class="pt-2">
+								<Button client:load className="w-full md:w-[180px] rounded-none bg-white p-6 font-semibold tracking-wide text-black shadow-none hover:cursor-pointer hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
+									View map
+								</Button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!-- End hero section -->
+			
+			<!-- How it works section -->
+			<section class="bg-black py-[60px] md:py-[140px]">
+				<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+					<div class="flex w-full flex-row justify-center">
+						<h3 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[36px] md:text-[48px] lg:text-[56px] leading-none">
+							How it works
+						</h3>
+					</div>
+					<div>
+						<div class="py-[24px] md:py-[68px] lg:py-[85px]">
+							<div class="grid h-[500px] grid-cols-1 gap-4 md:h-[400px] md:grid-cols-2 md:gap-0">
+								<div class="order-2 flex h-full flex-col items-start justify-center md:order-1">
+									<h4 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[19px] md:text-[24px] lg:text-[28px] leading-none">
+										Explore the map
+									</h4>
+									<p class="mt-[30px] max-w-sm text-white">
+										See the city at a glance. Every pin is an independent
+										business waiting to be discovered.
+									</p>
+								</div>
+								<div class="order-1 flex h-full w-full items-start justify-start md:order-2 md:items-center md:justify-center">
+									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]"></div>
+								</div>
+							</div>
+						</div>
+						<div class="py-[24px] md:py-[68px] lg:py-[85px]">
+							<div class="grid h-[500px] grid-cols-1 gap-4 md:h-[400px] md:grid-cols-2 md:gap-0">
+								<div class="order-1 flex h-full w-full items-start justify-start md:order-1 md:items-center md:justify-center">
+									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]"></div>
+								</div>
+								<div class="order-2 flex h-full flex-col items-start justify-center md:order-2">
+									<h4 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[19px] md:text-[24px] lg:text-[28px] leading-none">
+										Find the deals for you
+									</h4>
+									<p class="mt-[30px] max-w-sm text-white">
+										Get a more in&#8209;depth look into a business, what they
+										do, and what they have on offer for you.
+									</p>
+								</div>
+							</div>
+						</div>
+						<div class="py-[24px] md:py-[68px] lg:py-[85px]">
+							<div class="grid h-[500px] grid-cols-1 gap-4 md:h-[400px] md:grid-cols-2 md:gap-0">
+								<div class="order-2 flex h-full flex-col items-start justify-center md:order-1">
+									<h4 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[19px] md:text-[24px] lg:text-[28px] leading-none">
+										Support locals whilst
+										<br />
+										saving
+									</h4>
+									<p class="mt-[30px] max-w-sm text-white">
+										It's easy. Show your voucher, save money, support
+										Brighton's local independent scene.
+									</p>
+								</div>
+								<div class="order-1 flex h-full w-full items-start justify-start md:order-2 md:items-center md:justify-center">
+									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!-- End how it works section -->
+			
+			<!-- Join section -->
+			<section class="bg-white py-[24px] md:py-[68px] lg:py-[85px]">
+				<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+					<div class="grid h-[500px] grid-cols-1 gap-4 md:h-[400px] md:grid-cols-2 md:gap-0">
+						<div class="order-1 flex h-full flex-col items-start justify-center md:order-1">
+							<h4 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-black text-white text-[19px] md:text-[24px] lg:text-[28px] leading-none">
+								Stop scrolling and
+								<br />
+								join the movement
+							</h4>
+							<p class="my-[30px] max-w-sm text-black">
+								Backing Brighton's independents doesn't have to mean
+								paying more. Support local and spend less today.
+							</p>
+							<Button client:load className="w-full md:w-[180px] rounded-none bg-black p-6 font-semibold tracking-wide text-white shadow-none hover:cursor-pointer hover:bg-black/90 focus-visible:outline-2 focus-visible:outline-black focus-visible:outline-offset-2">
+								View map
+							</Button>
+						</div>
+						<div class="order-2 flex h-full w-full items-center justify-center md:order-2">
+							<div class="h-[200px] w-full bg-black/10 md:mx-0 md:h-[400px] md:w-[300px]"></div>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!-- End join section -->
+		</main>
+		<Footer client:load />
 	</body>
 </html>
