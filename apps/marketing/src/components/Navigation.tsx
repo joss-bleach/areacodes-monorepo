@@ -4,14 +4,20 @@ export const Navigation = () => {
   return (
     <header className="bg-black">
       <nav className="flex flex-row items-center justify-between px-4 py-6 md:px-12">
-        <ul className="hidden flex-row items-center gap-4 text-xs tracking-wide text-white uppercase md:flex">
+        <ul className="hidden flex-row items-center gap-4 text-xs tracking-wide text-white uppercase">
           <li>
-            <a className="hover:opacity-90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2" href="/about">
+            <a
+              className="hover:opacity-90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
+              href="/about"
+            >
               About
             </a>
           </li>
           <li>
-            <a className="hover:opacity-90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2" href="/contact">
+            <a
+              className="hover:opacity-90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
+              href="/contact"
+            >
               Contact
             </a>
           </li>
@@ -31,4 +37,3 @@ export const Navigation = () => {
     </header>
   );
 };
-

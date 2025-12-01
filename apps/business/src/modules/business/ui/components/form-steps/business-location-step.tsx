@@ -73,10 +73,8 @@ export const BusinessLocationStep = ({
       const data = await response.json();
 
       if (response.ok) {
-        console.log("API Response received:", data);
         setSuggestions(data);
         setError("");
-        console.log("Suggestions set:", data);
       } else {
         setError(data.error || "Failed to fetch suggestions");
         setSuggestions([]);

@@ -27,6 +27,7 @@ const ogAltText = "Person in an orange shirt serving steaming noodles into a tra
 		<meta property="og:description" content="Exclusive offers supporting independent businesses." />
 		<meta property="og:image" content="/opengraph-image.png" />
 		<meta property="og:image:alt" content={ogAltText} />
+		<meta property="og:url" content={Astro.url.href} />
 		
 		<!-- Twitter -->
 		<meta name="twitter:card" content="summary_large_image" />
@@ -89,9 +90,11 @@ const ogAltText = "Person in an orange shirt serving steaming noodles into a tra
 								Exclusive offers supporting independent businesses.
 							</h2>
 							<div class="pt-2">
-								<Button client:load className="w-full md:w-[180px] rounded-none bg-white p-6 font-semibold tracking-wide text-black shadow-none hover:cursor-pointer hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
-									View map
-								</Button>
+								<a href="https://map.acbrighton.com" target="_blank" rel="noopener noreferrer">
+									<Button client:load className="w-full md:w-[180px] rounded-none bg-white p-6 font-semibold tracking-wide text-black shadow-none hover:cursor-pointer hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
+										View map
+									</Button>
+								</a>
 							</div>
 						</div>
 					</div>
@@ -120,14 +123,18 @@ const ogAltText = "Person in an orange shirt serving steaming noodles into a tra
 									</p>
 								</div>
 								<div class="order-1 flex h-full w-full items-start justify-start md:order-2 md:items-center md:justify-center">
-									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]"></div>
+									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]">
+										<img src="/1.png" alt="Explore the map illustration" class="w-full h-full object-cover" />
+									</div>
 								</div>
 							</div>
 						</div>
 						<div class="py-[24px] md:py-[68px] lg:py-[85px]">
 							<div class="grid h-[500px] grid-cols-1 gap-4 md:h-[400px] md:grid-cols-2 md:gap-0">
 								<div class="order-1 flex h-full w-full items-start justify-start md:order-1 md:items-center md:justify-center">
-									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]"></div>
+									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]">
+										<img src="/2.png" alt="Find the deals for you illustration" class="w-full h-full object-cover" />
+									</div>
 								</div>
 								<div class="order-2 flex h-full flex-col items-start justify-center md:order-2">
 									<h4 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[19px] md:text-[24px] lg:text-[28px] leading-none">
@@ -154,7 +161,9 @@ const ogAltText = "Person in an orange shirt serving steaming noodles into a tra
 									</p>
 								</div>
 								<div class="order-1 flex h-full w-full items-start justify-start md:order-2 md:items-center md:justify-center">
-									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]"></div>
+									<div class="mb-4 h-[375px] w-full bg-white/10 md:mb-0 md:h-[400px] md:w-[300px]">
+										<img src="/3.png" alt="Support locals whilst saving illustration" class="w-full h-full object-cover" />
+									</div>
 								</div>
 							</div>
 						</div>
@@ -177,12 +186,16 @@ const ogAltText = "Person in an orange shirt serving steaming noodles into a tra
 								Backing Brighton's independents doesn't have to mean
 								paying more. Support local and spend less today.
 							</p>
-							<Button client:load className="w-full md:w-[180px] rounded-none bg-black p-6 font-semibold tracking-wide text-white shadow-none hover:cursor-pointer hover:bg-black/90 focus-visible:outline-2 focus-visible:outline-black focus-visible:outline-offset-2">
-								View map
-							</Button>
+							<a href="https://map.acbrighton.com" target="_blank" rel="noopener noreferrer">
+								<Button client:load className="w-full md:w-[180px] rounded-none bg-black p-6 font-semibold tracking-wide text-white shadow-none hover:cursor-pointer hover:bg-black/90 focus-visible:outline-2 focus-visible:outline-black focus-visible:outline-offset-2">
+									View map
+								</Button>
+							</a>
 						</div>
 						<div class="order-2 flex h-full w-full items-center justify-center md:order-2">
-							<div class="h-[200px] w-full bg-black/10 md:mx-0 md:h-[400px] md:w-[300px]"></div>
+							<div class="h-[200px] w-full bg-black/10 md:mx-0 md:h-[400px] md:w-[300px]">
+								<img src="/food-truck.jpg" alt="Food truck illustration" class="w-full h-full object-cover" />
+							</div>
 						</div>
 					</div>
 				</div>

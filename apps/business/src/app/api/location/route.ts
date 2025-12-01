@@ -49,9 +49,6 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
 
-    // Debug logging
-    console.log("Geoapify API Response:", JSON.stringify(data, null, 2));
-
     // Transform Geoapify response to match our expected format (include coordinates)
     const transformedResults =
       data.results?.map((result: any) => ({
@@ -68,11 +65,6 @@ export async function POST(request: NextRequest) {
         lat: result.lat,
         lon: result.lon,
       })) || [];
-
-    console.log(
-      "Transformed Results:",
-      JSON.stringify(transformedResults, null, 2)
-    );
 
     return NextResponse.json(transformedResults);
   } catch (error) {
