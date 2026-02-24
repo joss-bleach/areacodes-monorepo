@@ -7,7 +7,7 @@ export const createBusinessProfileFormSchema = z.object({
   name: z.string().min(1, "Business name is required"),
   description: z.string().min(1, "Business description is required"),
   websiteUrl: z
-    .union([z.literal(""), z.url("Please enter a valid website URL")])
+    .union([z.literal(""), z.string().url("Please enter a valid website URL")])
     .optional(),
   industryId: z.string().min(1, "Please select an industry"),
   addressLine1: z.string().min(1, "Address line 1 is required"),

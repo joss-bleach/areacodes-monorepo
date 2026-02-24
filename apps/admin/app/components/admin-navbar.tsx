@@ -1,4 +1,4 @@
-import { UserButton } from "@clerk/tanstack-start";
+import { UserButton } from "@clerk/tanstack-react-start";
 import { Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 

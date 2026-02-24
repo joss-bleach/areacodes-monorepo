@@ -1,4 +1,4 @@
-import { UserButton } from "@clerk/tanstack-start";
+import { UserButton } from "@clerk/tanstack-react-start";
 import { Link, useParams } from "@tanstack/react-router";
 import { Settings } from "lucide-react";
 import { useState, useEffect } from "react";

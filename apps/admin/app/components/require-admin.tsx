@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/tanstack-start";
+import { useUser } from "@clerk/tanstack-react-start";
 
 export const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoaded } = useUser();
