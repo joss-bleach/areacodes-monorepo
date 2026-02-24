@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/convex";
 import {
   Card,
@@ -49,7 +49,8 @@ const getActionLabel = (action: string) => {
 };
 
 function AuditLogList() {
-  const auditLog = useQuery(api.functions.admin.getAuditLog, {});
+  const { isAuthenticated } = useConvexAuth();
+  const auditLog = useQuery(api.functions.admin.getAuditLog, isAuthenticated ? {} : "skip");
 
   if (auditLog === undefined) {
     return <AuditLogLoading />;

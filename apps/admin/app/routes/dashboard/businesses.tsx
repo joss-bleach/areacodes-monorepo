@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import {
@@ -49,7 +49,8 @@ function BusinessesPage() {
 }
 
 function BusinessesList() {
-  const businesses = useQuery(api.functions.admin.getAllBusinesses, {});
+  const { isAuthenticated } = useConvexAuth();
+  const businesses = useQuery(api.functions.admin.getAllBusinesses, isAuthenticated ? {} : "skip");
   const flagBusiness = useMutation(api.functions.admin.flagBusiness);
   const [flagTarget, setFlagTarget] = useState<{
     id: Id<"businesses">;

@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/tanstack-start";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/convex";
 import { useEffect } from "react";
 
@@ -10,11 +10,12 @@ export const Route = createFileRoute("/")({
 
 function IndexPage() {
   const { userId, isLoaded } = useAuth();
+  const { isAuthenticated } = useConvexAuth();
   const navigate = useNavigate();
 
   const business = useQuery(
     api.functions.businesses.getBusinessByClerkUser,
-    isLoaded && userId ? {} : "skip"
+    isAuthenticated ? {} : "skip"
   );
 
   useEffect(() => {

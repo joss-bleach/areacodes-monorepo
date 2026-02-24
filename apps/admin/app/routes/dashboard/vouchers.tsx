@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import {
@@ -49,7 +49,8 @@ function VouchersPage() {
 }
 
 function VouchersList() {
-  const vouchers = useQuery(api.functions.admin.getAllVouchers, {});
+  const { isAuthenticated } = useConvexAuth();
+  const vouchers = useQuery(api.functions.admin.getAllVouchers, isAuthenticated ? {} : "skip");
   const removeVoucher = useMutation(api.functions.admin.removeVoucher);
   const [removeTarget, setRemoveTarget] = useState<{
     id: Id<"vouchers">;

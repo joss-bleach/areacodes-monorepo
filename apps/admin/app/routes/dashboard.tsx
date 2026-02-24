@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/convex";
 import { AdminNavbar } from "~/components/admin-navbar";
 import { RequireAdmin } from "~/components/require-admin";
@@ -33,9 +33,10 @@ function DashboardPage() {
 }
 
 function DashboardStats() {
-  const businesses = useQuery(api.functions.admin.getAllBusinesses, {});
-  const vouchers = useQuery(api.functions.admin.getAllVouchers, {});
-  const auditLog = useQuery(api.functions.admin.getAuditLog, {});
+  const { isAuthenticated } = useConvexAuth();
+  const businesses = useQuery(api.functions.admin.getAllBusinesses, isAuthenticated ? {} : "skip");
+  const vouchers = useQuery(api.functions.admin.getAllVouchers, isAuthenticated ? {} : "skip");
+  const auditLog = useQuery(api.functions.admin.getAuditLog, isAuthenticated ? {} : "skip");
 
   const activeBusinesses =
     businesses?.filter((b) => b.deletedAt === undefined).length ?? 0;
