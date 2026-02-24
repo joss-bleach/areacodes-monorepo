@@ -1,15 +1,10 @@
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvexAuth, useQuery } from "convex/react";
 import { api } from "@repo/convex";
 import { BusinessNavbar } from "~/components/business-navbar";
 import { CreateBusinessForm } from "~/components/create-business-form";
 
-export const Route = createFileRoute("/b/create")({
-  beforeLoad: ({ context }) => {
-    if (!context.auth?.userId) {
-      throw redirect({ to: "/sign-in" });
-    }
-  },
+export const Route = createFileRoute("/_authenticated/b/create")({
   component: CreatePage,
 });
 

@@ -12,17 +12,23 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as SignInImport } from './routes/sign-in'
+import { Route as AuthenticatedImport } from './routes/_authenticated'
 import { Route as IndexImport } from './routes/index'
 import { Route as SignInSplatImport } from './routes/sign-in.$'
-import { Route as BCreateImport } from './routes/b/create'
-import { Route as BSlugImport } from './routes/b/$slug'
-import { Route as BSlugEditImport } from './routes/b/$slug.edit'
+import { Route as AuthenticatedBCreateImport } from './routes/_authenticated/b/create'
+import { Route as AuthenticatedBSlugImport } from './routes/_authenticated/b/$slug'
+import { Route as AuthenticatedBSlugEditImport } from './routes/_authenticated/b/$slug.edit'
 
 // Create/Update Routes
 
 const SignInRoute = SignInImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AuthenticatedRoute = AuthenticatedImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -38,22 +44,22 @@ const SignInSplatRoute = SignInSplatImport.update({
   getParentRoute: () => SignInRoute,
 } as any)
 
-const BCreateRoute = BCreateImport.update({
+const AuthenticatedBCreateRoute = AuthenticatedBCreateImport.update({
   id: '/b/create',
   path: '/b/create',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
-const BSlugRoute = BSlugImport.update({
+const AuthenticatedBSlugRoute = AuthenticatedBSlugImport.update({
   id: '/b/$slug',
   path: '/b/$slug',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 
-const BSlugEditRoute = BSlugEditImport.update({
+const AuthenticatedBSlugEditRoute = AuthenticatedBSlugEditImport.update({
   id: '/edit',
   path: '/edit',
-  getParentRoute: () => BSlugRoute,
+  getParentRoute: () => AuthenticatedBSlugRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -67,25 +73,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexImport
       parentRoute: typeof rootRoute
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthenticatedImport
+      parentRoute: typeof rootRoute
+    }
     '/sign-in': {
       id: '/sign-in'
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInImport
-      parentRoute: typeof rootRoute
-    }
-    '/b/$slug': {
-      id: '/b/$slug'
-      path: '/b/$slug'
-      fullPath: '/b/$slug'
-      preLoaderRoute: typeof BSlugImport
-      parentRoute: typeof rootRoute
-    }
-    '/b/create': {
-      id: '/b/create'
-      path: '/b/create'
-      fullPath: '/b/create'
-      preLoaderRoute: typeof BCreateImport
       parentRoute: typeof rootRoute
     }
     '/sign-in/$': {
@@ -95,17 +94,56 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInSplatImport
       parentRoute: typeof SignInImport
     }
-    '/b/$slug/edit': {
-      id: '/b/$slug/edit'
+    '/_authenticated/b/$slug': {
+      id: '/_authenticated/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof AuthenticatedBSlugImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/b/create': {
+      id: '/_authenticated/b/create'
+      path: '/b/create'
+      fullPath: '/b/create'
+      preLoaderRoute: typeof AuthenticatedBCreateImport
+      parentRoute: typeof AuthenticatedImport
+    }
+    '/_authenticated/b/$slug/edit': {
+      id: '/_authenticated/b/$slug/edit'
       path: '/edit'
       fullPath: '/b/$slug/edit'
-      preLoaderRoute: typeof BSlugEditImport
-      parentRoute: typeof BSlugImport
+      preLoaderRoute: typeof AuthenticatedBSlugEditImport
+      parentRoute: typeof AuthenticatedBSlugImport
     }
   }
 }
 
 // Create and export the route tree
+
+interface AuthenticatedBSlugRouteChildren {
+  AuthenticatedBSlugEditRoute: typeof AuthenticatedBSlugEditRoute
+}
+
+const AuthenticatedBSlugRouteChildren: AuthenticatedBSlugRouteChildren = {
+  AuthenticatedBSlugEditRoute: AuthenticatedBSlugEditRoute,
+}
+
+const AuthenticatedBSlugRouteWithChildren =
+  AuthenticatedBSlugRoute._addFileChildren(AuthenticatedBSlugRouteChildren)
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedBSlugRoute: typeof AuthenticatedBSlugRouteWithChildren
+  AuthenticatedBCreateRoute: typeof AuthenticatedBCreateRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedBSlugRoute: AuthenticatedBSlugRouteWithChildren,
+  AuthenticatedBCreateRoute: AuthenticatedBCreateRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
 
 interface SignInRouteChildren {
   SignInSplatRoute: typeof SignInSplatRoute
@@ -118,84 +156,78 @@ const SignInRouteChildren: SignInRouteChildren = {
 const SignInRouteWithChildren =
   SignInRoute._addFileChildren(SignInRouteChildren)
 
-interface BSlugRouteChildren {
-  BSlugEditRoute: typeof BSlugEditRoute
-}
-
-const BSlugRouteChildren: BSlugRouteChildren = {
-  BSlugEditRoute: BSlugEditRoute,
-}
-
-const BSlugRouteWithChildren = BSlugRoute._addFileChildren(BSlugRouteChildren)
-
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '': typeof AuthenticatedRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
-  '/b/$slug': typeof BSlugRouteWithChildren
-  '/b/create': typeof BCreateRoute
   '/sign-in/$': typeof SignInSplatRoute
-  '/b/$slug/edit': typeof BSlugEditRoute
+  '/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
+  '/b/create': typeof AuthenticatedBCreateRoute
+  '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '': typeof AuthenticatedRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
-  '/b/$slug': typeof BSlugRouteWithChildren
-  '/b/create': typeof BCreateRoute
   '/sign-in/$': typeof SignInSplatRoute
-  '/b/$slug/edit': typeof BSlugEditRoute
+  '/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
+  '/b/create': typeof AuthenticatedBCreateRoute
+  '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
 }
 
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
-  '/b/$slug': typeof BSlugRouteWithChildren
-  '/b/create': typeof BCreateRoute
   '/sign-in/$': typeof SignInSplatRoute
-  '/b/$slug/edit': typeof BSlugEditRoute
+  '/_authenticated/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
+  '/_authenticated/b/create': typeof AuthenticatedBCreateRoute
+  '/_authenticated/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | ''
     | '/sign-in'
+    | '/sign-in/$'
     | '/b/$slug'
     | '/b/create'
-    | '/sign-in/$'
     | '/b/$slug/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | ''
     | '/sign-in'
+    | '/sign-in/$'
     | '/b/$slug'
     | '/b/create'
-    | '/sign-in/$'
     | '/b/$slug/edit'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/sign-in'
-    | '/b/$slug'
-    | '/b/create'
     | '/sign-in/$'
-    | '/b/$slug/edit'
+    | '/_authenticated/b/$slug'
+    | '/_authenticated/b/create'
+    | '/_authenticated/b/$slug/edit'
   fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   SignInRoute: typeof SignInRouteWithChildren
-  BSlugRoute: typeof BSlugRouteWithChildren
-  BCreateRoute: typeof BCreateRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
   SignInRoute: SignInRouteWithChildren,
-  BSlugRoute: BSlugRouteWithChildren,
-  BCreateRoute: BCreateRoute,
 }
 
 export const routeTree = rootRoute
@@ -209,13 +241,19 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/sign-in",
-        "/b/$slug",
-        "/b/create"
+        "/_authenticated",
+        "/sign-in"
       ]
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/_authenticated": {
+      "filePath": "_authenticated.tsx",
+      "children": [
+        "/_authenticated/b/$slug",
+        "/_authenticated/b/create"
+      ]
     },
     "/sign-in": {
       "filePath": "sign-in.tsx",
@@ -223,22 +261,24 @@ export const routeTree = rootRoute
         "/sign-in/$"
       ]
     },
-    "/b/$slug": {
-      "filePath": "b/$slug.tsx",
-      "children": [
-        "/b/$slug/edit"
-      ]
-    },
-    "/b/create": {
-      "filePath": "b/create.tsx"
-    },
     "/sign-in/$": {
       "filePath": "sign-in.$.tsx",
       "parent": "/sign-in"
     },
-    "/b/$slug/edit": {
-      "filePath": "b/$slug.edit.tsx",
-      "parent": "/b/$slug"
+    "/_authenticated/b/$slug": {
+      "filePath": "_authenticated/b/$slug.tsx",
+      "parent": "/_authenticated",
+      "children": [
+        "/_authenticated/b/$slug/edit"
+      ]
+    },
+    "/_authenticated/b/create": {
+      "filePath": "_authenticated/b/create.tsx",
+      "parent": "/_authenticated"
+    },
+    "/_authenticated/b/$slug/edit": {
+      "filePath": "_authenticated/b/$slug.edit.tsx",
+      "parent": "/_authenticated/b/$slug"
     }
   }
 }

@@ -1,16 +1,11 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { BusinessNavbar } from "~/components/business-navbar";
 import { DashboardTop } from "~/sections/dashboard-top";
 import { StatsSection } from "~/sections/stats-section";
 import { VoucherTable } from "~/sections/voucher-table";
 import { NewVoucherModal } from "~/components/new-voucher-modal";
 
-export const Route = createFileRoute("/b/$slug")({
-  beforeLoad: ({ context }) => {
-    if (!context.auth?.userId) {
-      throw redirect({ to: "/sign-in" });
-    }
-  },
+export const Route = createFileRoute("/_authenticated/b/$slug")({
   component: DashboardPage,
 });
 

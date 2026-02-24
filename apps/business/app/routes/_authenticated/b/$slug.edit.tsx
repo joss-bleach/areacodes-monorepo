@@ -1,13 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { BusinessNavbar } from "~/components/business-navbar";
 import { EditBusinessForm } from "~/components/edit-business-form";
 
-export const Route = createFileRoute("/b/$slug/edit")({
-  beforeLoad: ({ context }) => {
-    if (!context.auth?.userId) {
-      throw redirect({ to: "/sign-in" });
-    }
-  },
+export const Route = createFileRoute("/_authenticated/b/$slug/edit")({
   component: EditPage,
 });
 
