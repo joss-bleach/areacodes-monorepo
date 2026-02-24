@@ -1,5 +1,5 @@
 import {
-  createRootRoute,
+  createRootRouteWithContext,
   Outlet,
   ScrollRestoration,
   HeadContent,
@@ -16,7 +16,13 @@ const convex = new ConvexReactClient(
   import.meta.env.VITE_CONVEX_URL as string,
 );
 
-export const Route = createRootRoute({
+interface RouterContext {
+  auth: {
+    userId: string | null;
+  };
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   head: () => ({
     meta: [
       { charSet: "utf-8" },
