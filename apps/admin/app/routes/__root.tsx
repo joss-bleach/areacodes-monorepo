@@ -5,7 +5,7 @@ import { ClerkProvider, useAuth } from "@clerk/tanstack-start";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
 import { Toaster } from "@repo/ui";
-import "~/styles/globals.css";
+import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(
   import.meta.env.VITE_CONVEX_URL as string,
@@ -23,6 +23,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     { name: "viewport", content: "width=device-width, initial-scale=1" },
     { title: "Areacodes Admin" },
   ],
+  links: () => [{ rel: "stylesheet", href: appCss }],
   component: RootComponent,
 });
 

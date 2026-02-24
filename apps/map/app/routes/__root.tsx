@@ -3,7 +3,7 @@ import { Meta, Scripts } from "@tanstack/start";
 import type { ReactNode } from "react";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
-import "~/styles/globals.css";
+import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
@@ -14,6 +14,7 @@ export const Route = createRootRoute({
     { title: "Areacodes" },
     { name: "description", content: "Support local. Spend less." },
   ],
+  links: () => [{ rel: "stylesheet", href: appCss }],
   component: RootComponent,
 });
 

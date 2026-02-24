@@ -6,7 +6,7 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { Toaster } from "@repo/ui";
-import "~/styles/globals.css";
+import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(
   import.meta.env.VITE_CONVEX_URL as string,
@@ -23,6 +23,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     { charSet: "utf-8" },
     { name: "viewport", content: "width=device-width, initial-scale=1" },
   ],
+  links: () => [{ rel: "stylesheet", href: appCss }],
   component: RootComponent,
 });
 
