@@ -1,5 +1,9 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { Meta, Scripts } from "@tanstack/start";
+import {
+  createRootRoute,
+  Outlet,
+  HeadContent,
+  Scripts,
+} from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
@@ -8,13 +12,15 @@ import appCss from "~/styles/globals.css?url";
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
 
 export const Route = createRootRoute({
-  meta: () => [
-    { charSet: "utf-8" },
-    { name: "viewport", content: "width=device-width, initial-scale=1" },
-    { title: "Areacodes" },
-    { name: "description", content: "Support local. Spend less." },
-  ],
-  links: () => [{ rel: "stylesheet", href: appCss }],
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Areacodes" },
+      { name: "description", content: "Support local. Spend less." },
+    ],
+    links: [{ rel: "stylesheet", href: appCss }],
+  }),
   component: RootComponent,
 });
 
@@ -30,7 +36,7 @@ function RootDocument({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="dark">
       <head>
-        <Meta />
+        <HeadContent />
       </head>
       <body>
         <ConvexProvider client={convex}>

@@ -1,6 +1,10 @@
-import { createRootRouteWithContext } from "@tanstack/react-router";
-import { Outlet, ScrollRestoration } from "@tanstack/react-router";
-import { Meta, Scripts } from "@tanstack/start";
+import {
+  createRootRouteWithContext,
+  Outlet,
+  ScrollRestoration,
+  HeadContent,
+  Scripts,
+} from "@tanstack/react-router";
 import { ClerkProvider, useAuth } from "@clerk/tanstack-start";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
@@ -18,12 +22,14 @@ interface RouterContext {
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  meta: () => [
-    { charSet: "utf-8" },
-    { name: "viewport", content: "width=device-width, initial-scale=1" },
-    { title: "Areacodes Admin" },
-  ],
-  links: () => [{ rel: "stylesheet", href: appCss }],
+  head: () => ({
+    meta: [
+      { charSet: "utf-8" },
+      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { title: "Areacodes Admin" },
+    ],
+    links: [{ rel: "stylesheet", href: appCss }],
+  }),
   component: RootComponent,
 });
 
@@ -44,7 +50,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="dark">
       <head>
-        <Meta />
+        <HeadContent />
       </head>
       <body>
         {children}
