@@ -1,0 +1,39 @@
+{
+  "name": "admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vinxi dev --port 3002",
+    "build": "vinxi build",
+    "start": "vinxi start --port 3002",
+    "lint": "eslint . --max-warnings 0",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@clerk/tanstack-start": "^0.11.5",
+    "@repo/convex": "workspace:*",
+    "@repo/env": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@t3-oss/env-core": "^0.13.8",
+    "@tanstack/react-router": "^1.120.15",
+    "@tanstack/start": "^1.120.15",
+    "convex": "^1.17.0",
+    "lucide-react": "^0.552.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "sonner": "^2.0.7",
+    "vinxi": "^0.5.3"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@tailwindcss/vite": "^4.1.10",
+    "@types/node": "^22.15.3",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9.38.0",
+    "tailwindcss": "^4",
+    "typescript": "5.9.2"
+  }
+}

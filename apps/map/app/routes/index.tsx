@@ -1,0 +1,37 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Map } from "~/components/map";
+import { BusinessList } from "~/components/business-list";
+import { Navbar } from "~/components/navbar";
+
+export const Route = createFileRoute("/")({
+  component: ExploreView,
+});
+
+function ExploreView() {
+  const [isDrawerExpanded, setIsDrawerExpanded] = useState(false);
+
+  const handleDrawerHeightChange = (
+    _height: number,
+    isExpanded: boolean
+  ) => {
+    setIsDrawerExpanded(isExpanded);
+  };
+
+  return (
+    <main
+      id="main-content"
+      className="relative h-screen w-full overflow-hidden"
+    >
+      <Map scrollWheelZoom={!isDrawerExpanded} />
+      <Navbar />
+      {isDrawerExpanded && (
+        <div
+          className="fixed inset-0 z-40 pointer-events-auto"
+          aria-hidden="true"
+        />
+      )}
+      <BusinessList onDrawerHeightChange={handleDrawerHeightChange} />
+    </main>
+  );
+}

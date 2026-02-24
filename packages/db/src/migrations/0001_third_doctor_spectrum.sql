@@ -1,1 +1,0 @@
-ALTER TABLE "vouchers" ADD COLUMN "voucher_img_url" text;

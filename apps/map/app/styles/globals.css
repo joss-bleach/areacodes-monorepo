@@ -1,0 +1,68 @@
+@import "@repo/ui/tailwind.css";
+@import "leaflet/dist/leaflet.css";
+
+/* Hide scrollbar for all browsers */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom Leaflet popup styling */
+.leaflet-popup-content-wrapper {
+  border-radius: 0 !important;
+  border: 1px solid hsl(var(--border)) !important;
+  background-color: oklch(0.14 0 0) !important;
+  color: oklch(1 0 0) !important;
+  box-shadow: var(--shadow-lg) !important;
+  padding: 1.25rem !important;
+  width: 340px !important;
+  min-width: 340px !important;
+  max-width: 340px !important;
+  font-family: var(--font-sans) !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+  width: auto !important;
+  font-size: 0.875rem !important;
+  line-height: 1.25rem !important;
+  font-family: var(--font-sans) !important;
+}
+
+.leaflet-popup-tip {
+  background-color: oklch(0.14 0 0) !important;
+}
+
+.leaflet-popup-close-button {
+  padding: 1rem !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  width: auto !important;
+  height: auto !important;
+}

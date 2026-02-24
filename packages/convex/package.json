@@ -1,0 +1,29 @@
+{
+  "name": "@repo/convex",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "convex:generate": "convex codegen",
+    "check-types": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "*",
+    "@repo/typescript-config": "*",
+    "@types/node": "^22.15.3",
+    "@edge-runtime/vm": "^4.0.0",
+    "convex-test": "^0.0.35",
+    "eslint": "^9.38.0",
+    "typescript": "5.9.2",
+    "vitest": "^3.0.0"
+  },
+  "dependencies": {
+    "convex": "^1.17.0"
+  }
+}
