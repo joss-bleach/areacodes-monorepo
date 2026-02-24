@@ -7,7 +7,7 @@ import { NewVoucherModal } from "~/components/new-voucher-modal";
 
 export const Route = createFileRoute("/b/$slug")({
   beforeLoad: ({ context }) => {
-    if (!context.auth.userId) {
+    if (!context.auth?.userId) {
       throw redirect({ to: "/sign-in" });
     }
   },

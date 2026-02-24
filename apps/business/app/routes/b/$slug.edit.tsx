@@ -4,7 +4,7 @@ import { EditBusinessForm } from "~/components/edit-business-form";
 
 export const Route = createFileRoute("/b/$slug/edit")({
   beforeLoad: ({ context }) => {
-    if (!context.auth.userId) {
+    if (!context.auth?.userId) {
       throw redirect({ to: "/sign-in" });
     }
   },
