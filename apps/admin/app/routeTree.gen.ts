@@ -57,12 +57,29 @@ export interface FileRoutesByPath {
 
 export const rootRoute = new RootRoute()
 
-export const IndexRoute = createFileRoute('/')({\n  component: () => null,\n})
-export const SignInRoute = createFileRoute('/sign-in')({\n  component: () => null,\n})
-export const DashboardRoute = createFileRoute('/dashboard')({\n  component: () => null,\n})
-export const DashboardBusinessesRoute = createFileRoute('/dashboard/businesses')({\n  component: () => null,\n})
-export const DashboardVouchersRoute = createFileRoute('/dashboard/vouchers')({\n  component: () => null,\n})
-export const DashboardAuditLogRoute = createFileRoute('/dashboard/audit-log')({\n  component: () => null,\n})
+export const IndexRoute = createFileRoute('/')({
+  component: () => null,
+})
+
+export const SignInRoute = createFileRoute('/sign-in')({
+  component: () => null,
+})
+
+export const DashboardRoute = createFileRoute('/dashboard')({
+  component: () => null,
+})
+
+export const DashboardBusinessesRoute = createFileRoute('/dashboard/businesses')({
+  component: () => null,
+})
+
+export const DashboardVouchersRoute = createFileRoute('/dashboard/vouchers')({
+  component: () => null,
+})
+
+export const DashboardAuditLogRoute = createFileRoute('/dashboard/audit-log')({
+  component: () => null,
+})
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,

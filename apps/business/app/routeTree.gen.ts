@@ -51,11 +51,25 @@ export interface FileRoutesByPath {
 
 export const rootRoute = new RootRoute()
 
-export const IndexRoute = createFileRoute('/')({\n  component: () => null,\n})
-export const SignInRoute = createFileRoute('/sign-in')({\n  component: () => null,\n})
-export const BCreateRoute = createFileRoute('/b/create')({\n  component: () => null,\n})
-export const BSlugRoute = createFileRoute('/b/$slug')({\n  component: () => null,\n})
-export const BSlugEditRoute = createFileRoute('/b/$slug/edit')({\n  component: () => null,\n})
+export const IndexRoute = createFileRoute('/')({
+  component: () => null,
+})
+
+export const SignInRoute = createFileRoute('/sign-in')({
+  component: () => null,
+})
+
+export const BCreateRoute = createFileRoute('/b/create')({
+  component: () => null,
+})
+
+export const BSlugRoute = createFileRoute('/b/$slug')({
+  component: () => null,
+})
+
+export const BSlugEditRoute = createFileRoute('/b/$slug/edit')({
+  component: () => null,
+})
 
 export const routeTree = rootRoute.addChildren([
   IndexRoute,
