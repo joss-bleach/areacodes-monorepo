@@ -4,14 +4,12 @@ import {
   ScrollRestoration,
   HeadContent,
   Scripts,
-  useRouter,
 } from "@tanstack/react-router";
 import { ClerkProvider, useAuth } from "@clerk/tanstack-start";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { Toaster } from "@repo/ui";
-import { useEffect } from "react";
 import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(
@@ -63,21 +61,14 @@ function RootComponent() {
   );
 }
 
-// Keeps the router context in sync with Clerk's auth state so that
-// beforeLoad guards stay current after client-side navigations
-// (e.g. Clerk's post-sign-in redirect).
+// Keeps the router context in sync with Clerk's client-side auth state so
+// that beforeLoad guards stay current after client-side navigations (e.g.
+// Clerk's post-sign-in redirect). Written during render so the value is
+// available before the next router.navigate() call.
+// Ref: https://tanstack.com/router/latest/docs/guide/authenticated-routes#authentication-using-react-contexthooks
 function AuthGate({ children }: { children: React.ReactNode }) {
   const { userId } = useAuth();
-  const router = useRouter();
-
-  // Write synchronously during render — available before the next navigation
   _clientAuth = { userId: userId ?? null };
-
-  // Re-evaluate route guards whenever auth changes
-  useEffect(() => {
-    router.invalidate();
-  }, [userId, router]);
-
   return <>{children}</>;
 }
 
