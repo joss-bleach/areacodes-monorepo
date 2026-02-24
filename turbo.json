@@ -5,51 +5,40 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "outputs": [".output/**", "!.output/cache/**", "dist/**"],
       "env": [
-        "DATABASE_URL",
         "CLERK_SECRET_KEY",
-        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
-        "NEXT_PUBLIC_CLERK_SIGN_IN_URL",
-        "NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL",
-        "NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL",
-        "SUPABASE_URL",
-        "SUPABASE_ANON_KEY",
-        "SUPABASE_SERVICE_ROLE_KEY",
-        "NEXT_PUBLIC_SUPABASE_URL",
-        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "CLERK_JWT_ISSUER_DOMAIN",
+        "VITE_CLERK_PUBLISHABLE_KEY",
+        "VITE_CLERK_SIGN_IN_URL",
+        "VITE_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL",
+        "VITE_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL",
+        "VITE_CONVEX_URL",
+        "CONVEX_DEPLOY_KEY",
         "GEOAPIFY_API_KEY"
       ]
+    },
+    "convex:generate": {
+      "inputs": ["packages/convex/convex/**/*.ts"],
+      "outputs": ["packages/convex/convex/_generated/**"],
+      "cache": true
     },
     "lint": {
       "dependsOn": ["^lint"]
     },
     "check-types": {
-      "dependsOn": ["^check-types"]
+      "dependsOn": ["^check-types", "convex:generate"]
+    },
+    "test": {
+      "outputs": []
+    },
+    "test:e2e": {
+      "cache": false,
+      "outputs": []
     },
     "dev": {
       "cache": false,
       "persistent": true
-    },
-    "db:check": {
-      "dependsOn": ["^db:check"],
-      "cache": false
-    },
-    "db:generate": {
-      "dependsOn": ["^db:generate"],
-      "cache": false
-    },
-    "db:migrate": {
-      "dependsOn": ["^db:migrate"],
-      "cache": false
-    },
-    "db:seed": {
-      "dependsOn": ["^db:seed"],
-      "cache": false
-    },
-    "db:update-slugs": {
-      "dependsOn": ["^db:update-slugs"],
-      "cache": false
     }
   }
 }

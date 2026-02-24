@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "cd ../.. && bun run build --filter=map",
+  "buildCommand": "cd ../.. && bun run build --filter=admin",
   "installCommand": "cd ../.. && bun install",
   "framework": null
 }
