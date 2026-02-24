@@ -8,145 +8,50 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
+import { Route as DashboardVouchersRouteImport } from './routes/dashboard/vouchers'
+import { Route as DashboardBusinessesRouteImport } from './routes/dashboard/businesses'
+import { Route as DashboardAuditLogRouteImport } from './routes/dashboard/audit-log'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as SignInImport } from './routes/sign-in'
-import { Route as DashboardImport } from './routes/dashboard'
-import { Route as IndexImport } from './routes/index'
-import { Route as SignInSplatImport } from './routes/sign-in.$'
-import { Route as DashboardVouchersImport } from './routes/dashboard/vouchers'
-import { Route as DashboardBusinessesImport } from './routes/dashboard/businesses'
-import { Route as DashboardAuditLogImport } from './routes/dashboard/audit-log'
-
-// Create/Update Routes
-
-const SignInRoute = SignInImport.update({
+const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const DashboardRoute = DashboardImport.update({
+const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SignInSplatRoute = SignInSplatImport.update({
+const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/$',
   path: '/$',
   getParentRoute: () => SignInRoute,
 } as any)
-
-const DashboardVouchersRoute = DashboardVouchersImport.update({
+const DashboardVouchersRoute = DashboardVouchersRouteImport.update({
   id: '/vouchers',
   path: '/vouchers',
   getParentRoute: () => DashboardRoute,
 } as any)
-
-const DashboardBusinessesRoute = DashboardBusinessesImport.update({
+const DashboardBusinessesRoute = DashboardBusinessesRouteImport.update({
   id: '/businesses',
   path: '/businesses',
   getParentRoute: () => DashboardRoute,
 } as any)
-
-const DashboardAuditLogRoute = DashboardAuditLogImport.update({
+const DashboardAuditLogRoute = DashboardAuditLogRouteImport.update({
   id: '/audit-log',
   path: '/audit-log',
   getParentRoute: () => DashboardRoute,
 } as any)
-
-// Populate the FileRoutesByPath interface
-
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardImport
-      parentRoute: typeof rootRoute
-    }
-    '/sign-in': {
-      id: '/sign-in'
-      path: '/sign-in'
-      fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInImport
-      parentRoute: typeof rootRoute
-    }
-    '/dashboard/audit-log': {
-      id: '/dashboard/audit-log'
-      path: '/audit-log'
-      fullPath: '/dashboard/audit-log'
-      preLoaderRoute: typeof DashboardAuditLogImport
-      parentRoute: typeof DashboardImport
-    }
-    '/dashboard/businesses': {
-      id: '/dashboard/businesses'
-      path: '/businesses'
-      fullPath: '/dashboard/businesses'
-      preLoaderRoute: typeof DashboardBusinessesImport
-      parentRoute: typeof DashboardImport
-    }
-    '/dashboard/vouchers': {
-      id: '/dashboard/vouchers'
-      path: '/vouchers'
-      fullPath: '/dashboard/vouchers'
-      preLoaderRoute: typeof DashboardVouchersImport
-      parentRoute: typeof DashboardImport
-    }
-    '/sign-in/$': {
-      id: '/sign-in/$'
-      path: '/$'
-      fullPath: '/sign-in/$'
-      preLoaderRoute: typeof SignInSplatImport
-      parentRoute: typeof SignInImport
-    }
-  }
-}
-
-// Create and export the route tree
-
-interface DashboardRouteChildren {
-  DashboardAuditLogRoute: typeof DashboardAuditLogRoute
-  DashboardBusinessesRoute: typeof DashboardBusinessesRoute
-  DashboardVouchersRoute: typeof DashboardVouchersRoute
-}
-
-const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardAuditLogRoute: DashboardAuditLogRoute,
-  DashboardBusinessesRoute: DashboardBusinessesRoute,
-  DashboardVouchersRoute: DashboardVouchersRoute,
-}
-
-const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
-  DashboardRouteChildren,
-)
-
-interface SignInRouteChildren {
-  SignInSplatRoute: typeof SignInSplatRoute
-}
-
-const SignInRouteChildren: SignInRouteChildren = {
-  SignInSplatRoute: SignInSplatRoute,
-}
-
-const SignInRouteWithChildren =
-  SignInRoute._addFileChildren(SignInRouteChildren)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -157,7 +62,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
 }
-
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteWithChildren
@@ -167,9 +71,8 @@ export interface FileRoutesByTo {
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
 }
-
 export interface FileRoutesById {
-  __root__: typeof rootRoute
+  __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
@@ -178,7 +81,6 @@ export interface FileRoutesById {
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
 }
-
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
@@ -209,67 +111,108 @@ export interface FileRouteTypes {
     | '/sign-in/$'
   fileRoutesById: FileRoutesById
 }
-
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   SignInRoute: typeof SignInRouteWithChildren
 }
 
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/sign-in': {
+      id: '/sign-in'
+      path: '/sign-in'
+      fullPath: '/sign-in'
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sign-in/$': {
+      id: '/sign-in/$'
+      path: '/$'
+      fullPath: '/sign-in/$'
+      preLoaderRoute: typeof SignInSplatRouteImport
+      parentRoute: typeof SignInRoute
+    }
+    '/dashboard/vouchers': {
+      id: '/dashboard/vouchers'
+      path: '/vouchers'
+      fullPath: '/dashboard/vouchers'
+      preLoaderRoute: typeof DashboardVouchersRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/businesses': {
+      id: '/dashboard/businesses'
+      path: '/businesses'
+      fullPath: '/dashboard/businesses'
+      preLoaderRoute: typeof DashboardBusinessesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/audit-log': {
+      id: '/dashboard/audit-log'
+      path: '/audit-log'
+      fullPath: '/dashboard/audit-log'
+      preLoaderRoute: typeof DashboardAuditLogRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+  }
+}
+
+interface DashboardRouteChildren {
+  DashboardAuditLogRoute: typeof DashboardAuditLogRoute
+  DashboardBusinessesRoute: typeof DashboardBusinessesRoute
+  DashboardVouchersRoute: typeof DashboardVouchersRoute
+}
+
+const DashboardRouteChildren: DashboardRouteChildren = {
+  DashboardAuditLogRoute: DashboardAuditLogRoute,
+  DashboardBusinessesRoute: DashboardBusinessesRoute,
+  DashboardVouchersRoute: DashboardVouchersRoute,
+}
+
+const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
+  DashboardRouteChildren,
+)
+
+interface SignInRouteChildren {
+  SignInSplatRoute: typeof SignInSplatRoute
+}
+
+const SignInRouteChildren: SignInRouteChildren = {
+  SignInSplatRoute: SignInSplatRoute,
+}
+
+const SignInRouteWithChildren =
+  SignInRoute._addFileChildren(SignInRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRouteWithChildren,
   SignInRoute: SignInRouteWithChildren,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/dashboard",
-        "/sign-in"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/dashboard": {
-      "filePath": "dashboard.tsx",
-      "children": [
-        "/dashboard/audit-log",
-        "/dashboard/businesses",
-        "/dashboard/vouchers"
-      ]
-    },
-    "/sign-in": {
-      "filePath": "sign-in.tsx",
-      "children": [
-        "/sign-in/$"
-      ]
-    },
-    "/dashboard/audit-log": {
-      "filePath": "dashboard/audit-log.tsx",
-      "parent": "/dashboard"
-    },
-    "/dashboard/businesses": {
-      "filePath": "dashboard/businesses.tsx",
-      "parent": "/dashboard"
-    },
-    "/dashboard/vouchers": {
-      "filePath": "dashboard/vouchers.tsx",
-      "parent": "/dashboard"
-    },
-    "/sign-in/$": {
-      "filePath": "sign-in.$.tsx",
-      "parent": "/sign-in"
-    }
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
-ROUTE_MANIFEST_END */

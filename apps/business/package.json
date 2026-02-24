@@ -4,32 +4,32 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vinxi dev --port 3000",
-    "build": "vinxi build",
-    "start": "vinxi start --port 3000",
+    "dev": "vite dev --port 3000",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs",
     "lint": "eslint . --max-warnings 0",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@clerk/tanstack-react-start": "0.17.0",
+    "@clerk/tanstack-react-start": "^0.29.6",
     "@hookform/resolvers": "^5.2.2",
     "@repo/convex": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/ui": "workspace:*",
     "@t3-oss/env-core": "^0.13.8",
-    "@tanstack/react-router": "^1.120.15",
-    "@tanstack/start": "^1.120.15",
+    "@tanstack/react-router": "^1.162.9",
+    "@tanstack/react-start": "^1.162.9",
     "convex": "^1.17.0",
     "lucide-react": "^0.552.0",
     "motion": "^12.23.24",
+    "nitro": "npm:nitro-nightly@latest",
     "nuqs": "^2.7.2",
     "react": "^19.2.0",
     "react-day-picker": "^9.11.1",
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.66.0",
     "sonner": "^2.0.7",
-    "vinxi": "^0.5.3",
     "voucher-code-generator": "^1.3.0",
     "zod": "^3.25.1"
   },
@@ -41,8 +41,10 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/voucher-code-generator": "^1.1.3",
+    "@vitejs/plugin-react": "^4.6.0",
     "eslint": "^9.38.0",
     "tailwindcss": "^4",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vite": "^7.3.1"
   }
 }

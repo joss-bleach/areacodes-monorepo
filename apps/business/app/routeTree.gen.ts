@@ -8,117 +8,163 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-// Import Routes
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
+import { Route as AuthenticatedBCreateRouteImport } from './routes/_authenticated/b/create'
+import { Route as AuthenticatedBSlugRouteImport } from './routes/_authenticated/b/$slug'
+import { Route as AuthenticatedBSlugEditRouteImport } from './routes/_authenticated/b/$slug.edit'
 
-import { Route as rootRoute } from './routes/__root'
-import { Route as SignInImport } from './routes/sign-in'
-import { Route as AuthenticatedImport } from './routes/_authenticated'
-import { Route as IndexImport } from './routes/index'
-import { Route as SignInSplatImport } from './routes/sign-in.$'
-import { Route as AuthenticatedBCreateImport } from './routes/_authenticated/b/create'
-import { Route as AuthenticatedBSlugImport } from './routes/_authenticated/b/$slug'
-import { Route as AuthenticatedBSlugEditImport } from './routes/_authenticated/b/$slug.edit'
-
-// Create/Update Routes
-
-const SignInRoute = SignInImport.update({
+const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const AuthenticatedRoute = AuthenticatedImport.update({
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const IndexRoute = IndexImport.update({
+const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-
-const SignInSplatRoute = SignInSplatImport.update({
+const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/$',
   path: '/$',
   getParentRoute: () => SignInRoute,
 } as any)
-
-const AuthenticatedBCreateRoute = AuthenticatedBCreateImport.update({
+const AuthenticatedBCreateRoute = AuthenticatedBCreateRouteImport.update({
   id: '/b/create',
   path: '/b/create',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-
-const AuthenticatedBSlugRoute = AuthenticatedBSlugImport.update({
+const AuthenticatedBSlugRoute = AuthenticatedBSlugRouteImport.update({
   id: '/b/$slug',
   path: '/b/$slug',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-
-const AuthenticatedBSlugEditRoute = AuthenticatedBSlugEditImport.update({
+const AuthenticatedBSlugEditRoute = AuthenticatedBSlugEditRouteImport.update({
   id: '/edit',
   path: '/edit',
   getParentRoute: () => AuthenticatedBSlugRoute,
 } as any)
 
-// Populate the FileRoutesByPath interface
+export interface FileRoutesByFullPath {
+  '/': typeof IndexRoute
+  '/sign-in': typeof SignInRouteWithChildren
+  '/sign-in/$': typeof SignInSplatRoute
+  '/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
+  '/b/create': typeof AuthenticatedBCreateRoute
+  '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
+}
+export interface FileRoutesByTo {
+  '/': typeof IndexRoute
+  '/sign-in': typeof SignInRouteWithChildren
+  '/sign-in/$': typeof SignInSplatRoute
+  '/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
+  '/b/create': typeof AuthenticatedBCreateRoute
+  '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
+}
+export interface FileRoutesById {
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/sign-in': typeof SignInRouteWithChildren
+  '/sign-in/$': typeof SignInSplatRoute
+  '/_authenticated/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
+  '/_authenticated/b/create': typeof AuthenticatedBCreateRoute
+  '/_authenticated/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
+}
+export interface FileRouteTypes {
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/sign-in'
+    | '/sign-in/$'
+    | '/b/$slug'
+    | '/b/create'
+    | '/b/$slug/edit'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/sign-in'
+    | '/sign-in/$'
+    | '/b/$slug'
+    | '/b/create'
+    | '/b/$slug/edit'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/sign-in'
+    | '/sign-in/$'
+    | '/_authenticated/b/$slug'
+    | '/_authenticated/b/create'
+    | '/_authenticated/b/$slug/edit'
+  fileRoutesById: FileRoutesById
+}
+export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  SignInRoute: typeof SignInRouteWithChildren
+}
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexImport
-      parentRoute: typeof rootRoute
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthenticatedImport
-      parentRoute: typeof rootRoute
-    }
     '/sign-in': {
       id: '/sign-in'
       path: '/sign-in'
       fullPath: '/sign-in'
-      preLoaderRoute: typeof SignInImport
-      parentRoute: typeof rootRoute
+      preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/sign-in/$': {
       id: '/sign-in/$'
       path: '/$'
       fullPath: '/sign-in/$'
-      preLoaderRoute: typeof SignInSplatImport
-      parentRoute: typeof SignInImport
-    }
-    '/_authenticated/b/$slug': {
-      id: '/_authenticated/b/$slug'
-      path: '/b/$slug'
-      fullPath: '/b/$slug'
-      preLoaderRoute: typeof AuthenticatedBSlugImport
-      parentRoute: typeof AuthenticatedImport
+      preLoaderRoute: typeof SignInSplatRouteImport
+      parentRoute: typeof SignInRoute
     }
     '/_authenticated/b/create': {
       id: '/_authenticated/b/create'
       path: '/b/create'
       fullPath: '/b/create'
-      preLoaderRoute: typeof AuthenticatedBCreateImport
-      parentRoute: typeof AuthenticatedImport
+      preLoaderRoute: typeof AuthenticatedBCreateRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/b/$slug': {
+      id: '/_authenticated/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof AuthenticatedBSlugRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/b/$slug/edit': {
       id: '/_authenticated/b/$slug/edit'
       path: '/edit'
       fullPath: '/b/$slug/edit'
-      preLoaderRoute: typeof AuthenticatedBSlugEditImport
-      parentRoute: typeof AuthenticatedBSlugImport
+      preLoaderRoute: typeof AuthenticatedBSlugEditRouteImport
+      parentRoute: typeof AuthenticatedBSlugRoute
     }
   }
 }
-
-// Create and export the route tree
 
 interface AuthenticatedBSlugRouteChildren {
   AuthenticatedBSlugEditRoute: typeof AuthenticatedBSlugEditRoute
@@ -156,130 +202,21 @@ const SignInRouteChildren: SignInRouteChildren = {
 const SignInRouteWithChildren =
   SignInRoute._addFileChildren(SignInRouteChildren)
 
-export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '': typeof AuthenticatedRouteWithChildren
-  '/sign-in': typeof SignInRouteWithChildren
-  '/sign-in/$': typeof SignInSplatRoute
-  '/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
-  '/b/create': typeof AuthenticatedBCreateRoute
-  '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
-}
-
-export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '': typeof AuthenticatedRouteWithChildren
-  '/sign-in': typeof SignInRouteWithChildren
-  '/sign-in/$': typeof SignInSplatRoute
-  '/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
-  '/b/create': typeof AuthenticatedBCreateRoute
-  '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
-}
-
-export interface FileRoutesById {
-  __root__: typeof rootRoute
-  '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/sign-in': typeof SignInRouteWithChildren
-  '/sign-in/$': typeof SignInSplatRoute
-  '/_authenticated/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
-  '/_authenticated/b/create': typeof AuthenticatedBCreateRoute
-  '/_authenticated/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
-}
-
-export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | ''
-    | '/sign-in'
-    | '/sign-in/$'
-    | '/b/$slug'
-    | '/b/create'
-    | '/b/$slug/edit'
-  fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | ''
-    | '/sign-in'
-    | '/sign-in/$'
-    | '/b/$slug'
-    | '/b/create'
-    | '/b/$slug/edit'
-  id:
-    | '__root__'
-    | '/'
-    | '/_authenticated'
-    | '/sign-in'
-    | '/sign-in/$'
-    | '/_authenticated/b/$slug'
-    | '/_authenticated/b/create'
-    | '/_authenticated/b/$slug/edit'
-  fileRoutesById: FileRoutesById
-}
-
-export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  SignInRoute: typeof SignInRouteWithChildren
-}
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   SignInRoute: SignInRouteWithChildren,
 }
-
-export const routeTree = rootRoute
+export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
-/* ROUTE_MANIFEST_START
-{
-  "routes": {
-    "__root__": {
-      "filePath": "__root.tsx",
-      "children": [
-        "/",
-        "/_authenticated",
-        "/sign-in"
-      ]
-    },
-    "/": {
-      "filePath": "index.tsx"
-    },
-    "/_authenticated": {
-      "filePath": "_authenticated.tsx",
-      "children": [
-        "/_authenticated/b/$slug",
-        "/_authenticated/b/create"
-      ]
-    },
-    "/sign-in": {
-      "filePath": "sign-in.tsx",
-      "children": [
-        "/sign-in/$"
-      ]
-    },
-    "/sign-in/$": {
-      "filePath": "sign-in.$.tsx",
-      "parent": "/sign-in"
-    },
-    "/_authenticated/b/$slug": {
-      "filePath": "_authenticated/b/$slug.tsx",
-      "parent": "/_authenticated",
-      "children": [
-        "/_authenticated/b/$slug/edit"
-      ]
-    },
-    "/_authenticated/b/create": {
-      "filePath": "_authenticated/b/create.tsx",
-      "parent": "/_authenticated"
-    },
-    "/_authenticated/b/$slug/edit": {
-      "filePath": "_authenticated/b/$slug.edit.tsx",
-      "parent": "/_authenticated/b/$slug"
-    }
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
-ROUTE_MANIFEST_END */
