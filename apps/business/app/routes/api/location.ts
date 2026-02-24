@@ -14,6 +14,7 @@ export const APIRoute = createAPIFileRoute("/api/location")({
 
       const apiKey = process.env.GEOAPIFY_API_KEY;
       if (!apiKey) {
+        console.error("[location API] GEOAPIFY_API_KEY is not set in process.env");
         return new Response(
           JSON.stringify({ error: "Geoapify API key not configured" }),
           { status: 500, headers: { "Content-Type": "application/json" } }
@@ -29,8 +30,7 @@ export const APIRoute = createAPIFileRoute("/api/location")({
       });
 
       const response = await fetch(
-        `https://api.geoapify.com/v1/geocode/autocomplete?${params.toString()}`,
-        { headers: { "Content-Type": "application/json" } }
+        `https://api.geoapify.com/v1/geocode/autocomplete?${params.toString()}`
       );
 
       if (!response.ok) {
@@ -65,7 +65,7 @@ export const APIRoute = createAPIFileRoute("/api/location")({
         headers: { "Content-Type": "application/json" },
       });
     } catch (error) {
-      console.error("Location API error:", error);
+      console.error("[location API] Unexpected error:", error);
       return new Response(
         JSON.stringify({ error: "Failed to fetch location suggestions" }),
         { status: 500, headers: { "Content-Type": "application/json" } }

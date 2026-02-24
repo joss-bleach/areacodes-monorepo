@@ -1,21 +1,27 @@
+import { useState } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
 import { useQuery } from "convex/react";
 import { api } from "@repo/convex";
+import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
 import {
   Input,
   Textarea,
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
   Skeleton,
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  Button,
+  cn,
 } from "@repo/ui";
 import type { CreateBusinessProfileFormValues } from "~/schemas/create-business-profile-schema";
 import { BoundaryAlert } from "~/components/boundary-alert";
@@ -101,42 +107,14 @@ export const BusinessInformationStep = ({
           name="industryId"
           control={form.control}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="create-business-form-industryId">
-                Industry
-              </FieldLabel>
-              <Select
-                value={field.value}
-                onValueChange={field.onChange}
-                name={field.name}
-              >
-                <SelectTrigger
-                  id="create-business-form-industryId"
-                  className="w-full"
-                  aria-invalid={fieldState.invalid}
-                >
-                  <SelectValue placeholder="Select an industry…" />
-                </SelectTrigger>
-                <SelectContent side="bottom">
-                  {Object.entries(industriesByCategory).map(
-                    ([category, items]) => (
-                      <SelectGroup key={category}>
-                        <SelectLabel>{category}</SelectLabel>
-                        {items.map((industry) => (
-                          <SelectItem
-                            key={industry._id}
-                            value={industry._id}
-                          >
-                            {industry.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    )
-                  )}
-                </SelectContent>
-              </Select>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
+            <IndustryCombobox
+              value={field.value}
+              onChange={field.onChange}
+              industries={industries}
+              industriesByCategory={industriesByCategory}
+              invalid={fieldState.invalid}
+              error={fieldState.error}
+            />
           )}
         />
 
@@ -164,6 +142,93 @@ export const BusinessInformationStep = ({
         />
       </FieldGroup>
     </div>
+  );
+};
+
+const IndustryCombobox = ({
+  value,
+  onChange,
+  industries,
+  industriesByCategory,
+  invalid,
+  error,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  industries: { _id: string; name: string; category: string }[];
+  industriesByCategory: Record<
+    string,
+    { _id: string; name: string; category: string }[]
+  >;
+  invalid: boolean;
+  error: any;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  const selectedName =
+    industries.find((i) => i._id === value)?.name ?? null;
+
+  return (
+    <Field data-invalid={invalid}>
+      <FieldLabel htmlFor="create-business-form-industryId">
+        Industry
+      </FieldLabel>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            id="create-business-form-industryId"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            aria-invalid={invalid}
+            className={cn(
+              "w-full justify-between font-normal h-9",
+              !selectedName && "text-muted-foreground"
+            )}
+          >
+            <span className="truncate">
+              {selectedName ?? "Select an industry…"}
+            </span>
+            <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+          <Command>
+            <CommandInput placeholder="Search industries…" />
+            <CommandList>
+              <CommandEmpty>No industries found.</CommandEmpty>
+              {Object.entries(industriesByCategory).map(
+                ([category, items]) => (
+                  <CommandGroup key={category} heading={category}>
+                    {items.map((industry) => (
+                      <CommandItem
+                        key={industry._id}
+                        value={industry.name}
+                        onSelect={() => {
+                          onChange(industry._id);
+                          setOpen(false);
+                        }}
+                      >
+                        <CheckIcon
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            value === industry._id
+                              ? "opacity-100"
+                              : "opacity-0"
+                          )}
+                        />
+                        {industry.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )
+              )}
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+      {invalid && <FieldError errors={[error]} />}
+    </Field>
   );
 };
 

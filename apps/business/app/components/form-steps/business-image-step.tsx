@@ -44,29 +44,26 @@ export const BusinessImageStep = ({
       control={form.control}
       render={({ fieldState }) => (
         <Field data-invalid={fieldState.invalid} className="w-full">
-          <div className="flex flex-col w-full items-center gap-4 py-6">
+          <div className="flex flex-col w-full items-center gap-4 py-8">
             <div className="relative inline-flex">
-              <Button
-                variant="outline"
-                className="relative size-16 overflow-hidden p-0 shadow-none"
-                onClick={openFileDialog}
+              <button
                 type="button"
+                onClick={openFileDialog}
                 aria-label={previewUrl ? "Change image" : "Select image"}
+                className="relative size-24 border-2 border-dashed border-input bg-muted/30 flex items-center justify-center overflow-hidden transition-colors hover:border-foreground/40 hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
               >
                 {previewUrl ? (
                   <img
                     className="size-full object-cover"
                     src={previewUrl}
                     alt="Preview of uploaded image"
-                    width={64}
-                    height={64}
+                    width={96}
+                    height={96}
                   />
                 ) : (
-                  <div aria-hidden="true">
-                    <CircleUserRoundIcon className="size-4 opacity-60" />
-                  </div>
+                  <CircleUserRoundIcon className="size-8 text-muted-foreground" />
                 )}
-              </Button>
+              </button>
               {previewUrl && (
                 <Button
                   onClick={handleRemoveFile}
@@ -90,14 +87,8 @@ export const BusinessImageStep = ({
               <p className="text-xs text-muted-foreground">{fileName}</p>
             )}
 
-            {files.length > 0 && (
-              <div className="text-xs text-muted-foreground text-center">
-                Logo will be uploaded when you submit the form
-              </div>
-            )}
-
             {errors.length > 0 && (
-              <div className="text-xs text-red-600 text-center max-w-xs">
+              <div className="text-sm text-destructive text-center max-w-xs">
                 {errors.map((error, index) => (
                   <div key={index}>{error}</div>
                 ))}
@@ -106,7 +97,7 @@ export const BusinessImageStep = ({
 
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 
-            <p className="mt-2 text-xs text-muted-foreground text-center">
+            <p className="text-xs text-muted-foreground text-center">
               Upload your company logo (max 5MB)
             </p>
           </div>

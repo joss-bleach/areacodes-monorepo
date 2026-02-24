@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { defineConfig, devices } from "@playwright/test";
 
 const BUSINESS_URL = process.env.BUSINESS_URL ?? "http://localhost:3000";

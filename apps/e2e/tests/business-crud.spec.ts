@@ -42,20 +42,22 @@ test.describe("Business CRUD", () => {
     // Step 1 — Business information
     await page.fill("input[name='name']", "Playwright Test Cafe");
     await page.fill("textarea[name='description']", "A test business created by Playwright");
-    // Select industry
-    await page.getByRole("combobox").click();
-    await page.getByRole("option").first().click();
+    // Select industry via combobox
+    await page.getByRole("combobox", { name: /industry/i }).click();
+    await page.locator("[cmdk-item]").first().click();
     await page.getByRole("button", { name: /next/i }).click();
 
     // Step 2 — Location
     await page.fill("input[name='addressLine1']", "1 Test Street");
     await page.fill("input[name='townOrCity']", "Brighton");
-    await page.fill("input[name='county']", "East Sussex");
+    // County is a Select dropdown, not a text input
+    await page.locator("#create-business-form-county").click();
+    await page.getByRole("option", { name: "East Sussex" }).click();
     await page.fill("input[name='postcode']", "BN1 1AA");
     await page.getByRole("button", { name: /next/i }).click();
 
     // Step 3 — Image (optional, skip)
-    await page.getByRole("button", { name: /create business/i }).click();
+    await page.getByRole("button", { name: /^create$/i }).click();
 
     // Should redirect to dashboard
     await page.waitForURL(/\/b\/[a-z0-9-]+$/);

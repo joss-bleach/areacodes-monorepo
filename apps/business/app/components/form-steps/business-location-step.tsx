@@ -188,28 +188,27 @@ export const BusinessLocationStep = ({
                 <p className="text-sm text-destructive mt-1">{error}</p>
               )}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border border-border shadow-md max-h-60 overflow-y-auto">
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground border-b border-border">
-                    Select an address from the suggestions below:
-                  </div>
-                  {suggestions.map((suggestion, index) => (
-                    <div
-                      key={suggestion.place_id}
-                      className={`px-2 py-1.5 cursor-pointer border-b border-border last:border-b-0 transition-colors ${
-                        selectedIndex === index
-                          ? "bg-accent text-accent-foreground"
-                          : "hover:bg-accent hover:text-accent-foreground"
-                      }`}
-                      onClick={() => handleSuggestionClick(suggestion)}
-                      onMouseEnter={() => setSelectedIndex(index)}
-                    >
-                      <div className="text-sm font-medium truncate">
-                        {suggestion.display_name}
+                <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border shadow-md overflow-hidden">
+                  <div className="max-h-60 overflow-y-auto p-1">
+                    {suggestions.map((suggestion, index) => (
+                      <div
+                        key={suggestion.place_id}
+                        className={`relative flex cursor-default select-none items-center px-2 py-1.5 text-sm outline-none transition-colors ${
+                          selectedIndex === index
+                            ? "bg-accent text-accent-foreground"
+                            : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                        }`}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        onMouseEnter={() => setSelectedIndex(index)}
+                      >
+                        <span className="truncate">
+                          {suggestion.display_name}
+                        </span>
                       </div>
-                    </div>
-                  ))}
-                  <div className="px-2 py-1.5 text-xs text-muted-foreground border-t border-border">
-                    Can't find your address? Use the manual entry option below.
+                    ))}
+                  </div>
+                  <div className="border-t px-2 py-1.5 text-xs text-muted-foreground">
+                    Can't find your address? Enter it manually below.
                   </div>
                 </div>
               )}
