@@ -1,5 +1,6 @@
+@import "tailwindcss";
+@source "../../../../packages/ui/src";
 @import "@repo/ui/tailwind.css";
-@import "leaflet/dist/leaflet.css";
 
 /* Hide scrollbar for all browsers */
 .scrollbar-hide {
