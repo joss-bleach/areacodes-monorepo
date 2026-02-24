@@ -10,7 +10,7 @@ export const Route = createFileRoute("/")({
 
 function IndexPage() {
   const { userId, isLoaded } = useAuth();
-  const { isAuthenticated } = useConvexAuth();
+  const { isLoading: isConvexLoading } = useConvexAuth();
   const navigate = useNavigate();
 
   const business = useQuery(
@@ -28,15 +28,15 @@ function IndexPage() {
 
     if (business === undefined) return; // query still loading
 
-    // null before Convex auth = auth token hasn't synced yet, wait
-    if (business === null && !isAuthenticated) return;
+    // null while Convex auth still loading = token hasn't synced yet, wait
+    if (business === null && isConvexLoading) return;
 
     if (business === null) {
       navigate({ to: "/b/create" });
     } else {
       navigate({ to: "/b/$slug", params: { slug: business.slug } });
     }
-  }, [isLoaded, userId, isAuthenticated, business, navigate]);
+  }, [isLoaded, userId, isConvexLoading, business, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
