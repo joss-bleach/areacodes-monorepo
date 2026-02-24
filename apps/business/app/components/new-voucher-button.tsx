@@ -7,7 +7,7 @@ export const NewVoucherButton = () => {
 
   return (
     <Button
-      variant="outline"
+      variant="default"
       className="w-full md:w-[150px]"
       onClick={() => setIsOpen(true)}
       aria-haspopup="dialog"

@@ -19,8 +19,8 @@ export const DashboardTop = () => {
   if (business === undefined) {
     return (
       <div className="flex flex-col mb-6">
-        <Skeleton className="h-9 w-64 mb-3" />
-        <Skeleton className="h-5 w-96" />
+        <Skeleton className="h-10 w-64 mb-3" />
+        <Skeleton className="h-5 w-48" />
       </div>
     );
   }
@@ -36,11 +36,11 @@ export const DashboardTop = () => {
 
   return (
     <div className="flex flex-col mb-6">
-      <h1 className="text-3xl font-semibold text-foreground">
+      <h1 className="text-4xl text-foreground">
         {greeting}, {business.name}
       </h1>
       <p className="text-muted-foreground mt-1">
-        Here&apos;s what&apos;s happening with your vouchers today
+        Your voucher overview.
       </p>
     </div>
   );

@@ -12,18 +12,18 @@ export const BusinessNavbar = () => {
   }, []);
 
   return (
-    <header className="py-4 bg-background">
-      <nav className="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px] flex flex-row items-center justify-between">
+    <header className="border-b border-border bg-background">
+      <nav className="container-app flex flex-row items-center justify-between py-4">
         <Link
           to={slug ? `/b/${slug}` : "/"}
           aria-label="Go to business profile"
-          className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background rounded"
+          className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
         >
           <img
             src="/areacodes-white.svg"
             alt="Areacodes logo"
-            width={125}
-            height={125}
+            width={140}
+            height={140}
           />
         </Link>
         {isMounted ? (
@@ -39,7 +39,7 @@ export const BusinessNavbar = () => {
             </UserButton.MenuItems>
           </UserButton>
         ) : (
-          <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+          <div className="w-8 h-8 bg-muted animate-pulse" />
         )}
       </nav>
     </header>

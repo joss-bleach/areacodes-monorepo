@@ -188,7 +188,7 @@ export const BusinessLocationStep = ({
                 <p className="text-sm text-destructive mt-1">{error}</p>
               )}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border border-border rounded-none shadow-md max-h-60 overflow-y-auto">
+                <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border border-border shadow-md max-h-60 overflow-y-auto">
                   <div className="px-2 py-1.5 text-xs text-muted-foreground border-b border-border">
                     Select an address from the suggestions below:
                   </div>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useParams } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
@@ -10,7 +10,19 @@ import {
   CardDescription,
   CardContent,
   Button,
+  Badge,
   Skeleton,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
 } from "@repo/ui";
 import { MoreVertical, Edit, Trash2 } from "lucide-react";
 import { BoundaryAlert } from "~/components/boundary-alert";
@@ -18,7 +30,6 @@ import { ConfirmationDialog } from "~/components/confirmation-dialog";
 import { NewVoucherButton } from "~/components/new-voucher-button";
 import { useEditVoucher } from "~/hooks/use-edit-voucher";
 import { useAddVoucher } from "~/hooks/use-add-voucher";
-import { cn } from "@repo/ui";
 import { toast } from "sonner";
 
 type ConvexVoucher = {
@@ -36,17 +47,6 @@ type ConvexVoucher = {
   voucherValidTo: number;
   deletedAt?: number;
   voucherUrl: string | null;
-};
-
-const getStatusColor = (status: "active" | "inactive") => {
-  switch (status) {
-    case "active":
-      return "border-green-500/50 text-green-700 dark:text-green-400";
-    case "inactive":
-      return "border-gray-500/50 text-gray-700 dark:text-gray-400";
-    default:
-      return "";
-  }
 };
 
 const getVoucherStatus = (
@@ -93,53 +93,15 @@ const getFormatLabel = (format: string) => {
 };
 
 const VoucherActionsDropdown = ({ voucher }: { voucher: ConvexVoucher }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [positionAbove, setPositionAbove] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const { setEditVoucherId } = useEditVoucher();
   const { setIsOpen: setIsModalOpen } = useAddVoucher();
   const deleteVoucher = useMutation(api.functions.vouchers.deleteVoucher);
 
-  const handleToggle = () => {
-    if (!isOpen && dropdownRef.current) {
-      const rect = dropdownRef.current.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - rect.bottom;
-      setPositionAbove(spaceBelow < 140);
-    }
-    setIsOpen(!isOpen);
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
   const handleEdit = () => {
     setEditVoucherId(voucher._id);
     setIsModalOpen(true);
-    setIsOpen(false);
-  };
-
-  const handleDeleteClick = () => {
-    setIsOpen(false);
-    setShowDeleteDialog(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -156,42 +118,30 @@ const VoucherActionsDropdown = ({ voucher }: { voucher: ConvexVoucher }) => {
   };
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleToggle}
-        className="h-8 w-8"
-      >
-        <MoreVertical className="h-4 w-4" />
-        <span className="sr-only">Open menu</span>
-      </Button>
-      {isOpen && (
-        <div
-          className={cn(
-            "absolute right-0 z-50 w-48 origin-top-right rounded-none border-none bg-background shadow-lg focus:outline-none",
-            positionAbove ? "bottom-full mb-2" : "top-full mt-2"
-          )}
-        >
-          <div className="py-1">
-            <button
-              onClick={handleEdit}
-              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-accent cursor-pointer"
-            >
-              <Edit className="h-4 w-4" />
-              Edit
-            </button>
-            <button
-              onClick={handleDeleteClick}
-              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-destructive hover:bg-destructive/10 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={isDeleting}
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={handleEdit}>
+            <Edit className="h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => setShowDeleteDialog(true)}
+            disabled={isDeleting}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       <ConfirmationDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
@@ -203,7 +153,7 @@ const VoucherActionsDropdown = ({ voucher }: { voucher: ConvexVoucher }) => {
         onConfirm={handleDeleteConfirm}
         isLoading={isDeleting}
       />
-    </div>
+    </>
   );
 };
 
@@ -228,11 +178,13 @@ export const VoucherTable = () => {
   }
 
   return (
-    <Card className="rounded-none border-none">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="hidden md:block">
-            <h2 className="text-lg font-semibold leading-none">All Vouchers</h2>
+            <CardTitle className="text-lg font-semibold leading-none">
+              All Vouchers
+            </CardTitle>
             <CardDescription>
               View and manage your voucher codes
             </CardDescription>
@@ -241,84 +193,68 @@ export const VoucherTable = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                  Title
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                  Description
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                  Format
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                  Valid Until
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                  Status
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {vouchers.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="py-8 px-4 text-center text-sm text-muted-foreground"
-                  >
-                    No vouchers found. Create your first voucher to get started.
-                  </td>
-                </tr>
-              ) : (
-                vouchers.map((voucher) => (
-                  <tr
-                    key={voucher._id}
-                    className="border-b border-border hover:bg-muted/50 transition-colors"
-                  >
-                    <td className="py-4 px-4 text-sm font-medium text-foreground">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Format</TableHead>
+              <TableHead>Valid Until</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {vouchers.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="py-8 text-center text-sm text-muted-foreground"
+                >
+                  No vouchers found. Create your first voucher to get started.
+                </TableCell>
+              </TableRow>
+            ) : (
+              vouchers.map((voucher) => {
+                const status = getVoucherStatus(
+                  voucher.voucherValidFrom,
+                  voucher.voucherValidTo
+                );
+                return (
+                  <TableRow key={voucher._id}>
+                    <TableCell className="text-sm font-medium">
                       {voucher.title}
-                    </td>
-                    <td className="py-4 px-4 text-sm text-foreground">
+                    </TableCell>
+                    <TableCell className="text-sm">
                       {voucher.description}
-                    </td>
-                    <td className="py-4 px-4 text-sm text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
                       {getFormatLabel(voucher.voucherFormat)}
-                    </td>
-                    <td className="py-4 px-4 text-sm text-muted-foreground">
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
                       {new Date(voucher.voucherValidTo).toLocaleDateString()}
-                    </td>
-                    <td className="py-4 px-4">
-                      <span
-                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors ${getStatusColor(
-                          getVoucherStatus(
-                            voucher.voucherValidFrom,
-                            voucher.voucherValidTo
-                          )
-                        )}`}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={status === "active" ? "default" : "secondary"}
                       >
                         {getStatusDisplay(
                           voucher.voucherValidFrom,
                           voucher.voucherValidTo
                         )}
-                      </span>
-                    </td>
-                    <td className="py-4 px-4 text-right">
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
                       <VoucherActionsDropdown
                         voucher={voucher as ConvexVoucher}
                       />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
@@ -326,7 +262,7 @@ export const VoucherTable = () => {
 
 const VoucherTableLoading = () => {
   return (
-    <Card className="rounded-none border-none">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="hidden md:block">
@@ -337,51 +273,41 @@ const VoucherTableLoading = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border">
-                {["Title", "Description", "Format", "Valid Until", "Status", "Actions"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="text-left py-3 px-4 text-sm font-medium text-muted-foreground"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 5 }).map((_, index) => (
-                <tr
-                  key={index}
-                  className="border-b border-border hover:bg-muted/50 transition-colors"
-                >
-                  <td className="py-4 px-4">
-                    <Skeleton className="h-4 w-32" />
-                  </td>
-                  <td className="py-4 px-4">
-                    <Skeleton className="h-4 w-48" />
-                  </td>
-                  <td className="py-4 px-4">
-                    <Skeleton className="h-4 w-20" />
-                  </td>
-                  <td className="py-4 px-4">
-                    <Skeleton className="h-4 w-24" />
-                  </td>
-                  <td className="py-4 px-4">
-                    <Skeleton className="h-6 w-16" />
-                  </td>
-                  <td className="py-4 px-4">
-                    <Skeleton className="h-8 w-8 ml-auto" />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {["Title", "Description", "Format", "Valid Until", "Status", "Actions"].map(
+                (h) => (
+                  <TableHead key={h}>{h}</TableHead>
+                )
+              )}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <Skeleton className="h-4 w-32" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-48" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-20" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-6 w-16" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-8 w-8 ml-auto" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

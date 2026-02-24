@@ -342,7 +342,7 @@ export const NewVoucherModal = () => {
 
   return (
     <Dialog open={isOpen || isEditMode} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-[500px] rounded-none border-none border-border max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditMode ? "Edit Voucher" : "Create New Voucher"}
@@ -367,7 +367,7 @@ export const NewVoucherModal = () => {
                       {...field}
                       id="voucher-title"
                       placeholder="Enter voucher title…"
-                      className="rounded-none outline-none"
+
                       aria-invalid={fieldState.invalid}
                     />
                     {fieldState.invalid && (
@@ -389,7 +389,7 @@ export const NewVoucherModal = () => {
                       {...field}
                       id="voucher-description"
                       placeholder="Enter voucher description…"
-                      className="rounded-none outline-none"
+
                       aria-invalid={fieldState.invalid}
                     />
                     {fieldState.invalid && (
@@ -411,7 +411,7 @@ export const NewVoucherModal = () => {
                       {...field}
                       id="voucher-terms"
                       placeholder="Enter voucher terms and conditions (optional)…"
-                      className="rounded-none outline-none"
+
                       aria-invalid={fieldState.invalid}
                       rows={4}
                     />
@@ -439,7 +439,7 @@ export const NewVoucherModal = () => {
                             type="button"
                             variant="outline"
                             className={cn(
-                              "w-full justify-between font-normal rounded-none outline-none",
+                              "w-full justify-between font-normal",
                               !field.value && "text-muted-foreground"
                             )}
                             aria-invalid={fieldState.invalid}
@@ -453,7 +453,7 @@ export const NewVoucherModal = () => {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent
-                          className="w-auto overflow-hidden p-0 rounded-none outline-none"
+                          className="w-auto overflow-hidden p-0"
                           align="start"
                           sideOffset={4}
                         >
@@ -491,7 +491,7 @@ export const NewVoucherModal = () => {
                             type="button"
                             variant="outline"
                             className={cn(
-                              "w-full justify-between font-normal rounded-none outline-none",
+                              "w-full justify-between font-normal",
                               !field.value && "text-muted-foreground"
                             )}
                             aria-invalid={fieldState.invalid}
@@ -505,7 +505,7 @@ export const NewVoucherModal = () => {
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent
-                          className="w-auto overflow-hidden p-0 rounded-none outline-none"
+                          className="w-auto overflow-hidden p-0"
                           align="start"
                           sideOffset={4}
                         >
@@ -541,12 +541,12 @@ export const NewVoucherModal = () => {
                   <RadioGroup
                     value={field.value}
                     onValueChange={field.onChange}
-                    className="flex flex-col sm:flex-row gap-0 rounded-none border border-border"
+                    className="flex flex-col sm:flex-row gap-0 border border-border"
                   >
                     <label
                       htmlFor="qr-code"
                       className={cn(
-                        "flex flex-1 items-center justify-center gap-2 border-b sm:border-b-0 sm:border-r border-border px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors rounded-none outline-none",
+                        "flex flex-1 items-center justify-center gap-2 border-b sm:border-b-0 sm:border-r border-border px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors",
                         field.value === "qr-code"
                           ? "bg-muted"
                           : "bg-background hover:bg-muted/50"
@@ -560,7 +560,7 @@ export const NewVoucherModal = () => {
                     <label
                       htmlFor="barcode"
                       className={cn(
-                        "flex flex-1 items-center justify-center gap-2 border-b sm:border-b-0 sm:border-r border-border px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors rounded-none outline-none",
+                        "flex flex-1 items-center justify-center gap-2 border-b sm:border-b-0 sm:border-r border-border px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors",
                         field.value === "barcode"
                           ? "bg-muted"
                           : "bg-background hover:bg-muted/50"
@@ -574,7 +574,7 @@ export const NewVoucherModal = () => {
                     <label
                       htmlFor="generated-text"
                       className={cn(
-                        "flex flex-1 items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors rounded-none outline-none",
+                        "flex flex-1 items-center justify-center gap-2 px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer transition-colors",
                         field.value === "generated-text"
                           ? "bg-muted"
                           : "bg-background hover:bg-muted/50"
@@ -597,7 +597,7 @@ export const NewVoucherModal = () => {
               <div className="space-y-4">
                 <div
                   onClick={openQrDialog}
-                  className="relative w-full min-h-[160px] cursor-pointer border-2 border-dashed border-border rounded-none bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center"
+                  className="relative w-full min-h-[160px] cursor-pointer border-2 border-dashed border-border bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -669,7 +669,7 @@ export const NewVoucherModal = () => {
               <div className="space-y-4">
                 <div
                   onClick={openBarcodeDialog}
-                  className="relative w-full min-h-[80px] cursor-pointer border-2 border-dashed border-border rounded-none bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center"
+                  className="relative w-full min-h-[80px] cursor-pointer border-2 border-dashed border-border bg-muted hover:bg-muted/80 transition-colors flex items-center justify-center"
                   role="button"
                   tabIndex={0}
                   onKeyDown={(e) => {
@@ -756,7 +756,7 @@ export const NewVoucherModal = () => {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="absolute right-0 top-0 h-full rounded-none"
+                    className="absolute right-0 top-0 h-full"
                     onClick={handleCopyCode}
                     aria-label="Copy code to clipboard"
                     disabled={!generatedCode || isCopied}

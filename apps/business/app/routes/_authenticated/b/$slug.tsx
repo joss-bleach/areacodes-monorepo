@@ -14,7 +14,7 @@ function DashboardPage() {
     <>
       <BusinessNavbar />
       <main className="w-screen py-6">
-        <div className="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+        <div className="container-app">
           <DashboardTop />
           <StatsSection />
           <VoucherTable />

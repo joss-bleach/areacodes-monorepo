@@ -10,8 +10,8 @@ function EditPage() {
   return (
     <>
       <BusinessNavbar />
-      <main className="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px] py-8">
-        <h1 className="text-2xl font-semibold mb-2">Edit business profile</h1>
+      <main className="container-app py-8">
+        <h1 className="text-2xl mb-2">Edit business profile</h1>
         <p className="text-muted-foreground mb-6">
           Update your business details and logo
         </p>

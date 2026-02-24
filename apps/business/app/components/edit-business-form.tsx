@@ -167,7 +167,7 @@ export const EditBusinessForm = () => {
       className="contents"
     >
       <div className="flex flex-col gap-6">
-        <Card className="rounded-none border-none">
+        <Card>
           <CardHeader>
             <h2 className="text-lg font-semibold leading-none">
               Business Information
@@ -179,7 +179,7 @@ export const EditBusinessForm = () => {
           </CardHeader>
         </Card>
 
-        <Card className="rounded-none border-none">
+        <Card>
           <CardHeader>
             <h2 className="text-lg font-semibold leading-none">
               Business Location
@@ -193,7 +193,7 @@ export const EditBusinessForm = () => {
           </CardHeader>
         </Card>
 
-        <Card className="rounded-none border-none">
+        <Card>
           <CardHeader>
             <h2 className="text-lg font-semibold leading-none">
               Business Image
