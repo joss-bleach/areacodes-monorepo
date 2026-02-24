@@ -15,7 +15,7 @@ function IndexPage() {
 
   const business = useQuery(
     api.functions.businesses.getBusinessByClerkUser,
-    isAuthenticated ? {} : "skip"
+    isLoaded && userId ? {} : "skip"
   );
 
   useEffect(() => {
@@ -26,14 +26,17 @@ function IndexPage() {
       return;
     }
 
-    if (business === undefined) return; // still loading
+    if (business === undefined) return; // query still loading
+
+    // null before Convex auth = auth token hasn't synced yet, wait
+    if (business === null && !isAuthenticated) return;
 
     if (business === null) {
       navigate({ to: "/b/create" });
     } else {
       navigate({ to: "/b/$slug", params: { slug: business.slug } });
     }
-  }, [isLoaded, userId, business, navigate]);
+  }, [isLoaded, userId, isAuthenticated, business, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">

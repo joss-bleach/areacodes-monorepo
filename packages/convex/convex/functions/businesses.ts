@@ -19,7 +19,9 @@ function slugify(text: string): string {
 export const getBusinessByClerkUser = query({
   args: {},
   handler: async (ctx) => {
-    const clerkUserId = await requireAuth(ctx);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return null;
+    const clerkUserId = identity.subject;
     const business = await ctx.db
       .query("businesses")
       .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
