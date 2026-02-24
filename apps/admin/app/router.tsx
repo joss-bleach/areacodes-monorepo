@@ -1,4 +1,4 @@
-import { createTanStackRouter } from "@tanstack/react-router-server/client";
+import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 export function createRouter() {

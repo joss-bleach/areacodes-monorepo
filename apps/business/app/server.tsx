@@ -1,12 +1,14 @@
 import {
   createStartHandler,
   defaultStreamHandler,
-} from "@tanstack/start/server";
+} from "@tanstack/react-start/server";
+import { getRouterManifest } from "@tanstack/react-start/router-manifest";
 import { getAuth } from "@clerk/tanstack-start/server";
 import { createRouter } from "./router";
 
 export default createStartHandler({
   createRouter,
+  getRouterManifest,
 })(async ({ request, ...rest }) => {
   try {
     const auth = await getAuth(request);
