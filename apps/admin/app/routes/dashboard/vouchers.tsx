@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
@@ -23,11 +23,6 @@ import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/vouchers")({
-  beforeLoad: ({ context }) => {
-    if (!context.auth.userId) {
-      throw redirect({ to: "/sign-in" });
-    }
-  },
   component: VouchersPage,
 });
 
