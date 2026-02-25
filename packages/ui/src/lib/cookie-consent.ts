@@ -20,7 +20,7 @@ export function setCookieConsent(
   const maxAge = 365 * 24 * 60 * 60; // 1 year
   const isSecure = typeof location !== "undefined" && location.protocol === "https:";
   let cookie = `${COOKIE_NAME}=${status}; path=/; max-age=${maxAge}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
-  if (cookieDomain) {
+  if (cookieDomain && typeof location !== "undefined" && location.hostname.endsWith(cookieDomain.replace(/^\./, ""))) {
     cookie += `; domain=${cookieDomain}`;
   }
   document.cookie = cookie;
