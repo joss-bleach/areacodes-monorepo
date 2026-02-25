@@ -56,6 +56,12 @@ export function CookieBanner({
     setMessageState("initial");
   };
 
+  useEffect(() => {
+    if (messageState !== "confirmation") return;
+    const timer = setTimeout(handleHide, 5000);
+    return () => clearTimeout(timer);
+  }, [messageState]);
+
   if (messageState === "confirmation") {
     return (
       <div

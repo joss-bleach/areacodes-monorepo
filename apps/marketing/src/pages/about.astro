@@ -89,7 +89,16 @@ import { Button } from "@repo/ui";
 			</h2>
 			<div class="mt-[40px] md:mt-[60px] grid grid-cols-1 md:grid-cols-3 gap-[40px]">
 				<div class="about-reveal" style="--reveal-delay: 0.2s;">
-					<span class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
+					<div class="aspect-[3/2] overflow-hidden rounded-sm">
+						<img
+							src="/images/how-it-works-01.jpg"
+							alt="Street food market with local vendors"
+							class="h-full w-full object-cover"
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+					<span class="mt-4 inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
 						01
 					</span>
 					<h3 class="mt-4 text-white font-bold text-[19px] md:text-[22px] uppercase tracking-tight">
@@ -100,7 +109,16 @@ import { Button } from "@repo/ui";
 					</p>
 				</div>
 				<div class="about-reveal" style="--reveal-delay: 0.3s;">
-					<span class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
+					<div class="aspect-[3/2] overflow-hidden rounded-sm">
+						<img
+							src="/images/how-it-works-02.jpg"
+							alt="Customer redeeming a voucher at a local shop counter"
+							class="h-full w-full object-cover"
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+					<span class="mt-4 inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
 						02
 					</span>
 					<h3 class="mt-4 text-white font-bold text-[19px] md:text-[22px] uppercase tracking-tight">
@@ -111,7 +129,16 @@ import { Button } from "@repo/ui";
 					</p>
 				</div>
 				<div class="about-reveal" style="--reveal-delay: 0.4s;">
-					<span class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
+					<div class="aspect-[3/2] overflow-hidden rounded-sm">
+						<img
+							src="/images/how-it-works-03.jpg"
+							alt="Customer chatting with a shopkeeper at a local business"
+							class="h-full w-full object-cover"
+							loading="lazy"
+							decoding="async"
+						/>
+					</div>
+					<span class="mt-4 inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
 						03
 					</span>
 					<h3 class="mt-4 text-white font-bold text-[19px] md:text-[22px] uppercase tracking-tight">
@@ -128,18 +155,29 @@ import { Button } from "@repo/ui";
 	<!-- CTA -->
 	<section class="bg-white py-[60px] md:py-[100px]">
 		<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
-			<div class="about-reveal flex flex-col items-start gap-6" style="--reveal-delay: 0.15s;">
-				<h2 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-black text-white text-[28px] md:text-[36px] lg:text-[48px] leading-none">
-					See what's near you
-				</h2>
-				<p class="max-w-md text-black text-base leading-relaxed">
-					Backing your city's independents doesn't have to mean paying more. Support local and spend less today.
-				</p>
-				<a href="https://map.areacodes.co">
-					<Button client:load className="w-full md:w-[200px] bg-black p-6 font-semibold tracking-wide text-white shadow-none hover:bg-black/90 focus-visible:outline-2 focus-visible:outline-black focus-visible:outline-offset-2 active:scale-[0.98] transition-transform">
-						Explore the map
-					</Button>
-				</a>
+			<div class="about-reveal grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center" style="--reveal-delay: 0.15s;">
+				<div class="flex flex-col items-start gap-6">
+					<h2 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-black text-white text-[28px] md:text-[36px] lg:text-[48px] leading-none">
+						See what's near you
+					</h2>
+					<p class="max-w-md text-black text-base leading-relaxed">
+						Backing your city's independents doesn't have to mean paying more. Support local and spend less today.
+					</p>
+					<a href="https://map.acbrighton.com">
+						<Button client:load className="w-full md:w-[200px] bg-black p-6 font-semibold tracking-wide text-white shadow-none hover:bg-black/90 focus-visible:outline-2 focus-visible:outline-black focus-visible:outline-offset-2 active:scale-[0.98] transition-transform">
+							Explore the map
+						</Button>
+					</a>
+				</div>
+				<div class="aspect-[4/3] overflow-hidden rounded-sm">
+					<img
+						src="/images/cta-join.jpg"
+						alt="Vibrant food truck row at a local market"
+						class="h-full w-full object-cover"
+						loading="lazy"
+						decoding="async"
+					/>
+				</div>
 			</div>
 		</div>
 	</section>

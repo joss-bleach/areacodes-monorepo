@@ -18,7 +18,8 @@ export function setCookieConsent(
 ): void {
   if (typeof document === "undefined") return;
   const maxAge = 365 * 24 * 60 * 60; // 1 year
-  let cookie = `${COOKIE_NAME}=${status}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
+  const isSecure = typeof location !== "undefined" && location.protocol === "https:";
+  let cookie = `${COOKIE_NAME}=${status}; path=/; max-age=${maxAge}; SameSite=Lax${isSecure ? "; Secure" : ""}`;
   if (cookieDomain) {
     cookie += `; domain=${cookieDomain}`;
   }
