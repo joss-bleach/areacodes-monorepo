@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { CookieBanner } from "@repo/ui";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import appCss from "~/styles/globals.css?url";
 
@@ -41,6 +42,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body>
         <ConvexProvider client={convex}>
           <NuqsAdapter>{children}</NuqsAdapter>
+          <CookieBanner cookiesUrl="https://www.acbrighton.com/cookies" cookieDomain=".acbrighton.com" />
         </ConvexProvider>
         <Scripts />
       </body>

@@ -7,7 +7,7 @@ import {
 import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { ConvexReactClient } from "convex/react";
-import { Toaster } from "@repo/ui";
+import { CookieBanner, Toaster } from "@repo/ui";
 import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(
@@ -33,6 +33,7 @@ function RootComponent() {
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <Outlet />
           <Toaster />
+          <CookieBanner cookiesUrl="https://www.acbrighton.com/cookies" cookieDomain=".acbrighton.com" />
         </ConvexProviderWithClerk>
       </ClerkProvider>
     </RootDocument>
