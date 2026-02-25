@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as VIdRouteImport } from './routes/v/$id'
+import { Route as BIdRouteImport } from './routes/b/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const VIdRoute = VIdRouteImport.update({
   path: '/v/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BIdRoute = BIdRouteImport.update({
+  id: '/b/$id',
+  path: '/b/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/v/$id'
+  fullPaths: '/' | '/b/$id' | '/v/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/v/$id'
-  id: '__root__' | '/' | '/v/$id'
+  to: '/' | '/b/$id' | '/v/$id'
+  id: '__root__' | '/' | '/b/$id' | '/v/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BIdRoute: typeof BIdRoute
   VIdRoute: typeof VIdRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/b/$id': {
+      id: '/b/$id'
+      path: '/b/$id'
+      fullPath: '/b/$id'
+      preLoaderRoute: typeof BIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BIdRoute: BIdRoute,
   VIdRoute: VIdRoute,
 }
 export const routeTree = rootRouteImport

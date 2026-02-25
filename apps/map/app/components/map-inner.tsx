@@ -86,7 +86,7 @@ function BusinessPopupContent({ business }: { business: Business }) {
         <p className="text-sm font-medium leading-tight">{business.name}</p>
         <p className="text-sm text-muted-foreground">{business.description}</p>
         <a
-          href={`/v/${business._id}`}
+          href={`/b/${business._id}`}
           className="text-sm text-primary hover:underline inline-block mt-1"
         >
           View vouchers
