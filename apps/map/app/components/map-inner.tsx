@@ -10,7 +10,27 @@ import {
   Popup,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
+import type { Icon } from "leaflet";
 import type { Id } from "@repo/convex";
+
+// Create the custom marker icon once at module level, shared across all BusinessMarker instances
+const customIconPromise: Promise<Icon> = import("leaflet").then((L) => {
+  delete (L.default.Icon.Default.prototype as any)._getIconUrl;
+  L.default.Icon.Default.mergeOptions({
+    iconRetinaUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+    iconUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+    shadowUrl:
+      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  });
+  return L.default.icon({
+    iconUrl: "/marker.svg",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32],
+  });
+});
 
 type Business = {
   _id: Id<"businesses">;
@@ -97,18 +117,10 @@ function BusinessPopupContent({ business }: { business: Business }) {
 }
 
 function BusinessMarker({ business }: { business: Business }) {
-  const [customIcon, setCustomIcon] = useState<any>(null);
+  const [customIcon, setCustomIcon] = useState<Icon | null>(null);
 
   useEffect(() => {
-    import("leaflet").then((L) => {
-      const icon = L.default.icon({
-        iconUrl: "/marker.svg",
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      });
-      setCustomIcon(icon);
-    });
+    customIconPromise.then(setCustomIcon);
   }, []);
 
   if (!customIcon) return null;
@@ -167,18 +179,7 @@ export function MapInner({
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    import("leaflet").then((L) => {
-      delete (L.default.Icon.Default.prototype as any)._getIconUrl;
-      L.default.Icon.Default.mergeOptions({
-        iconRetinaUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-        iconUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-        shadowUrl:
-          "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-      });
-    });
-    setTimeout(() => setIsReady(true), 500);
+    customIconPromise.then(() => setIsReady(true));
   }, []);
 
   const center: [number, number] = [50.8236, -0.1435];

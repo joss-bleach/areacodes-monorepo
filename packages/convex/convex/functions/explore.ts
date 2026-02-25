@@ -35,20 +35,20 @@ export const getBusinessesWithVouchers = query({
 
         if (vouchers.length === 0) return null;
 
-        const industry = await ctx.db.get(business.industryId);
-
-        const logoUrl = business.logoStorageId
-          ? await ctx.storage.getUrl(business.logoStorageId)
-          : null;
-
-        const vouchersWithUrls = await Promise.all(
-          vouchers.map(async (voucher) => ({
-            ...voucher,
-            voucherUrl: voucher.voucherStorageId
-              ? await ctx.storage.getUrl(voucher.voucherStorageId)
-              : null,
-          }))
-        );
+        const [industry, logoUrl, vouchersWithUrls] = await Promise.all([
+          ctx.db.get(business.industryId),
+          business.logoStorageId
+            ? ctx.storage.getUrl(business.logoStorageId)
+            : null,
+          Promise.all(
+            vouchers.map(async (voucher) => ({
+              ...voucher,
+              voucherUrl: voucher.voucherStorageId
+                ? await ctx.storage.getUrl(voucher.voucherStorageId)
+                : null,
+            }))
+          ),
+        ]);
 
         return {
           ...business,
@@ -84,20 +84,20 @@ export const getBusinessByIdWithVouchers = query({
       )
       .collect();
 
-    const industry = await ctx.db.get(business.industryId);
-
-    const logoUrl = business.logoStorageId
-      ? await ctx.storage.getUrl(business.logoStorageId)
-      : null;
-
-    const vouchersWithUrls = await Promise.all(
-      vouchers.map(async (voucher) => ({
-        ...voucher,
-        voucherUrl: voucher.voucherStorageId
-          ? await ctx.storage.getUrl(voucher.voucherStorageId)
-          : null,
-      }))
-    );
+    const [industry, logoUrl, vouchersWithUrls] = await Promise.all([
+      ctx.db.get(business.industryId),
+      business.logoStorageId
+        ? ctx.storage.getUrl(business.logoStorageId)
+        : null,
+      Promise.all(
+        vouchers.map(async (voucher) => ({
+          ...voucher,
+          voucherUrl: voucher.voucherStorageId
+            ? await ctx.storage.getUrl(voucher.voucherStorageId)
+            : null,
+        }))
+      ),
+    ]);
 
     return {
       ...business,

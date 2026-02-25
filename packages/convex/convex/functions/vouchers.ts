@@ -93,15 +93,15 @@ export const getVoucherByIdWithBusiness = query({
     const business = await ctx.db.get(voucher.businessId);
     if (!business || business.deletedAt !== undefined) return null;
 
-    const industry = await ctx.db.get(business.industryId);
-
-    const voucherUrl = voucher.voucherStorageId
-      ? await ctx.storage.getUrl(voucher.voucherStorageId)
-      : null;
-
-    const logoUrl = business.logoStorageId
-      ? await ctx.storage.getUrl(business.logoStorageId)
-      : null;
+    const [industry, voucherUrl, logoUrl] = await Promise.all([
+      ctx.db.get(business.industryId),
+      voucher.voucherStorageId
+        ? ctx.storage.getUrl(voucher.voucherStorageId)
+        : null,
+      business.logoStorageId
+        ? ctx.storage.getUrl(business.logoStorageId)
+        : null,
+    ]);
 
     return {
       ...voucher,
