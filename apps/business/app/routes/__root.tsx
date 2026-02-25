@@ -68,7 +68,7 @@ function RootComponent() {
           <NuqsAdapter>
             <Outlet />
             <Toaster />
-            <CookieBanner cookiesUrl="https://www.acbrighton.com/cookies" cookieDomain=".acbrighton.com" />
+            <CookieBanner cookiesUrl="https://www.acbrighton.com/cookies" />
           </NuqsAdapter>
         </ConvexProviderWithClerk>
       </ClerkProvider>

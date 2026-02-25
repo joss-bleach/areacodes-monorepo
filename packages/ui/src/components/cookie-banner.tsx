@@ -12,12 +12,10 @@ type MessageState = "initial" | "confirmation";
 
 interface CookieBannerProps {
   cookiesUrl?: string;
-  cookieDomain?: string;
 }
 
 export function CookieBanner({
   cookiesUrl = "/cookies",
-  cookieDomain,
 }: CookieBannerProps) {
   const [mounted, setMounted] = useState(false);
   const [consentStatus, setConsentStatus] =
@@ -45,14 +43,14 @@ export function CookieBanner({
   if (consentStatus !== null && messageState !== "confirmation") return null;
 
   const handleAccept = () => {
-    setCookieConsent("accepted", cookieDomain);
+    setCookieConsent("accepted");
     setConsentStatus("accepted");
     setMessageState("confirmation");
     setTimeout(() => confirmationRef.current?.focus(), 100);
   };
 
   const handleReject = () => {
-    setCookieConsent("rejected", cookieDomain);
+    setCookieConsent("rejected");
     setConsentStatus("rejected");
     setMessageState("confirmation");
     setTimeout(() => confirmationRef.current?.focus(), 100);
