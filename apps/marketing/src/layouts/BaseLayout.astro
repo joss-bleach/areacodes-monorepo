@@ -1,0 +1,60 @@
+---
+import { Navigation } from "../components/Navigation";
+import { Footer } from "../components/Footer";
+import { CookieBanner } from "../components/CookieBanner";
+import "../styles/globals.css";
+
+interface Props {
+	title: string;
+	description: string;
+	ogImage?: string;
+	ogImageAlt?: string;
+}
+
+const {
+	title,
+	description,
+	ogImage = "/opengraph-image.png",
+	ogImageAlt = "Areacodes — Support Local. Spend Less.",
+} = Astro.props;
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/x-icon" href="/favicon.ico" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+		<meta name="generator" content={Astro.generator} />
+		<meta name="theme-color" content="#000000" />
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+
+		<!-- Open Graph / Facebook -->
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={ogImage} />
+		<meta property="og:image:alt" content={ogImageAlt} />
+
+		<!-- Twitter -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={ogImage} />
+		<meta name="twitter:image:alt" content={ogImageAlt} />
+	</head>
+	<body>
+		<a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-white focus:text-black focus:font-semibold">
+			Skip to content
+		</a>
+		<CookieBanner client:load />
+		<Navigation client:load />
+		<main id="main-content">
+			<slot />
+		</main>
+		<Footer client:load />
+	</body>
+</html>

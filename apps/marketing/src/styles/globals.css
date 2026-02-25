@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../../../../packages/ui/src";
+@import "@repo/ui/tailwind.css";
 
 @theme {
   --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
@@ -9,11 +11,17 @@
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: dark;
 }
 
-body {
-  font-family: var(--font-sans);
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    font-family: var(--font-sans);
+    @apply bg-background text-foreground;
+  }
 }
 
 /* Skip link */
@@ -70,9 +78,8 @@ a {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   video {
     animation: none !important;
   }
 }
-

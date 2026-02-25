@@ -1,0 +1,162 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Button } from "@repo/ui";
+---
+
+<BaseLayout
+	title="About | Areacodes"
+	description="We empower local, independent businesses and reshape how people engage with their city."
+>
+	<!-- Hero -->
+	<section class="bg-black pt-[120px] pb-[60px] md:pt-[160px] md:pb-[80px]">
+		<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+			<h1 class="about-reveal inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[40px] md:text-[64px] lg:text-[80px] leading-none">
+				About AreaCodes
+			</h1>
+		</div>
+	</section>
+
+	<!-- Mission -->
+	<section class="bg-black py-[60px] md:py-[100px]">
+		<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+			<div class="about-reveal max-w-3xl" style="--reveal-delay: 0.1s;">
+				<p class="text-white text-[22px] md:text-[28px] lg:text-[32px] font-bold leading-snug tracking-[-0.01em]">
+					To empower local, independent businesses by helping them attract loyal customers without compromising their identity or profit.
+				</p>
+				<p class="mt-6 text-white text-[22px] md:text-[28px] lg:text-[32px] font-bold leading-snug tracking-[-0.01em]">
+					To reshape the way people engage with their city, making supporting local not just a nice thing to do, but the best choice.
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Values -->
+	<section class="bg-black py-[60px] md:py-[100px] border-t border-white/10">
+		<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+			<h2 class="about-reveal inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[28px] md:text-[36px] lg:text-[48px] leading-none" style="--reveal-delay: 0.15s;">
+				What we stand for
+			</h2>
+			<div class="mt-[40px] md:mt-[60px] grid grid-cols-1 md:grid-cols-2 gap-x-[60px] gap-y-[40px]">
+				<div class="about-reveal" style="--reveal-delay: 0.2s;">
+					<h3 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[16px] md:text-[19px] leading-none">
+						Local over corporate
+					</h3>
+					<p class="mt-4 text-white/80 text-base leading-relaxed">
+						We champion independent, grassroots enterprise. The businesses that give a city its character deserve to thrive.
+					</p>
+				</div>
+				<div class="about-reveal" style="--reveal-delay: 0.25s;">
+					<h3 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[16px] md:text-[19px] leading-none">
+						Culture over convenience
+					</h3>
+					<p class="mt-4 text-white/80 text-base leading-relaxed">
+						We believe in the unique, authentic character of a city. Not the copy-paste high street, but the real thing.
+					</p>
+				</div>
+				<div class="about-reveal" style="--reveal-delay: 0.3s;">
+					<h3 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[16px] md:text-[19px] leading-none">
+						Truth over polish
+					</h3>
+					<p class="mt-4 text-white/80 text-base leading-relaxed">
+						We value authenticity and real-world experiences. No stock photos, no corporate fluff. Just honest, direct communication.
+					</p>
+				</div>
+				<div class="about-reveal" style="--reveal-delay: 0.35s;">
+					<h3 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[16px] md:text-[19px] leading-none">
+						Community over competition
+					</h3>
+					<p class="mt-4 text-white/80 text-base leading-relaxed">
+						We foster a network of support among local businesses. When one wins, the whole neighbourhood wins.
+					</p>
+				</div>
+				<div class="about-reveal" style="--reveal-delay: 0.4s;">
+					<h3 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[16px] md:text-[19px] leading-none">
+						Accessibility without devaluing
+					</h3>
+					<p class="mt-4 text-white/80 text-base leading-relaxed">
+						We make local a viable and attractive option for everyone — without undercutting the businesses that make it special.
+					</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- How we work -->
+	<section class="bg-black py-[60px] md:py-[100px] border-t border-white/10">
+		<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+			<h2 class="about-reveal inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[28px] md:text-[36px] lg:text-[48px] leading-none" style="--reveal-delay: 0.15s;">
+				How it works
+			</h2>
+			<div class="mt-[40px] md:mt-[60px] grid grid-cols-1 md:grid-cols-3 gap-[40px]">
+				<div class="about-reveal" style="--reveal-delay: 0.2s;">
+					<span class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
+						01
+					</span>
+					<h3 class="mt-4 text-white font-bold text-[19px] md:text-[22px] uppercase tracking-tight">
+						Explore the map
+					</h3>
+					<p class="mt-3 text-white/80 text-base leading-relaxed">
+						Every pin is an independent business waiting to be discovered. See the city at a glance.
+					</p>
+				</div>
+				<div class="about-reveal" style="--reveal-delay: 0.3s;">
+					<span class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
+						02
+					</span>
+					<h3 class="mt-4 text-white font-bold text-[19px] md:text-[22px] uppercase tracking-tight">
+						Grab a voucher
+					</h3>
+					<p class="mt-3 text-white/80 text-base leading-relaxed">
+						Find exclusive deals from the businesses you love. No catch, no corporate middlemen.
+					</p>
+				</div>
+				<div class="about-reveal" style="--reveal-delay: 0.4s;">
+					<span class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[14px] leading-none">
+						03
+					</span>
+					<h3 class="mt-4 text-white font-bold text-[19px] md:text-[22px] uppercase tracking-tight">
+						Support locals
+					</h3>
+					<p class="mt-3 text-white/80 text-base leading-relaxed">
+						Show your voucher, save money, and put it straight back into your neighbourhood.
+					</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- CTA -->
+	<section class="bg-white py-[60px] md:py-[100px]">
+		<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+			<div class="about-reveal flex flex-col items-start gap-6" style="--reveal-delay: 0.15s;">
+				<h2 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-black text-white text-[28px] md:text-[36px] lg:text-[48px] leading-none">
+					See what's near you
+				</h2>
+				<p class="max-w-md text-black text-base leading-relaxed">
+					Backing your city's independents doesn't have to mean paying more. Support local and spend less today.
+				</p>
+				<a href="https://map.areacodes.co">
+					<Button client:load className="w-full md:w-[200px] bg-black p-6 font-semibold tracking-wide text-white shadow-none hover:bg-black/90 focus-visible:outline-2 focus-visible:outline-black focus-visible:outline-offset-2 active:scale-[0.98] transition-transform">
+						Explore the map
+					</Button>
+				</a>
+			</div>
+		</div>
+	</section>
+</BaseLayout>
+
+<style>
+	.about-reveal {
+		opacity: 0;
+		transform: translateY(12px);
+		animation: aboutReveal 0.5s ease-out forwards;
+		animation-delay: var(--reveal-delay, 0s);
+	}
+
+	@keyframes aboutReveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+</style>

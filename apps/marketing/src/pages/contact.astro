@@ -1,0 +1,82 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { ContactForm } from "../components/ContactForm";
+---
+
+<BaseLayout
+	title="Contact | Areacodes"
+	description="Got a question? Want to partner up? Get in touch with the Areacodes team."
+>
+	<!-- Hero -->
+	<section class="bg-black pt-[120px] pb-[60px] md:pt-[160px] md:pb-[80px]">
+		<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+			<h1 class="contact-reveal inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[40px] md:text-[64px] lg:text-[80px] leading-none">
+				Get in Touch
+			</h1>
+		</div>
+	</section>
+
+	<!-- Form + Info -->
+	<section class="bg-black py-[60px] md:py-[100px]">
+		<div class="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px]">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-[60px]">
+				<!-- Form column -->
+				<div class="contact-reveal" style="--reveal-delay: 0.1s;">
+					<p class="text-white/80 text-base leading-relaxed mb-8">
+						Got a question? Want to partner up? Drop us a line.
+					</p>
+					<ContactForm client:load />
+				</div>
+
+				<!-- Info column -->
+				<div class="contact-reveal" style="--reveal-delay: 0.2s;">
+					<div class="md:pl-[40px] flex flex-col gap-8">
+						<div>
+							<h2 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[16px] md:text-[19px] leading-none">
+								For business enquiries
+							</h2>
+							<p class="mt-4 text-white/80 text-base leading-relaxed">
+								Want to list your business on Areacodes? We'd love to hear from you. Reach out and we'll get you set up.
+							</p>
+						</div>
+						<div>
+							<h2 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[16px] md:text-[19px] leading-none">
+								General
+							</h2>
+							<p class="mt-4 text-white/80 text-base leading-relaxed">
+								For anything else, use the form or email us at<br />
+								<a href="mailto:hello@areacodes.co" class="text-white underline underline-offset-4 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
+									hello@areacodes.co
+								</a>
+							</p>
+						</div>
+						<div>
+							<h2 class="inline-block w-fit px-2 py-1 font-bold uppercase tracking-tight bg-white text-black text-[16px] md:text-[19px] leading-none">
+								Brighton, UK
+							</h2>
+							<p class="mt-4 text-white/80 text-base leading-relaxed">
+								Built in Brighton, for Brighton. Expanding soon.
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+</BaseLayout>
+
+<style>
+	.contact-reveal {
+		opacity: 0;
+		transform: translateY(12px);
+		animation: contactReveal 0.5s ease-out forwards;
+		animation-delay: var(--reveal-delay, 0s);
+	}
+
+	@keyframes contactReveal {
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+</style>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Button } from "./ui/button";
+import { Button } from "@repo/ui";
 import {
   getCookieConsent,
   setCookieConsent,
@@ -82,7 +82,7 @@ export function CookieBanner() {
                 ? "You've accepted analytics cookies. You can change your cookie settings at any time."
                 : "You've rejected analytics cookies. You can change your cookie settings at any time."}
             </p>
-            <Button size="sm" variant="outline" onClick={handleHide} className="rounded-none bg-white text-black border-white hover:bg-white/90">
+            <Button size="sm" variant="outline" onClick={handleHide} className="bg-white text-black border-white hover:bg-white/90">
               Hide cookie message
             </Button>
           </div>
@@ -113,15 +113,15 @@ export function CookieBanner() {
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" onClick={handleAccept} className="rounded-none bg-white text-black hover:bg-white/90">
+            <Button size="sm" onClick={handleAccept} className="bg-white text-black hover:bg-white/90">
               Accept analytics cookies
             </Button>
-            <Button size="sm" variant="outline" onClick={handleReject} className="rounded-none bg-transparent text-white border-white hover:bg-white/10">
+            <Button size="sm" variant="outline" onClick={handleReject} className="bg-transparent text-white border-white hover:bg-white/10">
               Reject analytics cookies
             </Button>
             <a
               href="/cookies"
-              className="inline-flex h-8 items-center justify-center rounded-none px-3 text-sm font-medium text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
+              className="inline-flex h-8 items-center justify-center px-3 text-sm font-medium text-white underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2"
             >
               View cookies
             </a>
@@ -131,4 +131,3 @@ export function CookieBanner() {
     </div>
   );
 }
-

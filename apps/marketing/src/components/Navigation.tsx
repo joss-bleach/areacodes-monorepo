@@ -1,4 +1,4 @@
-import { Button } from "./ui/button";
+import { Button } from "@repo/ui";
 
 export const Navigation = () => {
   return (
@@ -24,11 +24,10 @@ export const Navigation = () => {
             alt="Areacodes logo"
           />
         </a>
-        <Button className="w-[120px] rounded-none bg-white font-semibold tracking-wide text-black shadow-none hover:cursor-pointer hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
+        <Button className="w-[120px] bg-white font-semibold tracking-wide text-black shadow-none hover:cursor-pointer hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
           View map
         </Button>
       </nav>
     </header>
   );
 };
-
