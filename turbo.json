@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".output/**", "!.output/cache/**", ".vercel/output/**", ".vinxi/**", "dist/**"],
+      "outputs": [".output/**", "!.output/cache/**", ".vercel/output/**", "dist/**"],
       "env": [
         "CLERK_SECRET_KEY",
         "VITE_CLERK_PUBLISHABLE_KEY",

@@ -13,7 +13,11 @@ export default defineConfig({
       srcDirectory: "app",
     }),
     nitro(),
-    react(),
+    react({
+      babel: {
+        plugins: ["babel-plugin-react-compiler"],
+      },
+    }),
   ],
   resolve: {
     alias: {

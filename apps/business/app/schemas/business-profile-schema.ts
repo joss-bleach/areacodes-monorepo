@@ -3,7 +3,7 @@ import { z } from "zod";
 const UK_POSTCODE_REGEX =
   /^(GIR\s?0AA|(?:(?:[A-PR-UWYZ][0-9][0-9]?)|(?:[A-PR-UWYZ][A-HK-Y][0-9][0-9]?)|(?:[A-PR-UWYZ][0-9][A-HJKSTUW])|(?:[A-PR-UWYZ][A-HK-Y][0-9][ABEHMNPRV-Y]))\s?[0-9][ABD-HJLNP-UW-Z]{2})$/i;
 
-export const createBusinessProfileFormSchema = z.object({
+export const businessProfileFormSchema = z.object({
   name: z.string().min(1, "Business name is required"),
   description: z.string().min(1, "Business description is required"),
   websiteUrl: z
@@ -27,6 +27,6 @@ export const createBusinessProfileFormSchema = z.object({
   longitude: z.number().optional(),
 });
 
-export type CreateBusinessProfileFormValues = z.infer<
-  typeof createBusinessProfileFormSchema
+export type BusinessProfileFormValues = z.infer<
+  typeof businessProfileFormSchema
 >;

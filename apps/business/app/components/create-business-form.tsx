@@ -23,11 +23,11 @@ import { BusinessInformationStep } from "~/components/form-steps/business-inform
 import { BusinessLocationStep } from "~/components/form-steps/business-location-step";
 import { BusinessImageStep } from "~/components/form-steps/business-image-step";
 import {
-  createBusinessProfileFormSchema,
-  type CreateBusinessProfileFormValues,
-} from "~/schemas/create-business-profile-schema";
+  businessProfileFormSchema,
+  type BusinessProfileFormValues,
+} from "~/schemas/business-profile-schema";
 
-type FormValues = CreateBusinessProfileFormValues;
+type FormValues = BusinessProfileFormValues;
 
 const STEP_VALUES = [
   "business-information",
@@ -40,7 +40,6 @@ type StepValue = (typeof STEP_VALUES)[number];
 export const CreateBusinessForm = () => {
   const navigate = useNavigate();
   const logoFileRef = useRef<File | null>(null);
-  const isSubmittingRef = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [currentStep, setCurrentStep] = useState<StepValue>(STEP_VALUES[0]);
@@ -52,7 +51,7 @@ export const CreateBusinessForm = () => {
   const createBusiness = useMutation(api.functions.businesses.createBusiness);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(createBusinessProfileFormSchema),
+    resolver: zodResolver(businessProfileFormSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -102,13 +101,13 @@ export const CreateBusinessForm = () => {
   const renderStep = () => {
     switch (currentStep) {
       case "business-information":
-        return <BusinessInformationStep form={form} />;
+        return <BusinessInformationStep form={form} idPrefix="create-business-form" />;
       case "business-location":
-        return <BusinessLocationStep form={form} />;
+        return <BusinessLocationStep form={form} idPrefix="create-business-form" />;
       case "business-image":
         return <BusinessImageStep form={form} logoFileRef={logoFileRef} />;
       default:
-        return <BusinessInformationStep form={form} />;
+        return <BusinessInformationStep form={form} idPrefix="create-business-form" />;
     }
   };
 
@@ -139,10 +138,9 @@ export const CreateBusinessForm = () => {
   };
 
   const onSubmit = async (data: FormValues) => {
-    if (isSubmittingRef.current || isUploadingLogo) return;
+    if (isSubmitting || isUploadingLogo) return;
     if (!logoFileRef.current) return;
 
-    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -210,7 +208,6 @@ export const CreateBusinessForm = () => {
       toast.error("Failed to create business");
     } finally {
       setIsSubmitting(false);
-      isSubmittingRef.current = false;
     }
   };
 
@@ -294,7 +291,7 @@ export const CreateBusinessForm = () => {
               onClick={() => {
                 const currentIndex = STEP_VALUES.indexOf(currentStep);
                 if (currentIndex > 0) {
-                  setCurrentStep(STEP_VALUES[currentIndex - 1]);
+                  setCurrentStep(STEP_VALUES[currentIndex - 1]!);
                 }
               }}
               disabled={isFirstStep}
@@ -338,7 +335,7 @@ export const CreateBusinessForm = () => {
                   if (!ok) return;
                   const currentIndex = STEP_VALUES.indexOf(currentStep);
                   if (currentIndex < STEP_VALUES.length - 1) {
-                    setCurrentStep(STEP_VALUES[currentIndex + 1]);
+                    setCurrentStep(STEP_VALUES[currentIndex + 1]!);
                   }
                 }}
               >

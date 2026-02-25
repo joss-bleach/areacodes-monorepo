@@ -23,15 +23,17 @@ import {
   Button,
   cn,
 } from "@repo/ui";
-import type { CreateBusinessProfileFormValues } from "~/schemas/create-business-profile-schema";
+import type { BusinessProfileFormValues } from "~/schemas/business-profile-schema";
 import { BoundaryAlert } from "~/components/boundary-alert";
 
-type FormValues = CreateBusinessProfileFormValues;
+type FormValues = BusinessProfileFormValues;
 
 export const BusinessInformationStep = ({
   form,
+  idPrefix = "business-form",
 }: {
   form: UseFormReturn<FormValues>;
+  idPrefix?: string;
 }) => {
   const industries = useQuery(api.functions.industries.getAllIndustries, {});
 
@@ -53,7 +55,7 @@ export const BusinessInformationStep = ({
       if (!acc[industry.category]) {
         acc[industry.category] = [];
       }
-      acc[industry.category].push(industry);
+      acc[industry.category]!.push(industry);
       return acc;
     },
     {} as Record<string, typeof industries>
@@ -67,12 +69,12 @@ export const BusinessInformationStep = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="create-business-form-name">
+              <FieldLabel htmlFor={`${idPrefix}-name`}>
                 Business name
               </FieldLabel>
               <Input
                 {...field}
-                id="create-business-form-name"
+                id={`${idPrefix}-name`}
                 className="w-full"
                 placeholder="Enter your business name…"
                 aria-invalid={fieldState.invalid}
@@ -88,12 +90,12 @@ export const BusinessInformationStep = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="create-business-form-description">
+              <FieldLabel htmlFor={`${idPrefix}-description`}>
                 Business description
               </FieldLabel>
               <Textarea
                 {...field}
-                id="create-business-form-description"
+                id={`${idPrefix}-description`}
                 className="w-full"
                 placeholder="Tell us a bit about your business…"
                 aria-invalid={fieldState.invalid}
@@ -114,6 +116,7 @@ export const BusinessInformationStep = ({
               industriesByCategory={industriesByCategory}
               invalid={fieldState.invalid}
               error={fieldState.error}
+              idPrefix={idPrefix}
             />
           )}
         />
@@ -123,13 +126,13 @@ export const BusinessInformationStep = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="create-business-form-websiteUrl">
+              <FieldLabel htmlFor={`${idPrefix}-websiteUrl`}>
                 Website URL
               </FieldLabel>
               <Input
                 {...field}
                 value={field.value ?? ""}
-                id="create-business-form-websiteUrl"
+                id={`${idPrefix}-websiteUrl`}
                 className="w-full"
                 placeholder="Enter your business website URL…"
                 type="url"
@@ -152,6 +155,7 @@ const IndustryCombobox = ({
   industriesByCategory,
   invalid,
   error,
+  idPrefix,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -162,6 +166,7 @@ const IndustryCombobox = ({
   >;
   invalid: boolean;
   error: any;
+  idPrefix: string;
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -170,13 +175,13 @@ const IndustryCombobox = ({
 
   return (
     <Field data-invalid={invalid}>
-      <FieldLabel htmlFor="create-business-form-industryId">
+      <FieldLabel htmlFor={`${idPrefix}-industryId`}>
         Industry
       </FieldLabel>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            id="create-business-form-industryId"
+            id={`${idPrefix}-industryId`}
             variant="outline"
             role="combobox"
             aria-expanded={open}

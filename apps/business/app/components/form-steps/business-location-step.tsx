@@ -8,15 +8,14 @@ import {
   SelectTrigger,
   SelectValue,
   Field,
-  FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
 } from "@repo/ui";
 import { counties } from "~/constants/counties";
-import type { CreateBusinessProfileFormValues } from "~/schemas/create-business-profile-schema";
+import type { BusinessProfileFormValues } from "~/schemas/business-profile-schema";
 
-type FormValues = CreateBusinessProfileFormValues;
+type FormValues = BusinessProfileFormValues;
 
 interface LocationSuggestion {
   place_id: string;
@@ -35,16 +34,22 @@ interface LocationSuggestion {
 
 export const BusinessLocationStep = ({
   form,
+  idPrefix = "business-form",
+  searchLabel = "Start typing your address",
+  searchPlaceholder = "Enter your business address…",
 }: {
   form: UseFormReturn<FormValues>;
+  idPrefix?: string;
+  searchLabel?: string;
+  searchPlaceholder?: string;
 }) => {
   const [suggestions, setSuggestions] = useState<LocationSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [addressSearch, setAddressSearch] = useState("");
   const debounceTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchSuggestions = async (input: string) => {
     if (input.length < 3) {
@@ -77,6 +82,7 @@ export const BusinessLocationStep = ({
   };
 
   const handleInputChange = (value: string) => {
+    setAddressSearch(value);
     setShowSuggestions(true);
     setSelectedIndex(-1);
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
@@ -101,7 +107,7 @@ export const BusinessLocationStep = ({
       counties.find((c) => c.toLowerCase() === rawCounty.toLowerCase()) ||
       rawCounty;
 
-    form.setValue("addressSearch", suggestion.display_name || "");
+    setAddressSearch(suggestion.display_name || "");
     form.setValue("addressLine1", line1);
     form.setValue("townOrCity", town);
     form.setValue("postcode", postcode);
@@ -128,7 +134,7 @@ export const BusinessLocationStep = ({
       case "Enter":
         e.preventDefault();
         if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-          handleSuggestionClick(suggestions[selectedIndex]);
+          handleSuggestionClick(suggestions[selectedIndex]!);
         }
         break;
       case "Escape":
@@ -144,78 +150,68 @@ export const BusinessLocationStep = ({
     };
   }, []);
 
+  const clearCoordinates = () => {
+    form.setValue("latitude", undefined);
+    form.setValue("longitude", undefined);
+  };
+
   return (
     <div className="w-full flex flex-col space-y-6">
-      <Controller
-        name="addressSearch"
-        control={form.control}
-        render={({ field }) => (
-          <div className="flex flex-col gap-2 w-full relative">
-            <FieldLabel htmlFor="create-business-form-address-search">
-              Start typing your address
-            </FieldLabel>
-            <div className="relative">
-              <Input
-                {...field}
-                value={field.value ?? ""}
-                ref={(e) => {
-                  field.ref(e);
-                  inputRef.current = e;
-                }}
-                id="create-business-form-address-search"
-                className="w-full"
-                onChange={(e) => {
-                  field.onChange(e.target.value);
-                  handleInputChange(e.target.value);
-                }}
-                onBlur={() => {
-                  field.onBlur();
-                  setTimeout(() => setShowSuggestions(false), 200);
-                }}
-                onFocus={() => {
-                  if (suggestions.length > 0) setShowSuggestions(true);
-                }}
-                onKeyDown={handleKeyDown}
-                placeholder="Enter your business address…"
-                autoComplete="street-address"
-              />
-              {isLoading && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground" />
-                </div>
-              )}
-              {error && (
-                <p className="text-sm text-destructive mt-1">{error}</p>
-              )}
-              {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border shadow-md overflow-hidden">
-                  <div className="max-h-60 overflow-y-auto p-1">
-                    {suggestions.map((suggestion, index) => (
-                      <div
-                        key={suggestion.place_id}
-                        className={`relative flex cursor-default select-none items-center px-2 py-1.5 text-sm outline-none transition-colors ${
-                          selectedIndex === index
-                            ? "bg-accent text-accent-foreground"
-                            : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
-                        }`}
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        onMouseEnter={() => setSelectedIndex(index)}
-                      >
-                        <span className="truncate">
-                          {suggestion.display_name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border-t px-2 py-1.5 text-xs text-muted-foreground">
-                    Can't find your address? Enter it manually below.
-                  </div>
-                </div>
-              )}
+      <div className="flex flex-col gap-2 w-full relative">
+        <FieldLabel htmlFor={`${idPrefix}-address-search`}>
+          {searchLabel}
+        </FieldLabel>
+        <div className="relative">
+          <Input
+            id={`${idPrefix}-address-search`}
+            value={addressSearch}
+            className="w-full"
+            onChange={(e) => handleInputChange(e.target.value)}
+            onBlur={() => {
+              setTimeout(() => setShowSuggestions(false), 200);
+            }}
+            onFocus={() => {
+              if (suggestions.length > 0) setShowSuggestions(true);
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder={searchPlaceholder}
+            autoComplete="off"
+          />
+          {isLoading && (
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground" />
             </div>
-          </div>
-        )}
-      />
+          )}
+          {error && (
+            <p className="text-sm text-destructive mt-1">{error}</p>
+          )}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute z-50 w-full mt-1 bg-popover text-popover-foreground border shadow-md overflow-hidden">
+              <div className="max-h-60 overflow-y-auto p-1">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={suggestion.place_id}
+                    className={`relative flex cursor-default select-none items-center px-2 py-1.5 text-sm outline-none transition-colors ${
+                      selectedIndex === index
+                        ? "bg-accent text-accent-foreground"
+                        : "hover:bg-accent hover:text-accent-foreground cursor-pointer"
+                    }`}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                  >
+                    <span className="truncate">
+                      {suggestion.display_name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t px-2 py-1.5 text-xs text-muted-foreground">
+                Can't find your address? Enter it manually below.
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       <FieldGroup className="gap-4">
         <Controller
@@ -223,19 +219,18 @@ export const BusinessLocationStep = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="create-business-form-addressLine1">
+              <FieldLabel htmlFor={`${idPrefix}-addressLine1`}>
                 Address line 1
               </FieldLabel>
               <Input
                 {...field}
-                id="create-business-form-addressLine1"
+                id={`${idPrefix}-addressLine1`}
                 className="w-full"
                 aria-invalid={fieldState.invalid}
                 autoComplete="address-line1"
                 onChange={(e) => {
                   field.onChange(e);
-                  form.setValue("latitude", undefined);
-                  form.setValue("longitude", undefined);
+                  clearCoordinates();
                 }}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -248,19 +243,18 @@ export const BusinessLocationStep = ({
           control={form.control}
           render={({ field }) => (
             <Field>
-              <FieldLabel htmlFor="create-business-form-addressLine2">
+              <FieldLabel htmlFor={`${idPrefix}-addressLine2`}>
                 Address line 2
               </FieldLabel>
               <Input
                 {...field}
                 value={field.value ?? ""}
-                id="create-business-form-addressLine2"
+                id={`${idPrefix}-addressLine2`}
                 className="w-full"
                 autoComplete="address-line2"
                 onChange={(e) => {
                   field.onChange(e);
-                  form.setValue("latitude", undefined);
-                  form.setValue("longitude", undefined);
+                  clearCoordinates();
                 }}
               />
             </Field>
@@ -272,19 +266,18 @@ export const BusinessLocationStep = ({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="create-business-form-townOrCity">
+              <FieldLabel htmlFor={`${idPrefix}-townOrCity`}>
                 Town or city
               </FieldLabel>
               <Input
                 {...field}
-                id="create-business-form-townOrCity"
+                id={`${idPrefix}-townOrCity`}
                 className="w-full"
                 aria-invalid={fieldState.invalid}
                 autoComplete="address-level2"
                 onChange={(e) => {
                   field.onChange(e);
-                  form.setValue("latitude", undefined);
-                  form.setValue("longitude", undefined);
+                  clearCoordinates();
                 }}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -298,20 +291,19 @@ export const BusinessLocationStep = ({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid} className="w-full">
-                <FieldLabel htmlFor="create-business-form-county">
+                <FieldLabel htmlFor={`${idPrefix}-county`}>
                   County
                 </FieldLabel>
                 <Select
                   value={field.value}
                   onValueChange={(v) => {
                     field.onChange(v);
-                    form.setValue("latitude", undefined);
-                    form.setValue("longitude", undefined);
+                    clearCoordinates();
                   }}
                   name={field.name}
                 >
                   <SelectTrigger
-                    id="create-business-form-county"
+                    id={`${idPrefix}-county`}
                     className="w-full"
                     aria-invalid={fieldState.invalid}
                   >
@@ -337,19 +329,18 @@ export const BusinessLocationStep = ({
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid} className="w-full">
-                <FieldLabel htmlFor="create-business-form-postcode">
+                <FieldLabel htmlFor={`${idPrefix}-postcode`}>
                   Post code
                 </FieldLabel>
                 <Input
                   {...field}
-                  id="create-business-form-postcode"
+                  id={`${idPrefix}-postcode`}
                   className="w-full"
                   aria-invalid={fieldState.invalid}
                   autoComplete="postal-code"
                   onChange={(e) => {
                     field.onChange(e);
-                    form.setValue("latitude", undefined);
-                    form.setValue("longitude", undefined);
+                    clearCoordinates();
                   }}
                 />
                 {fieldState.invalid && (

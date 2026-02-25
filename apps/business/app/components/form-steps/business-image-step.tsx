@@ -1,17 +1,19 @@
 import { CircleUserRoundIcon, XIcon } from "lucide-react";
 import { Controller, type UseFormReturn } from "react-hook-form";
-import { Button, Field, FieldError, FieldLabel } from "@repo/ui";
+import { Button, Field, FieldError } from "@repo/ui";
 import { useFileUpload } from "~/hooks/use-file-upload";
-import type { CreateBusinessProfileFormValues } from "~/schemas/create-business-profile-schema";
+import type { BusinessProfileFormValues } from "~/schemas/business-profile-schema";
 
-type FormValues = CreateBusinessProfileFormValues;
+type FormValues = BusinessProfileFormValues;
 
 export const BusinessImageStep = ({
   form,
   logoFileRef,
+  existingLogoUrl,
 }: {
   form: UseFormReturn<FormValues>;
   logoFileRef: React.MutableRefObject<File | null>;
+  existingLogoUrl?: string | null;
 }) => {
   const [{ files, errors }, { removeFile, openFileDialog, getInputProps }] =
     useFileUpload({
@@ -19,8 +21,9 @@ export const BusinessImageStep = ({
       maxSize: 5 * 1024 * 1024,
       multiple: false,
       onFilesChange: (newFiles) => {
-        if (newFiles.length > 0 && newFiles[0].file instanceof File) {
-          logoFileRef.current = newFiles[0].file;
+        const first = newFiles[0];
+        if (first && first.file instanceof File) {
+          logoFileRef.current = first.file;
         } else {
           logoFileRef.current = null;
         }
@@ -29,12 +32,14 @@ export const BusinessImageStep = ({
 
   const previewUrl = files[0]?.preview || null;
   const fileName = files[0]?.file.name || null;
+  const displayImageUrl = previewUrl || existingLogoUrl || null;
+  const isNewFile = !!previewUrl;
 
   const handleRemoveFile = () => {
     if (files[0]?.id) {
       removeFile(files[0].id);
       logoFileRef.current = null;
-      form.setValue("logoUrl", "");
+      if (!existingLogoUrl) form.setValue("logoUrl", "");
     }
   };
 
@@ -49,14 +54,14 @@ export const BusinessImageStep = ({
               <button
                 type="button"
                 onClick={openFileDialog}
-                aria-label={previewUrl ? "Change image" : "Select image"}
+                aria-label={displayImageUrl ? "Change image" : "Select image"}
                 className="relative size-24 border-2 border-dashed border-input bg-muted/30 flex items-center justify-center overflow-hidden transition-colors hover:border-foreground/40 hover:bg-muted/50 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none"
               >
-                {previewUrl ? (
+                {displayImageUrl ? (
                   <img
                     className="size-full object-cover"
-                    src={previewUrl}
-                    alt="Preview of uploaded image"
+                    src={displayImageUrl}
+                    alt={isNewFile ? "Preview of uploaded image" : "Current business logo"}
                     width={96}
                     height={96}
                   />
@@ -87,6 +92,18 @@ export const BusinessImageStep = ({
               <p className="text-xs text-muted-foreground">{fileName}</p>
             )}
 
+            {previewUrl && existingLogoUrl && (
+              <div className="text-xs text-muted-foreground text-center">
+                New logo will be uploaded when you submit the form
+              </div>
+            )}
+
+            {!previewUrl && existingLogoUrl && (
+              <div className="text-xs text-muted-foreground text-center">
+                Current logo will be kept if no new file is selected
+              </div>
+            )}
+
             {errors.length > 0 && (
               <div className="text-sm text-destructive text-center max-w-xs">
                 {errors.map((error, index) => (
@@ -98,7 +115,9 @@ export const BusinessImageStep = ({
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
 
             <p className="text-xs text-muted-foreground text-center">
-              Upload your company logo (max 5MB)
+              {existingLogoUrl
+                ? "Upload a new company logo (max 5MB) or keep the current one"
+                : "Upload your company logo (max 5MB)"}
             </p>
           </div>
         </Field>

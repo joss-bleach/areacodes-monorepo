@@ -8,5 +8,5 @@ export function generateVoucherCode(): string {
     prefix: "areacodes-",
     postfix: `-${year}`,
   });
-  return code[0];
+  return code[0]!;
 }

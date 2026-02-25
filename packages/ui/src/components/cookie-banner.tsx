@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "./button";
 import {
   getCookieConsent,
   setCookieConsent,
   type CookieConsentStatus,
 } from "../lib/cookie-consent";
-
-type MessageState = "initial" | "confirmation";
 
 interface CookieBannerProps {
   cookiesUrl?: string;
@@ -17,82 +15,20 @@ interface CookieBannerProps {
 export function CookieBanner({
   cookiesUrl = "/cookies",
 }: CookieBannerProps) {
-  const [mounted, setMounted] = useState(false);
-  const [consentStatus, setConsentStatus] =
-    useState<CookieConsentStatus>(null);
-  const [messageState, setMessageState] = useState<MessageState>("initial");
-  const confirmationRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    const stored = getCookieConsent();
-    if (stored !== null) {
-      setConsentStatus(stored);
-      setMessageState("initial");
+    if (getCookieConsent() === null) {
+      setVisible(true);
     }
   }, []);
 
-  useEffect(() => {
-    if (messageState !== "confirmation") return;
-    const timer = setTimeout(() => setMessageState("initial"), 5000);
-    return () => clearTimeout(timer);
-  }, [messageState]);
+  if (!visible) return null;
 
-  if (!mounted) return null;
-
-  if (consentStatus !== null && messageState !== "confirmation") return null;
-
-  const handleAccept = () => {
-    setCookieConsent("accepted");
-    setConsentStatus("accepted");
-    setMessageState("confirmation");
-    setTimeout(() => confirmationRef.current?.focus(), 100);
+  const handleConsent = (status: "accepted" | "rejected") => {
+    setCookieConsent(status);
+    setVisible(false);
   };
-
-  const handleReject = () => {
-    setCookieConsent("rejected");
-    setConsentStatus("rejected");
-    setMessageState("confirmation");
-    setTimeout(() => confirmationRef.current?.focus(), 100);
-  };
-
-  const handleHide = () => {
-    setMessageState("initial");
-  };
-
-  if (messageState === "confirmation") {
-    return (
-      <div
-        className="fixed top-0 left-0 right-0 z-[9999] border-b border-white/20 bg-black px-4 py-3 shadow-lg"
-        role="region"
-        aria-label="Cookies on Areacodes"
-        data-nosnippet
-      >
-        <div className="mx-auto w-full max-w-[1200px]">
-          <div
-            ref={confirmationRef}
-            role="alert"
-            tabIndex={-1}
-            className="flex flex-col justify-between gap-3 md:flex-row md:items-center"
-          >
-            <p className="text-sm text-white">
-              {consentStatus === "accepted"
-                ? "You've accepted analytics cookies. You can change your cookie settings at any time."
-                : "You've rejected analytics cookies. You can change your cookie settings at any time."}
-            </p>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleHide}
-              className="bg-white text-black border-white hover:bg-white/90"
-            >
-              Hide cookie message
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -120,7 +56,7 @@ export function CookieBanner({
           <div className="flex flex-wrap gap-2">
             <Button
               size="sm"
-              onClick={handleAccept}
+              onClick={() => handleConsent("accepted")}
               className="bg-white text-black hover:bg-white/90"
             >
               Accept analytics cookies
@@ -128,7 +64,7 @@ export function CookieBanner({
             <Button
               size="sm"
               variant="outline"
-              onClick={handleReject}
+              onClick={() => handleConsent("rejected")}
               className="bg-transparent text-white border-white hover:bg-white/10"
             >
               Reject analytics cookies

@@ -15,22 +15,21 @@ import {
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRef, useState, useEffect } from "react";
-import { EditBusinessInformationStep } from "~/components/form-steps/edit-business-information-step";
-import { EditBusinessLocationStep } from "~/components/form-steps/edit-business-location-step";
-import { EditBusinessImageStep } from "~/components/form-steps/edit-business-image-step";
+import { BusinessInformationStep } from "~/components/form-steps/business-information-step";
+import { BusinessLocationStep } from "~/components/form-steps/business-location-step";
+import { BusinessImageStep } from "~/components/form-steps/business-image-step";
 import {
-  updateBusinessProfileFormSchema,
-  type UpdateBusinessProfileFormValues,
-} from "~/schemas/update-business-profile-schema";
+  businessProfileFormSchema,
+  type BusinessProfileFormValues,
+} from "~/schemas/business-profile-schema";
 import { parseAddress } from "~/lib/parse-address";
 
-type FormValues = UpdateBusinessProfileFormValues;
+type FormValues = BusinessProfileFormValues;
 
 export const EditBusinessForm = () => {
   const navigate = useNavigate();
   const { slug } = useParams({ strict: false }) as { slug: string };
   const logoFileRef = useRef<File | null>(null);
-  const isSubmittingRef = useRef(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -41,7 +40,7 @@ export const EditBusinessForm = () => {
   const updateBusiness = useMutation(api.functions.businesses.updateBusiness);
 
   const form = useForm<FormValues>({
-    resolver: zodResolver(updateBusinessProfileFormSchema),
+    resolver: zodResolver(businessProfileFormSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -90,9 +89,8 @@ export const EditBusinessForm = () => {
   }
 
   const onSubmit = async (data: FormValues) => {
-    if (isSubmittingRef.current || isUploadingLogo || isSubmitting) return;
+    if (isSubmitting || isUploadingLogo) return;
 
-    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -154,7 +152,6 @@ export const EditBusinessForm = () => {
     } finally {
       setIsSubmitting(false);
       setIsUploadingLogo(false);
-      isSubmittingRef.current = false;
     }
   };
 
@@ -174,7 +171,7 @@ export const EditBusinessForm = () => {
             </h2>
             <CardDescription>Update your business details</CardDescription>
             <CardContent className="p-4">
-              <EditBusinessInformationStep form={form} />
+              <BusinessInformationStep form={form} idPrefix="edit-business-form" />
             </CardContent>
           </CardHeader>
         </Card>
@@ -188,7 +185,12 @@ export const EditBusinessForm = () => {
               Update your business address and location
             </CardDescription>
             <CardContent className="p-4">
-              <EditBusinessLocationStep form={form} />
+              <BusinessLocationStep
+                form={form}
+                idPrefix="edit-business-form"
+                searchLabel="Search for a new address"
+                searchPlaceholder="Search to update your business address…"
+              />
             </CardContent>
           </CardHeader>
         </Card>
@@ -200,7 +202,7 @@ export const EditBusinessForm = () => {
             </h2>
             <CardDescription>Update your business logo</CardDescription>
             <CardContent className="p-4">
-              <EditBusinessImageStep
+              <BusinessImageStep
                 form={form}
                 logoFileRef={logoFileRef}
                 existingLogoUrl={business.logoUrl}
