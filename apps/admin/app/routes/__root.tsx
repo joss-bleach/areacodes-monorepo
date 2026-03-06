@@ -42,7 +42,7 @@ function RootComponent() {
         <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
           <Outlet />
           <Toaster />
-          <CookieBanner cookiesUrl="https://www.acbrighton.com/cookies" />
+          <CookieBanner />
         </ConvexProviderWithClerk>
       </ClerkProvider>
     </RootDocument>

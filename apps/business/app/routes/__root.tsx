@@ -71,7 +71,7 @@ function RootComponent() {
           <NuqsAdapter>
             <Outlet />
             <Toaster />
-            <CookieBanner cookiesUrl="https://www.acbrighton.com/cookies" />
+            <CookieBanner />
           </NuqsAdapter>
         </ConvexProviderWithClerk>
       </ClerkProvider>

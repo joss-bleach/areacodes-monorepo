@@ -80,7 +80,7 @@ function RootDocument({ children }: { children: ReactNode }) {
       <body>
         <ConvexProvider client={convex}>
           <NuqsAdapter>{children}</NuqsAdapter>
-          <CookieBanner cookiesUrl="https://www.acbrighton.com/cookies" />
+          <CookieBanner />
         </ConvexProvider>
         <Scripts />
       </body>
