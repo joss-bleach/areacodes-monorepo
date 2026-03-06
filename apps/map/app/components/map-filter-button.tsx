@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from "react";
+import { useMemo } from "react";
 import * as React from "react";
 import { SlidersHorizontalIcon, X } from "lucide-react";
 import { useQuery } from "convex/react";
@@ -15,7 +15,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@repo/ui";
 import {
   useExploreFilters,
@@ -120,23 +119,31 @@ export const MapFilterButton = () => {
   ];
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="bg-transparent shadow-none hover:bg-black/50"
-          aria-label="Sort & Filter"
-        >
-          <SlidersHorizontalIcon className="w-4 h-4" />
-        </Button>
-      </SheetTrigger>
+    <>
+      <Button
+        variant="secondary"
+        size="icon"
+        className="bg-transparent shadow-none hover:bg-black/50"
+        aria-label="Sort & Filter"
+        onClick={() => setOpen(true)}
+      >
+        <SlidersHorizontalIcon className="w-4 h-4" />
+      </Button>
+      <Sheet open={open} onOpenChange={setOpen} modal>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-sm px-6 sm:px-4 flex flex-col"
+        className="px-6 sm:px-4 flex flex-col"
       >
-        <SheetHeader>
+        <SheetHeader className="flex flex-row items-center justify-between">
           <SheetTitle>Sort & Filter</SheetTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-8"
+            onClick={() => setOpen(false)}
+          >
+            <X className="size-4" />
+          </Button>
         </SheetHeader>
 
         <div className="flex-1 overflow-y-auto scrollbar-hide">
@@ -235,5 +242,6 @@ export const MapFilterButton = () => {
         )}
       </SheetContent>
     </Sheet>
+    </>
   );
 };

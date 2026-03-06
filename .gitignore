@@ -28,6 +28,11 @@ coverage/
 out/
 build/
 dist/
+.output/
+
+# Playwright
+playwright-report/
+test-results/
 
 # Astro
 .astro/

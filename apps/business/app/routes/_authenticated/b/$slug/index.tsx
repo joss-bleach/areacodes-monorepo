@@ -5,7 +5,7 @@ import { StatsSection } from "~/sections/stats-section";
 import { VoucherTable } from "~/sections/voucher-table";
 import { NewVoucherModal } from "~/components/new-voucher-modal";
 
-export const Route = createFileRoute("/_authenticated/b/$slug")({
+export const Route = createFileRoute("/_authenticated/b/$slug/")({
   component: DashboardPage,
 });
 

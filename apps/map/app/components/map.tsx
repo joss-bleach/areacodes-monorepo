@@ -13,6 +13,7 @@ type Business = {
   latitude: number;
   longitude: number;
   logoUrl: string | null;
+  industryName: string | null;
 };
 
 type MapInnerComponent = React.ComponentType<{
@@ -33,7 +34,7 @@ export const Map = ({
     industryId ? { industryId: industryId as Id<"industries"> } : {}
   );
 
-  // Dynamic import ensures leaflet/react-leaflet never load during SSR.
+  // Dynamic import ensures maplibre-gl never loads during SSR.
   // useEffect only runs on the client, so this is safe.
   useEffect(() => {
     import("./map-inner").then((mod) => {
@@ -51,6 +52,7 @@ export const Map = ({
       latitude: b.latitude,
       longitude: b.longitude,
       logoUrl: b.logoUrl,
+      industryName: b.industry?.name ?? null,
     }));
   }, [businesses]);
 

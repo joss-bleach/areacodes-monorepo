@@ -11,6 +11,7 @@ export * from "./components/dialog";
 export * from "./components/dropdown-menu";
 export * from "./components/field";
 export * from "./components/input";
+export * from "./components/input-otp";
 export * from "./components/label";
 export * from "./components/popover";
 export * from "./components/radio-group";

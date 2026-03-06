@@ -63,7 +63,7 @@ export const BusinessLocationStep = ({
       const response = await fetch("/api/location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: input }),
+        body: JSON.stringify({ mode: "autocomplete", q: input }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -89,31 +89,54 @@ export const BusinessLocationStep = ({
     debounceTimeout.current = setTimeout(() => fetchSuggestions(value), 300);
   };
 
-  const handleSuggestionClick = (suggestion: LocationSuggestion) => {
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+
+  const handleSuggestionClick = async (suggestion: LocationSuggestion) => {
     setSuggestions([]);
     setShowSuggestions(false);
     setError("");
     setSelectedIndex(-1);
-
-    const line1Parts = [
-      suggestion.address?.house_number,
-      suggestion.address?.road,
-    ].filter(Boolean);
-    const line1 = line1Parts.join(" ");
-    const town = suggestion.address?.city || "";
-    const postcode = suggestion.address?.postcode || "";
-    const rawCounty = suggestion.address?.county || "";
-    const matchedCounty =
-      counties.find((c) => c.toLowerCase() === rawCounty.toLowerCase()) ||
-      rawCounty;
-
     setAddressSearch(suggestion.display_name || "");
-    form.setValue("addressLine1", line1);
-    form.setValue("townOrCity", town);
-    form.setValue("postcode", postcode);
-    form.setValue("county", matchedCounty);
-    if (suggestion.lat != null) form.setValue("latitude", Number(suggestion.lat));
-    if (suggestion.lon != null) form.setValue("longitude", Number(suggestion.lon));
+    setIsLoadingDetails(true);
+
+    try {
+      const response = await fetch("/api/location", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "details", placeId: suggestion.place_id }),
+      });
+
+      if (!response.ok) {
+        setError("Failed to fetch address details");
+        return;
+      }
+
+      const details: LocationSuggestion = await response.json();
+
+      const line1Parts = [
+        details.address?.house_number,
+        details.address?.road,
+      ].filter(Boolean);
+      const line1 = line1Parts.join(" ");
+      const town = details.address?.city || "";
+      const postcode = details.address?.postcode || "";
+      const rawCounty = details.address?.county || "";
+      const matchedCounty =
+        counties.find((c) => c.toLowerCase() === rawCounty.toLowerCase()) ||
+        rawCounty;
+
+      setAddressSearch(details.display_name || suggestion.display_name || "");
+      form.setValue("addressLine1", line1);
+      form.setValue("townOrCity", town);
+      form.setValue("postcode", postcode);
+      form.setValue("county", matchedCounty);
+      if (details.lat != null) form.setValue("latitude", Number(details.lat));
+      if (details.lon != null) form.setValue("longitude", Number(details.lon));
+    } catch {
+      setError("Failed to fetch address details");
+    } finally {
+      setIsLoadingDetails(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -177,7 +200,7 @@ export const BusinessLocationStep = ({
             placeholder={searchPlaceholder}
             autoComplete="off"
           />
-          {isLoading && (
+          {(isLoading || isLoadingDetails) && (
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground" />
             </div>
@@ -205,8 +228,9 @@ export const BusinessLocationStep = ({
                   </div>
                 ))}
               </div>
-              <div className="border-t px-2 py-1.5 text-xs text-muted-foreground">
-                Can't find your address? Enter it manually below.
+              <div className="border-t px-2 py-1.5 text-xs text-muted-foreground flex items-center justify-between">
+                <span>Can't find your address? Enter it manually below.</span>
+                <span>Powered by Google</span>
               </div>
             </div>
           )}

@@ -19,6 +19,6 @@ export const convexServerSchema = {
   CONVEX_DEPLOY_KEY: z.string().optional(),
 };
 
-export const geoapifyServerSchema = {
-  GEOAPIFY_API_KEY: z.string().min(1),
+export const googlePlacesServerSchema = {
+  GOOGLE_PLACES_API_KEY: z.string().min(1),
 };

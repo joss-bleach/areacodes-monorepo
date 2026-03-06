@@ -1,36 +1,16 @@
 // Client-only module — only imported via dynamic import in map.tsx.
-// Leaflet and react-leaflet access `window` on module init, so they must
+// maplibre-gl accesses `window` on module init, so it must
 // never be statically imported in an SSR context.
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
-  useMap,
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import type { Icon } from "leaflet";
+  Map as MapCN,
+  MapMarker,
+  MarkerContent,
+  MapPopup,
+} from "~/components/ui/map";
+import { Button } from "@repo/ui";
+import { ExternalLink } from "lucide-react";
 import type { Id } from "@repo/convex";
-
-// Create the custom marker icon once at module level, shared across all BusinessMarker instances
-const customIconPromise: Promise<Icon> = import("leaflet").then((L) => {
-  delete (L.default.Icon.Default.prototype as any)._getIconUrl;
-  L.default.Icon.Default.mergeOptions({
-    iconRetinaUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-    iconUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-    shadowUrl:
-      "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  });
-  return L.default.icon({
-    iconUrl: "/marker.svg",
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32],
-  });
-});
 
 type Business = {
   _id: Id<"businesses">;
@@ -40,132 +20,123 @@ type Business = {
   latitude: number;
   longitude: number;
   logoUrl: string | null;
+  industryName: string | null;
 };
 
-function MapClickHandler() {
-  const map = useMap();
-
-  useEffect(() => {
-    const handleMapClick = (e: any) => {
-      const target = e.originalEvent?.target;
-      if (
-        target?.closest(".leaflet-marker-icon") ||
-        target?.closest(".leaflet-popup")
-      ) {
-        return;
-      }
-      map.eachLayer((layer: any) => {
-        if (layer.getPopup && layer.isPopupOpen && layer.isPopupOpen()) {
-          layer.closePopup();
-        }
-      });
-    };
-    map.on("click", handleMapClick);
-    return () => {
-      map.off("click", handleMapClick);
-    };
-  }, [map]);
-
-  return null;
-}
-
-function MapScrollHandler({ scrollWheelZoom }: { scrollWheelZoom: boolean }) {
-  const map = useMap();
-  useEffect(() => {
-    if (scrollWheelZoom) {
-      map.scrollWheelZoom.enable();
-    } else {
-      map.scrollWheelZoom.disable();
-    }
-  }, [map, scrollWheelZoom]);
-  return null;
-}
-
-function BusinessPopupContent({ business }: { business: Business }) {
-  return (
-    <div className="flex items-start gap-3">
-      {business.logoUrl ? (
-        <img
-          className="shrink-0 rounded-full self-start mt-2"
-          src={business.logoUrl}
-          width={40}
-          height={40}
-          alt={business.name}
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = "none";
-          }}
-        />
-      ) : (
-        <div className="shrink-0 rounded-full w-10 h-10 bg-muted border border-border flex items-center justify-center self-start mt-2">
-          <span className="text-xs font-medium text-muted-foreground">
-            {business.name.charAt(0).toUpperCase()}
-          </span>
-        </div>
-      )}
-      <div className="space-y-1 flex-1">
-        <p className="text-sm font-medium leading-tight">{business.name}</p>
-        <p className="text-sm text-muted-foreground">{business.description}</p>
-        <a
-          href={`/b/${business._id}`}
-          className="text-sm text-primary hover:underline inline-block mt-1"
-        >
-          View vouchers
-        </a>
-      </div>
-    </div>
-  );
-}
+const isTouchDevice = () =>
+  typeof window !== "undefined" &&
+  ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 
 function BusinessMarker({ business }: { business: Business }) {
-  const [customIcon, setCustomIcon] = useState<Icon | null>(null);
+  const [showPopup, setShowPopup] = useState(false);
+  const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    customIconPromise.then(setCustomIcon);
+  const clearHoverTimeout = () => {
+    if (hoverTimeout.current) {
+      clearTimeout(hoverTimeout.current);
+      hoverTimeout.current = null;
+    }
+  };
+
+  const handleMouseEnter = useCallback(() => {
+    if (isTouchDevice()) return;
+    clearHoverTimeout();
+    setShowPopup(true);
   }, []);
 
-  if (!customIcon) return null;
+  const handleMouseLeave = useCallback(() => {
+    if (isTouchDevice()) return;
+    hoverTimeout.current = setTimeout(() => setShowPopup(false), 200);
+  }, []);
 
-  const position: [number, number] = [business.latitude, business.longitude];
+  const handleClick = useCallback(() => {
+    setShowPopup((prev) => !prev);
+  }, []);
 
   return (
-    <Marker
-      position={position}
-      icon={customIcon}
-      eventHandlers={{
-        mouseover: (e) => e.target.openPopup(),
-        click: (e) => e.target.openPopup(),
-        mouseout: (e) => {
-          const marker = e.target;
-          setTimeout(() => {
-            const popup = marker.getPopup();
-            if (popup && !popup.getElement()?.matches(":hover")) {
-              marker.closePopup();
-            }
-          }, 100);
-        },
-      }}
-    >
-      <Popup
-        className="custom-popup"
-        closeButton={false}
-        autoPan={false}
-        maxWidth={340}
-        closeOnClick={false}
-        closeOnEscapeKey={true}
-        eventHandlers={{
-          mouseout: (e) => {
-            const popup = e.target;
-            setTimeout(() => {
-              if (!popup.getElement()?.matches(":hover")) {
-                popup.close();
-              }
-            }, 100);
-          },
-        }}
+    <>
+      <MapMarker
+        longitude={business.longitude}
+        latitude={business.latitude}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
       >
-        <BusinessPopupContent business={business} />
-      </Popup>
-    </Marker>
+        <MarkerContent>
+          <img
+            src="/marker.svg"
+            width={32}
+            height={32}
+            alt=""
+            className="drop-shadow-lg hover:scale-110 transition-transform"
+          />
+        </MarkerContent>
+      </MapMarker>
+      {showPopup && (
+        <MapPopup
+          longitude={business.longitude}
+          latitude={business.latitude}
+          onClose={() => setShowPopup(false)}
+          closeOnClick={false}
+          className="p-0 w-72"
+          offset={32}
+        >
+          <div
+            onMouseEnter={() => {
+              if (!isTouchDevice()) clearHoverTimeout();
+            }}
+            onMouseLeave={() => {
+              if (!isTouchDevice()) {
+                hoverTimeout.current = setTimeout(
+                  () => setShowPopup(false),
+                  200
+                );
+              }
+            }}
+          >
+            <div className="flex items-start gap-3 p-3">
+              {business.logoUrl ? (
+                <img
+                  className="shrink-0 rounded-full self-start size-10 object-cover"
+                  src={business.logoUrl}
+                  alt={business.name}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+              ) : (
+                <div className="shrink-0 rounded-full size-10 bg-muted border border-border flex items-center justify-center self-start">
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {business.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              <div className="space-y-1 flex-1 min-w-0">
+                <p className="text-sm font-semibold leading-tight text-foreground">
+                  {business.name}
+                </p>
+                {business.industryName && (
+                  <p className="text-xs text-primary">
+                    {business.industryName}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground line-clamp-2">
+                  {business.description}
+                </p>
+              </div>
+            </div>
+            <div className="border-t px-3 py-2">
+              <Button size="sm" className="w-full h-8" asChild>
+                <a href={`/b/${business._id}`}>
+                  View vouchers
+                  <ExternalLink className="size-3.5 ml-1.5" />
+                </a>
+              </Button>
+            </div>
+          </div>
+        </MapPopup>
+      )}
+    </>
   );
 }
 
@@ -176,40 +147,20 @@ export function MapInner({
   businesses: Business[];
   scrollWheelZoom: boolean;
 }) {
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    customIconPromise.then(() => setIsReady(true));
-  }, []);
-
-  const center: [number, number] = [50.8236, -0.1435];
-  const zoom = 15;
+  const center: [number, number] = [-0.1435, 50.8236]; // [lng, lat] for MapLibre
 
   return (
     <div className="absolute inset-0">
-      <MapContainer
-        key="map-container"
+      <MapCN
         center={center}
-        zoom={zoom}
-        scrollWheelZoom={scrollWheelZoom}
-        className="h-full w-full z-0"
-        style={{ height: "100%", width: "100%" }}
-        zoomControl={false}
+        zoom={15}
+        theme="dark"
+        scrollZoom={scrollWheelZoom}
       >
-        {isReady && (
-          <>
-            <TileLayer
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            />
-            <MapClickHandler />
-            <MapScrollHandler scrollWheelZoom={scrollWheelZoom} />
-            {businesses.map((business) => (
-              <BusinessMarker key={business._id} business={business} />
-            ))}
-          </>
-        )}
-      </MapContainer>
+        {businesses.map((business) => (
+          <BusinessMarker key={business._id} business={business} />
+        ))}
+      </MapCN>
     </div>
   );
 }

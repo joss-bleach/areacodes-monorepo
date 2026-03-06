@@ -14,7 +14,7 @@
         "VITE_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL",
         "VITE_CONVEX_URL",
         "CONVEX_DEPLOY_KEY",
-        "GEOAPIFY_API_KEY"
+        "GOOGLE_PLACES_API_KEY"
       ]
     },
     "convex:generate": {

@@ -3,13 +3,13 @@ import {
   clerkServerSchema,
   clerkClientSchema,
   convexClientSchema,
-  geoapifyServerSchema,
+  googlePlacesServerSchema,
 } from "@repo/env";
 
 export const env = createEnv({
   server: {
     ...clerkServerSchema,
-    ...geoapifyServerSchema,
+    ...googlePlacesServerSchema,
   },
   clientPrefix: "VITE_",
   client: {

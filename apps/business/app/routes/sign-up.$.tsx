@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { AuthenticateWithRedirectCallback } from "@clerk/tanstack-react-start";
 
-export const Route = createFileRoute("/sign-in/$")({
+export const Route = createFileRoute("/sign-up/$")({
   component: SSOCallback,
 });
 
@@ -12,5 +12,5 @@ function SSOCallback() {
     return <AuthenticateWithRedirectCallback />;
   }
 
-  return <Navigate to="/sign-in" />;
+  return <Navigate to="/sign-up" />;
 }

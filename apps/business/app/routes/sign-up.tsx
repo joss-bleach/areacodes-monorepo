@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useSignIn } from "@clerk/tanstack-react-start";
+import { useSignUp, useSignIn } from "@clerk/tanstack-react-start";
 import { useState } from "react";
 import {
   Button,
@@ -17,8 +17,8 @@ import {
 } from "@repo/ui";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
-export const Route = createFileRoute("/sign-in")({
-  component: SignInPage,
+export const Route = createFileRoute("/sign-up")({
+  component: SignUpPage,
 });
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -44,8 +44,9 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-function SignInPage() {
-  const { isLoaded, signIn, setActive } = useSignIn();
+function SignUpPage() {
+  const { isLoaded, signUp, setActive } = useSignUp();
+  const { signIn } = useSignIn();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -62,13 +63,13 @@ function SignInPage() {
     );
   }
 
-  async function handleGoogleSignIn() {
+  async function handleGoogleSignUp() {
     if (!signIn) return;
     setGoogleLoading(true);
     try {
       await signIn.authenticateWithRedirect({
         strategy: "oauth_google",
-        redirectUrl: "/sign-in/sso-callback",
+        redirectUrl: "/sign-up/sso-callback",
         redirectUrlComplete: "/",
       });
     } catch (err: unknown) {
@@ -78,7 +79,7 @@ function SignInPage() {
       setError(
         clerkError.errors?.[0]?.longMessage ||
           clerkError.errors?.[0]?.message ||
-          "Failed to sign in with Google.",
+          "Failed to sign up with Google.",
       );
       setGoogleLoading(false);
     }
@@ -86,28 +87,13 @@ function SignInPage() {
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!signIn) return;
+    if (!signUp) return;
     setError("");
     setLoading(true);
 
     try {
-      const result = await signIn.create({ identifier: email });
-
-      const emailCodeFactor = result.supportedFirstFactors?.find(
-        (f) => f.strategy === "email_code",
-      );
-
-      if (!emailCodeFactor || !("emailAddressId" in emailCodeFactor)) {
-        setError("Email code sign-in is not available for this account.");
-        setLoading(false);
-        return;
-      }
-
-      await signIn.prepareFirstFactor({
-        strategy: "email_code",
-        emailAddressId: emailCodeFactor.emailAddressId,
-      });
-
+      await signUp.create({ emailAddress: email });
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setStep("code");
     } catch (err: unknown) {
       const clerkError = err as {
@@ -125,15 +111,12 @@ function SignInPage() {
 
   async function handleCodeSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!signIn) return;
+    if (!signUp) return;
     setError("");
     setLoading(true);
 
     try {
-      const result = await signIn.attemptFirstFactor({
-        strategy: "email_code",
-        code,
-      });
+      const result = await signUp.attemptEmailAddressVerification({ code });
 
       if (result.status === "complete" && setActive) {
         await setActive({ session: result.createdSessionId });
@@ -154,20 +137,11 @@ function SignInPage() {
   }
 
   async function handleResendCode() {
-    if (!signIn) return;
+    if (!signUp) return;
     setError("");
 
     try {
-      const emailCodeFactor = signIn.supportedFirstFactors?.find(
-        (f) => f.strategy === "email_code",
-      );
-
-      if (emailCodeFactor && "emailAddressId" in emailCodeFactor) {
-        await signIn.prepareFirstFactor({
-          strategy: "email_code",
-          emailAddressId: emailCodeFactor.emailAddressId,
-        });
-      }
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
     } catch {
       setError("Failed to resend code. Please try again.");
     }
@@ -192,9 +166,9 @@ function SignInPage() {
           {step === "email" ? (
             <form onSubmit={handleEmailSubmit} className="flex flex-col gap-6">
               <CardHeader>
-                <CardTitle className="text-lg">Sign in</CardTitle>
+                <CardTitle className="text-lg">Create an account</CardTitle>
                 <CardDescription>
-                  Sign in to your business dashboard
+                  Get started with your business dashboard
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-5">
@@ -202,7 +176,7 @@ function SignInPage() {
                   type="button"
                   variant="outline"
                   className="w-full rounded-none"
-                  onClick={handleGoogleSignIn}
+                  onClick={handleGoogleSignUp}
                   disabled={googleLoading}
                 >
                   {googleLoading ? (
@@ -254,12 +228,12 @@ function SignInPage() {
                   )}
                 </Button>
                 <p className="text-sm text-muted-foreground text-center">
-                  Don&apos;t have an account?{" "}
+                  Already have an account?{" "}
                   <Link
-                    to="/sign-up"
+                    to="/sign-in"
                     className="text-foreground underline underline-offset-4 hover:text-foreground/80"
                   >
-                    Sign up
+                    Sign in
                   </Link>
                 </p>
               </CardFooter>
@@ -267,7 +241,7 @@ function SignInPage() {
           ) : (
             <form onSubmit={handleCodeSubmit} className="flex flex-col gap-6">
               <CardHeader>
-                <CardTitle className="text-lg">Check your email</CardTitle>
+                <CardTitle className="text-lg">Verify your email</CardTitle>
                 <CardDescription>
                   We sent a 6-digit code to{" "}
                   <span className="text-foreground font-medium">{email}</span>

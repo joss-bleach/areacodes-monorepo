@@ -60,6 +60,26 @@ export const Footer = () => {
           </ul>
         </div>
       </div>
+
+      {/* Bleach credit bar */}
+      <div className="border-t border-white/10 py-4">
+        <div className="mx-auto w-[87.5%] md:w-[692px] lg:w-[980px] flex items-center justify-center gap-2">
+          <span className="text-[11px] text-white/40">Website built by</span>
+          <a
+            href="https://bleach.digital?ref=areacodes"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:opacity-80 transition-opacity focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
+          >
+            <img
+              src="/bleach-logo.svg"
+              alt="Bleach Digital"
+              height={14}
+              className="h-3.5 w-auto"
+            />
+          </a>
+        </div>
+      </div>
     </footer>
   );
 };

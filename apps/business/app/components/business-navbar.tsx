@@ -1,10 +1,11 @@
 import { UserButton } from "@clerk/tanstack-react-start";
-import { Link, useParams } from "@tanstack/react-router";
+import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { Settings } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export const BusinessNavbar = () => {
   const { slug } = useParams({ strict: false }) as { slug?: string };
+  const navigate = useNavigate();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -30,10 +31,10 @@ export const BusinessNavbar = () => {
           <UserButton>
             <UserButton.MenuItems>
               {slug && (
-                <UserButton.Link
+                <UserButton.Action
                   label="Edit business profile"
                   labelIcon={<Settings className="w-4 h-4" />}
-                  href={`/b/${slug}/edit`}
+                  onClick={() => navigate({ to: `/b/$slug/edit`, params: { slug } })}
                 />
               )}
             </UserButton.MenuItems>

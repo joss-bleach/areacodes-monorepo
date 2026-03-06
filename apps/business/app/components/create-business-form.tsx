@@ -121,7 +121,7 @@ export const CreateBusinessForm = () => {
       const response = await fetch("/api/location", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ q: address }),
+        body: JSON.stringify({ mode: "geocode", q: address }),
       });
       if (!response.ok) return null;
       const results = await response.json();
@@ -266,7 +266,6 @@ export const CreateBusinessForm = () => {
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={currentStep}
-                className="min-h-[610px] md:min-h-[501px]"
                 initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: 24 }}
                 animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, x: 0 }}
                 exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, x: -24 }}
@@ -282,7 +281,7 @@ export const CreateBusinessForm = () => {
               </motion.div>
             </AnimatePresence>
           </form>
-          <div className="flex flex-row justify-end items-center gap-4 mt-6 w-full md:w-auto">
+          <div className="flex flex-row justify-end items-center gap-4 mt-4 w-full md:w-auto">
             <Button
               type="button"
               variant="outline"
