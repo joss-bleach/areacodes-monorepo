@@ -16,6 +16,7 @@ type Business = {
   industryName: string | null;
 };
 
+
 type MapInnerComponent = React.ComponentType<{
   businesses: Business[];
   scrollWheelZoom: boolean;
@@ -43,17 +44,19 @@ export const Map = ({
   }, []);
 
   const uniqueBusinesses = useMemo(() => {
-    if (!businesses) return [];
-    return businesses.map((b) => ({
-      _id: b._id,
-      name: b.name,
-      slug: b.slug,
-      description: b.description,
-      latitude: b.latitude,
-      longitude: b.longitude,
-      logoUrl: b.logoUrl,
-      industryName: b.industry?.name ?? null,
-    }));
+    const real = businesses
+      ? businesses.map((b) => ({
+          _id: b._id,
+          name: b.name,
+          slug: b.slug,
+          description: b.description,
+          latitude: b.latitude,
+          longitude: b.longitude,
+          logoUrl: b.logoUrl,
+          industryName: b.industry?.name ?? null,
+        }))
+      : [];
+    return real;
   }, [businesses]);
 
   if (businesses === undefined || !MapInner) {

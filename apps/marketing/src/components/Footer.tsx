@@ -72,10 +72,10 @@ export const Footer = () => {
             className="hover:opacity-80 transition-opacity focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
           >
             <img
-              src="/bleach-logo.svg"
+              src="/bleach-wordmark-white.svg"
               alt="Bleach Digital"
-              height={14}
-              className="h-3.5 w-auto"
+              height={22}
+              className="h-[22px] w-auto"
             />
           </a>
         </div>
