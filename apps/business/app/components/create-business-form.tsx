@@ -139,7 +139,10 @@ export const CreateBusinessForm = () => {
 
   const onSubmit = async (data: FormValues) => {
     if (isSubmitting || isUploadingLogo) return;
-    if (!logoFileRef.current) return;
+    if (!logoFileRef.current) {
+      toast.error("Please select a logo image");
+      return;
+    }
 
     setIsSubmitting(true);
 
