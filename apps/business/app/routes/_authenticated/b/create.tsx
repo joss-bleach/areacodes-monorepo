@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useConvexAuth, useQuery } from "convex/react";
+import { useEffect } from "react";
 import { api } from "@repo/convex";
 import { BusinessNavbar } from "~/components/business-navbar";
 import { CreateBusinessForm } from "~/components/create-business-form";
@@ -17,18 +18,15 @@ function CreatePage() {
     isAuthenticated ? {} : "skip",
   );
 
-  // Still waiting for Convex auth or query result
-  if (business === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-8 w-8 bg-foreground animate-pulse" />
-      </div>
-    );
-  }
-
   // User already has a business — redirect to dashboard
-  if (business !== null) {
-    navigate({ to: "/b/$slug", params: { slug: business.slug } });
+  useEffect(() => {
+    if (business !== undefined && business !== null) {
+      navigate({ to: "/b/$slug", params: { slug: business.slug } });
+    }
+  }, [business, navigate]);
+
+  // Still waiting for Convex auth or query result, or redirecting
+  if (business === undefined || business !== null) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="h-8 w-8 bg-foreground animate-pulse" />

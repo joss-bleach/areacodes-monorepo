@@ -59,6 +59,9 @@ export const VoucherDateRange = ({ control }: VoucherDateRangeProps) => {
                   mode="single"
                   selected={field.value}
                   captionLayout="dropdown"
+                  fromDate={new Date()}
+                  fromYear={new Date().getFullYear()}
+                  toYear={new Date().getFullYear() + 10}
                   onSelect={(date) => {
                     field.onChange(date);
                     setStartDateOpen(false);

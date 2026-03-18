@@ -31,6 +31,26 @@ export function parseAddress(address: string): {
     return { addressLine1, addressLine2, townOrCity, county, postcode };
   }
 
+  if (parts.length === 3) {
+    return {
+      addressLine1: parts[0] || "",
+      addressLine2: "",
+      townOrCity: parts[1] || "",
+      county: "",
+      postcode: parts[2] || "",
+    };
+  }
+
+  if (parts.length === 2) {
+    return {
+      addressLine1: parts[0] || "",
+      addressLine2: "",
+      townOrCity: "",
+      county: "",
+      postcode: parts[1] || "",
+    };
+  }
+
   return {
     addressLine1: address,
     addressLine2: "",
