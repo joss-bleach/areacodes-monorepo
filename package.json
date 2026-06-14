@@ -9,7 +9,8 @@
     "check-types": "turbo run check-types",
     "convex:generate": "turbo run convex:generate",
     "test": "turbo run test --filter=!e2e",
-    "test:e2e": "turbo run test:e2e"
+    "test:e2e": "turbo run test:e2e",
+    "sandcastle": "npx tsx .sandcastle/main.mts"
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
