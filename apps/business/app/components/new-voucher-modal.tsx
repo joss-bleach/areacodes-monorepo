@@ -8,6 +8,7 @@ import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import { useAddVoucher } from "~/hooks/use-add-voucher";
 import { useEditVoucher } from "~/hooks/use-edit-voucher";
+import { useConvexUpload } from "~/hooks/use-convex-upload";
 import {
   Dialog,
   DialogContent,
@@ -55,9 +56,7 @@ export const NewVoucherModal = () => {
       : "skip"
   );
 
-  const generateUploadUrl = useMutation(
-    api.functions.businesses.generateUploadUrl
-  );
+  const { upload } = useConvexUpload();
   const createVoucher = useMutation(api.functions.vouchers.createVoucher);
   const updateVoucher = useMutation(api.functions.vouchers.updateVoucher);
 
@@ -127,20 +126,6 @@ export const NewVoucherModal = () => {
 
   const voucherFormat = form.watch("voucherFormat");
 
-  const uploadVoucherImage = async (
-    file: File
-  ): Promise<Id<"_storage"> | null> => {
-    const uploadUrl = await generateUploadUrl();
-    const uploadResponse = await fetch(uploadUrl, {
-      method: "POST",
-      headers: { "Content-Type": file.type },
-      body: file,
-    });
-    if (!uploadResponse.ok) return null;
-    const { storageId } = await uploadResponse.json();
-    return storageId as Id<"_storage">;
-  };
-
   const onSubmit = async (data: VoucherFormValues) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -169,21 +154,9 @@ export const NewVoucherModal = () => {
       let voucherStorageId: Id<"_storage"> | undefined;
 
       if (data.voucherFormat === "qr-code" && qrFile) {
-        const sid = await uploadVoucherImage(qrFile);
-        if (!sid) {
-          setIsSubmitting(false);
-          toast.error("Failed to upload QR code image");
-          return;
-        }
-        voucherStorageId = sid;
+        voucherStorageId = await upload(qrFile);
       } else if (data.voucherFormat === "barcode" && barcodeFile) {
-        const sid = await uploadVoucherImage(barcodeFile);
-        if (!sid) {
-          setIsSubmitting(false);
-          toast.error("Failed to upload barcode image");
-          return;
-        }
-        voucherStorageId = sid;
+        voucherStorageId = await upload(barcodeFile);
       }
 
       const apiVoucherFormat =

@@ -2,6 +2,7 @@ import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import { isHidden } from "./visibility";
+import { isActiveVoucher } from "../lib/voucher-filters";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
@@ -42,14 +43,7 @@ export const getActiveVouchersByBusiness = query({
     const vouchers = await ctx.db
       .query("vouchers")
       .withIndex("by_business", (q) => q.eq("businessId", businessId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("deletedAt"), undefined),
-          q.eq(q.field("flaggedAt"), undefined),
-          q.lte(q.field("voucherValidFrom"), now),
-          q.gte(q.field("voucherValidTo"), now)
-        )
-      )
+      .filter((q) => isActiveVoucher(q, now))
       .collect();
 
     return await Promise.all(
