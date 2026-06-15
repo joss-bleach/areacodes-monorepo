@@ -24,6 +24,8 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
-    "convex": "^1.17.0"
+    "@areacodes/domain": "*",
+    "convex": "^1.17.0",
+    "effect": "^3.16.0"
   }
 }

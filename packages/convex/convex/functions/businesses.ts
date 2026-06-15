@@ -1,6 +1,13 @@
 import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { Effect, Layer } from "effect";
+import {
+  BusinessRepo,
+  BusinessService,
+  type IBusinessRepo,
+} from "@areacodes/domain";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
@@ -8,12 +15,70 @@ async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   return identity.subject;
 }
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+function makeConvexRepo(ctx: MutationCtx): IBusinessRepo {
+  return {
+    findBySlug: (slug) =>
+      Effect.promise(() =>
+        ctx.db
+          .query("businesses")
+          .withIndex("by_slug", (q) => q.eq("slug", slug))
+          .first(),
+      ),
+    findById: (id) =>
+      Effect.promise(() => ctx.db.get(id as Id<"businesses">)),
+    insert: (data) =>
+      Effect.promise(async () => {
+        const id = await ctx.db.insert("businesses", {
+          userId: data.userId,
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+          websiteUrl: data.websiteUrl,
+          industryId: data.industryId as Id<"industries">,
+          address: data.address,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          logoStorageId: data.logoStorageId as Id<"_storage"> | undefined,
+        });
+        return id as unknown as string;
+      }),
+    patch: (id, data) =>
+      Effect.promise(async () => {
+        await ctx.db.patch(id as Id<"businesses">, {
+          ...(data.name !== undefined ? { name: data.name } : {}),
+          ...(data.slug !== undefined ? { slug: data.slug } : {}),
+          ...(data.description !== undefined ? { description: data.description } : {}),
+          ...(data.websiteUrl !== undefined ? { websiteUrl: data.websiteUrl } : {}),
+          ...(data.industryId !== undefined
+            ? { industryId: data.industryId as Id<"industries"> }
+            : {}),
+          ...(data.address !== undefined ? { address: data.address } : {}),
+          ...(data.latitude !== undefined ? { latitude: data.latitude } : {}),
+          ...(data.longitude !== undefined ? { longitude: data.longitude } : {}),
+          ...(Object.prototype.hasOwnProperty.call(data, "logoStorageId")
+            ? { logoStorageId: data.logoStorageId as Id<"_storage"> | undefined }
+            : {}),
+          ...(data.deletedAt !== undefined ? { deletedAt: data.deletedAt } : {}),
+        });
+      }),
+    findVouchersByBusiness: (businessId) =>
+      Effect.promise(() =>
+        ctx.db
+          .query("vouchers")
+          .withIndex("by_business", (q) =>
+            q.eq("businessId", businessId as Id<"businesses">),
+          )
+          .collect(),
+      ),
+    patchVoucher: (id, data) =>
+      Effect.promise(async () => {
+        await ctx.db.patch(id as Id<"vouchers">, { deletedAt: data.deletedAt });
+      }),
+    deleteStorage: (storageId) =>
+      Effect.promise(async () => {
+        await ctx.storage.delete(storageId as Id<"_storage">);
+      }),
+  };
 }
 
 export const getBusinessByUser = query({
@@ -75,29 +140,14 @@ export const createBusiness = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
-    const baseSlug = slugify(args.name);
+    const repo = makeConvexRepo(ctx);
+    const layer = Layer.succeed(BusinessRepo, repo);
 
-    const existing = await ctx.db
-      .query("businesses")
-      .withIndex("by_slug", (q) => q.eq("slug", baseSlug))
-      .first();
+    const id = await Effect.runPromise(
+      Effect.provide(BusinessService.create(userId, args), layer),
+    );
 
-    const slug = existing ? `${baseSlug}-${Date.now()}` : baseSlug;
-
-    const businessId = await ctx.db.insert("businesses", {
-      userId,
-      name: args.name,
-      slug,
-      description: args.description,
-      websiteUrl: args.websiteUrl,
-      logoStorageId: args.logoStorageId,
-      industryId: args.industryId,
-      address: args.address,
-      latitude: args.latitude,
-      longitude: args.longitude,
-    });
-
-    return await ctx.db.get(businessId);
+    return await ctx.db.get(id as unknown as Id<"businesses">);
   },
 });
 
@@ -115,43 +165,15 @@ export const updateBusiness = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
-    const business = await ctx.db.get(args.businessId);
+    const repo = makeConvexRepo(ctx);
+    const layer = Layer.succeed(BusinessRepo, repo);
 
-    if (!business) throw new Error("Business not found");
-    if (business.userId !== userId) throw new Error("Unauthorized");
-
-    let newSlug = business.slug;
-    if (business.name !== args.name) {
-      const baseSlug = slugify(args.name);
-      const existing = await ctx.db
-        .query("businesses")
-        .withIndex("by_slug", (q) => q.eq("slug", baseSlug))
-        .first();
-      newSlug =
-        existing && existing._id !== args.businessId
-          ? `${baseSlug}-${Date.now()}`
-          : baseSlug;
-    }
-
-    if (
-      business.logoStorageId &&
-      args.logoStorageId &&
-      business.logoStorageId !== args.logoStorageId
-    ) {
-      await ctx.storage.delete(business.logoStorageId);
-    }
-
-    await ctx.db.patch(args.businessId, {
-      name: args.name,
-      slug: newSlug,
-      description: args.description,
-      websiteUrl: args.websiteUrl,
-      industryId: args.industryId,
-      address: args.address,
-      latitude: args.latitude,
-      longitude: args.longitude,
-      logoStorageId: args.logoStorageId,
-    });
+    await Effect.runPromise(
+      Effect.provide(
+        BusinessService.update(userId, args.businessId, args),
+        layer,
+      ),
+    );
 
     return await ctx.db.get(args.businessId);
   },
@@ -161,29 +183,12 @@ export const deleteBusiness = mutation({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, { businessId }) => {
     const userId = await requireAuth(ctx);
-    const business = await ctx.db.get(businessId);
+    const repo = makeConvexRepo(ctx);
+    const layer = Layer.succeed(BusinessRepo, repo);
 
-    if (!business) throw new Error("Business not found");
-    if (business.userId !== userId) throw new Error("Unauthorized");
-
-    const vouchers = await ctx.db
-      .query("vouchers")
-      .withIndex("by_business", (q) => q.eq("businessId", businessId))
-      .collect();
-
-    for (const voucher of vouchers) {
-      if (voucher.voucherStorageId) {
-        await ctx.storage.delete(voucher.voucherStorageId);
-      }
-      await ctx.db.patch(voucher._id, { deletedAt: Date.now() });
-    }
-
-    if (business.logoStorageId) {
-      await ctx.storage.delete(business.logoStorageId);
-    }
-
-    await ctx.db.patch(businessId, { deletedAt: Date.now() });
-    return { success: true };
+    return await Effect.runPromise(
+      Effect.provide(BusinessService.softDelete(userId, businessId), layer),
+    );
   },
 });
 
