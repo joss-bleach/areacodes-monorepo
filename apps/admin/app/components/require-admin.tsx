@@ -11,8 +11,7 @@ export const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  const isAdmin =
-    (session?.user as { role?: string } | undefined)?.role === "admin";
+  const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   if (!isAdmin) {
     return (

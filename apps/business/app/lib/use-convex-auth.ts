@@ -5,7 +5,7 @@ export function useConvexAuth() {
 
   return {
     isLoading: isPending,
-    isAuthenticated: session !== null && session !== undefined,
+    isAuthenticated: session !== null,
     fetchAccessToken: async ({
       forceRefreshToken,
     }: {
