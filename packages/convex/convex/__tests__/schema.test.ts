@@ -115,21 +115,15 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
     const adminT = t.withIdentity({ subject: "admin_1", role: "admin" });
     const ownerT = t.withIdentity({ subject: "owner_1" });
 
-    await t.run(async (ctx) => {
-      await ctx.db.insert("industries", {
+    const industryId = await t.run(async (ctx) =>
+      ctx.db.insert("industries", {
         name: "Food",
         category: "Food & Drink",
         slug: "food",
-      });
-    });
+      })
+    );
 
-    const industryId = (
-      await t.run(async (ctx) =>
-        ctx.db.query("industries").first()
-      )
-    )!._id;
-
-    const businessId = await ownerT.mutation(
+    const created = await ownerT.mutation(
       api.functions.businesses.createBusiness,
       {
         name: "My Cafe",
@@ -143,10 +137,10 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
     );
 
     await adminT.mutation(api.functions.admin.flagBusiness, {
-      businessId: businessId!._id,
+      businessId: created!._id,
     });
 
-    const business = await t.run(async (ctx) => ctx.db.get(businessId!._id));
+    const business = await t.run(async (ctx) => ctx.db.get(created!._id));
     expect(business?.flaggedAt).toBeDefined();
     expect(business?.deletedAt).toBeUndefined();
   });
@@ -156,21 +150,15 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
     const adminT = t.withIdentity({ subject: "admin_1", role: "admin" });
     const ownerT = t.withIdentity({ subject: "owner_1" });
 
-    await t.run(async (ctx) => {
-      await ctx.db.insert("industries", {
+    const industryId = await t.run(async (ctx) =>
+      ctx.db.insert("industries", {
         name: "Retail",
         category: "Shopping",
         slug: "retail",
-      });
-    });
+      })
+    );
 
-    const industryId = (
-      await t.run(async (ctx) =>
-        ctx.db.query("industries").first()
-      )
-    )!._id;
-
-    const businessId = await ownerT.mutation(
+    const created = await ownerT.mutation(
       api.functions.businesses.createBusiness,
       {
         name: "My Shop",
@@ -184,17 +172,17 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
     );
 
     await adminT.mutation(api.functions.admin.flagBusiness, {
-      businessId: businessId!._id,
+      businessId: created!._id,
     });
 
-    let business = await t.run(async (ctx) => ctx.db.get(businessId!._id));
+    let business = await t.run(async (ctx) => ctx.db.get(created!._id));
     expect(business?.flaggedAt).toBeDefined();
 
     await adminT.mutation(api.functions.admin.reinstateBusiness, {
-      businessId: businessId!._id,
+      businessId: created!._id,
     });
 
-    business = await t.run(async (ctx) => ctx.db.get(businessId!._id));
+    business = await t.run(async (ctx) => ctx.db.get(created!._id));
     expect(business?.flaggedAt).toBeUndefined();
   });
 

@@ -1,6 +1,7 @@
 import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { isHidden } from "./visibility";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
@@ -95,20 +96,10 @@ export const getVoucherByIdWithBusiness = query({
   args: { voucherId: v.id("vouchers") },
   handler: async (ctx, { voucherId }) => {
     const voucher = await ctx.db.get(voucherId);
-    if (
-      !voucher ||
-      voucher.deletedAt !== undefined ||
-      voucher.flaggedAt !== undefined
-    )
-      return null;
+    if (!voucher || isHidden(voucher)) return null;
 
     const business = await ctx.db.get(voucher.businessId);
-    if (
-      !business ||
-      business.deletedAt !== undefined ||
-      business.flaggedAt !== undefined
-    )
-      return null;
+    if (!business || isHidden(business)) return null;
 
     const [industry, voucherUrl, logoUrl] = await Promise.all([
       ctx.db.get(business.industryId),

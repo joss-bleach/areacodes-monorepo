@@ -1,5 +1,6 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
+import { isHidden } from "./visibility";
 
 export const getBusinessesWithVouchers = query({
   args: {
@@ -75,12 +76,7 @@ export const getBusinessByIdWithVouchers = query({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, { businessId }) => {
     const business = await ctx.db.get(businessId);
-    if (
-      !business ||
-      business.deletedAt !== undefined ||
-      business.flaggedAt !== undefined
-    )
-      return null;
+    if (!business || isHidden(business)) return null;
 
     const now = Date.now();
     const vouchers = await ctx.db
