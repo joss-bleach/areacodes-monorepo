@@ -49,6 +49,19 @@
         "vite": "^7.3.1",
       },
     },
+    "apps/api": {
+      "name": "@areacodes/api",
+      "version": "0.0.0",
+      "dependencies": {
+        "hono": "^4.7.0",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "*",
+        "@types/node": "^22.15.3",
+        "typescript": "5.9.2",
+        "vitest": "^3.0.0",
+      },
+    },
     "apps/business": {
       "name": "business",
       "version": "0.1.0",
@@ -278,6 +291,8 @@
     "@ai-hero/sandcastle": ["@ai-hero/sandcastle@0.8.0", "", { "dependencies": { "@clack/prompts": "^1.1.0" }, "peerDependencies": { "@daytona/sdk": "^0.164.0", "@vercel/sandbox": ">=1.0.0" }, "optionalPeers": ["@daytona/sdk", "@vercel/sandbox"], "bin": { "sandcastle": "dist/main.js" } }, "sha512-B3uNOfBu46MXB1sh5m08FD4Zg7joUUFMoEzt1QsBi5E/Q69J7PsR4w6xTdxeCIQuHH/z73ogQmInB+3SscD/4g=="],
 
     "@antfu/ni": ["@antfu/ni@25.0.0", "", { "dependencies": { "ansis": "^4.0.0", "fzf": "^0.5.2", "package-manager-detector": "^1.3.0", "tinyexec": "^1.0.1" }, "bin": { "na": "bin/na.mjs", "ni": "bin/ni.mjs", "nr": "bin/nr.mjs", "nci": "bin/nci.mjs", "nlx": "bin/nlx.mjs", "nun": "bin/nun.mjs", "nup": "bin/nup.mjs" } }, "sha512-9q/yCljni37pkMr4sPrI3G4jqdIk074+iukc5aFJl7kmDCCsiJrbZ6zKxnES1Gwg+i9RcDZwvktl23puGslmvA=="],
+
+    "@areacodes/api": ["@areacodes/api@workspace:apps/api"],
 
     "@areacodes/domain": ["@areacodes/domain@workspace:packages/domain"],
 
