@@ -3,7 +3,11 @@ import { useParams } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
-import { voucherStatus, voucherFormatLabel } from "@areacodes/domain";
+import {
+  voucherStatus,
+  voucherFormatLabel,
+  type VoucherStatus,
+} from "@areacodes/domain";
 import {
   Card,
   CardTitle,
@@ -176,7 +180,7 @@ export const VoucherTable = () => {
             ) : (
               vouchers.map((voucher) => {
                 const status = voucherStatus(voucher, Date.now());
-                const statusLabel: Record<typeof status, string> = {
+                const statusLabel: Record<VoucherStatus, string> = {
                   active: "Active",
                   expiring: "Expiring",
                   expired: "Expired",
