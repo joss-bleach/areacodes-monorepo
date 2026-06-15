@@ -1,9 +1,9 @@
-import { useUser } from "@clerk/tanstack-react-start";
+import { authClient } from "~/lib/auth-client";
 
 export const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoaded } = useUser();
+  const { data: session, isPending } = authClient.useSession();
 
-  if (!isLoaded) {
+  if (isPending) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
@@ -11,7 +11,8 @@ export const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  const isAdmin = user?.publicMetadata?.role === "admin";
+  const isAdmin =
+    (session?.user as { role?: string } | undefined)?.role === "admin";
 
   if (!isAdmin) {
     return (
