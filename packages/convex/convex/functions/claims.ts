@@ -31,37 +31,8 @@ function makeConvexVoucherRepo(ctx: QueryCtx | MutationCtx): IVoucherRepo {
   };
 }
 
-function makeConvexClaimRepo(ctx: MutationCtx): IClaimRepo {
-  return {
-    findByCustomerVoucher: (customerId, voucherId) =>
-      Effect.promise(() =>
-        ctx.db
-          .query("claims")
-          .withIndex("by_customer_voucher", (q) =>
-            q.eq("customerId", customerId).eq("voucherId", voucherId as Id<"vouchers">),
-          )
-          .first(),
-      ),
-    findById: (id) =>
-      Effect.promise(() => ctx.db.get(id as Id<"claims">)),
-    findByCustomer: (customerId) =>
-      Effect.promise(() =>
-        ctx.db
-          .query("claims")
-          .filter((q) => q.eq(q.field("customerId"), customerId))
-          .collect(),
-      ),
-    insert: (data) =>
-      Effect.promise(async () => {
-        const id = await ctx.db.insert("claims", {
-          customerId: data.customerId,
-          voucherId: data.voucherId as Id<"vouchers">,
-          claimedAt: data.claimedAt,
-        });
-        return id as unknown as string;
-      }),
-  };
-}
+// The read methods work in both query and mutation contexts; only the mutation
+// repos can insert. Query repos `die` on insert so misuse fails loudly.
 
 function makeConvexClaimQueryRepo(ctx: QueryCtx): IClaimRepo {
   return {
@@ -87,23 +58,15 @@ function makeConvexClaimQueryRepo(ctx: QueryCtx): IClaimRepo {
   };
 }
 
-function makeConvexRevealRepo(ctx: MutationCtx): IRevealRepo {
+function makeConvexClaimRepo(ctx: MutationCtx): IClaimRepo {
   return {
-    findByClaim: (claimId) =>
-      Effect.promise(() =>
-        ctx.db
-          .query("reveals")
-          .withIndex("by_claim", (q) => q.eq("claimId", claimId as Id<"claims">))
-          .order("desc")
-          .first(),
-      ),
+    ...makeConvexClaimQueryRepo(ctx),
     insert: (data) =>
       Effect.promise(async () => {
-        const id = await ctx.db.insert("reveals", {
-          claimId: data.claimId as Id<"claims">,
-          voucherCode: data.voucherCode,
-          revealedAt: data.revealedAt,
-          expiresAt: data.expiresAt,
+        const id = await ctx.db.insert("claims", {
+          customerId: data.customerId,
+          voucherId: data.voucherId as Id<"vouchers">,
+          claimedAt: data.claimedAt,
         });
         return id as unknown as string;
       }),
@@ -121,6 +84,22 @@ function makeConvexRevealQueryRepo(ctx: QueryCtx): IRevealRepo {
           .first(),
       ),
     insert: () => Effect.die("not available in query context"),
+  };
+}
+
+function makeConvexRevealRepo(ctx: MutationCtx): IRevealRepo {
+  return {
+    ...makeConvexRevealQueryRepo(ctx),
+    insert: (data) =>
+      Effect.promise(async () => {
+        const id = await ctx.db.insert("reveals", {
+          claimId: data.claimId as Id<"claims">,
+          voucherCode: data.voucherCode,
+          revealedAt: data.revealedAt,
+          expiresAt: data.expiresAt,
+        });
+        return id as unknown as string;
+      }),
   };
 }
 
