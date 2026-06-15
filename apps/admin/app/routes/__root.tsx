@@ -4,10 +4,9 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { ClerkProvider, useAuth } from "@clerk/tanstack-react-start";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { ConvexReactClient } from "convex/react";
+import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { CookieBanner, Toaster } from "@repo/ui";
+import { useConvexAuth } from "~/lib/use-convex-auth";
 import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(
@@ -38,13 +37,11 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <ClerkProvider>
-        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-          <Outlet />
-          <Toaster />
-          <CookieBanner />
-        </ConvexProviderWithClerk>
-      </ClerkProvider>
+      <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
+        <Outlet />
+        <Toaster />
+        <CookieBanner />
+      </ConvexProviderWithAuth>
     </RootDocument>
   );
 }

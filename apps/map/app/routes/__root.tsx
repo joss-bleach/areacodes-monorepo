@@ -5,9 +5,10 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { ConvexProvider, ConvexReactClient } from "convex/react";
+import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { CookieBanner } from "@repo/ui";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
+import { useConvexAuth } from "~/lib/use-convex-auth";
 import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -78,10 +79,10 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ConvexProvider client={convex}>
+        <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
           <NuqsAdapter>{children}</NuqsAdapter>
           <CookieBanner />
-        </ConvexProvider>
+        </ConvexProviderWithAuth>
         <Scripts />
       </body>
     </html>

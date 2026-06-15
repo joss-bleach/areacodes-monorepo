@@ -1,14 +1,15 @@
 import { z } from "zod";
 
-export const clerkServerSchema = {
-  CLERK_SECRET_KEY: z.string().min(1),
+export const betterAuthServerSchema = {
+  BETTER_AUTH_SECRET: z.string().min(1),
+  BETTER_AUTH_URL: z.string().url(),
+  DATABASE_URL: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
 };
 
-export const clerkClientSchema = {
-  VITE_CLERK_PUBLISHABLE_KEY: z.string().min(1),
-  VITE_CLERK_SIGN_IN_URL: z.string().default("/sign-in"),
-  VITE_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: z.string().default("/"),
-  VITE_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: z.string().default("/"),
+export const betterAuthClientSchema = {
+  VITE_API_URL: z.string().url(),
 };
 
 export const convexClientSchema = {
