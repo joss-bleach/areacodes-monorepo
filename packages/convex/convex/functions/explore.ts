@@ -1,6 +1,7 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 import { isHidden } from "./visibility";
+import { isActiveVoucher } from "../lib/voucher-filters";
 
 export const getBusinessesWithVouchers = query({
   args: {
@@ -30,14 +31,7 @@ export const getBusinessesWithVouchers = query({
           .withIndex("by_business", (q) =>
             q.eq("businessId", business._id)
           )
-          .filter((q) =>
-            q.and(
-              q.eq(q.field("deletedAt"), undefined),
-              q.eq(q.field("flaggedAt"), undefined),
-              q.lte(q.field("voucherValidFrom"), now),
-              q.gte(q.field("voucherValidTo"), now)
-            )
-          )
+          .filter((q) => isActiveVoucher(q, now))
           .collect();
 
         if (vouchers.length === 0) return null;
@@ -82,14 +76,7 @@ export const getBusinessByIdWithVouchers = query({
     const vouchers = await ctx.db
       .query("vouchers")
       .withIndex("by_business", (q) => q.eq("businessId", businessId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("deletedAt"), undefined),
-          q.eq(q.field("flaggedAt"), undefined),
-          q.lte(q.field("voucherValidFrom"), now),
-          q.gte(q.field("voucherValidTo"), now)
-        )
-      )
+      .filter((q) => isActiveVoucher(q, now))
       .collect();
 
     const [industry, logoUrl, vouchersWithUrls] = await Promise.all([

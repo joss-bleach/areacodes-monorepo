@@ -4,6 +4,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
+import { useConvexUpload } from "~/hooks/use-convex-upload";
 import { Button } from "@repo/ui";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { toast } from "sonner";
@@ -45,9 +46,7 @@ export const CreateBusinessForm = () => {
   const [currentStep, setCurrentStep] = useState<StepValue>(STEP_VALUES[0]);
   const shouldReduceMotion = useReducedMotion();
 
-  const generateUploadUrl = useMutation(
-    api.functions.businesses.generateUploadUrl
-  );
+  const { upload } = useConvexUpload();
   const createBusiness = useMutation(api.functions.businesses.createBusiness);
 
   const form = useForm<FormValues>({
@@ -147,21 +146,8 @@ export const CreateBusinessForm = () => {
     setIsSubmitting(true);
 
     try {
-      // Upload logo via Convex file storage
       setIsUploadingLogo(true);
-      const uploadUrl = await generateUploadUrl();
-      const uploadResponse = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": logoFileRef.current.type },
-        body: logoFileRef.current,
-      });
-
-      if (!uploadResponse.ok) {
-        toast.error("Failed to upload logo");
-        return;
-      }
-
-      const { storageId } = await uploadResponse.json();
+      const storageId = await upload(logoFileRef.current);
       setIsUploadingLogo(false);
 
       // Format address
@@ -197,7 +183,7 @@ export const CreateBusinessForm = () => {
         address,
         latitude,
         longitude,
-        logoStorageId: storageId as Id<"_storage">,
+        logoStorageId: storageId,
       });
 
       if (!business) {

@@ -15,6 +15,7 @@ import {
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRef, useState, useEffect } from "react";
+import { useConvexUpload } from "~/hooks/use-convex-upload";
 import { BusinessInformationStep } from "~/components/form-steps/business-information-step";
 import { BusinessLocationStep } from "~/components/form-steps/business-location-step";
 import { BusinessImageStep } from "~/components/form-steps/business-image-step";
@@ -34,9 +35,7 @@ export const EditBusinessForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const business = useQuery(api.functions.businesses.getBusinessBySlug, { slug });
-  const generateUploadUrl = useMutation(
-    api.functions.businesses.generateUploadUrl
-  );
+  const { upload } = useConvexUpload();
   const updateBusiness = useMutation(api.functions.businesses.updateBusiness);
 
   const form = useForm<FormValues>({
@@ -98,20 +97,7 @@ export const EditBusinessForm = () => {
 
       if (logoFileRef.current) {
         setIsUploadingLogo(true);
-        const uploadUrl = await generateUploadUrl();
-        const uploadResponse = await fetch(uploadUrl, {
-          method: "POST",
-          headers: { "Content-Type": logoFileRef.current.type },
-          body: logoFileRef.current,
-        });
-
-        if (!uploadResponse.ok) {
-          toast.error("Failed to upload logo");
-          return;
-        }
-
-        const { storageId } = await uploadResponse.json();
-        logoStorageId = storageId as Id<"_storage">;
+        logoStorageId = await upload(logoFileRef.current);
         setIsUploadingLogo(false);
       }
 
