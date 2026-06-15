@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@repo/convex";
 import { VoucherNavbar } from "~/components/voucher-navbar";
 import {
@@ -14,6 +14,8 @@ import {
 } from "@repo/ui";
 import { BoundaryAlert } from "~/components/boundary-alert";
 import type { Id } from "@repo/convex";
+import { authClient } from "~/lib/auth-client";
+import { useState } from "react";
 
 export const Route = createFileRoute("/v/$id")({
   component: VoucherView,
@@ -21,9 +23,36 @@ export const Route = createFileRoute("/v/$id")({
 
 function VoucherView() {
   const { id } = Route.useParams();
+  const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
+  const [claiming, setClaiming] = useState(false);
+  const [claimError, setClaimError] = useState("");
+
   const voucher = useQuery(api.functions.vouchers.getVoucherByIdWithBusiness, {
     voucherId: id as Id<"vouchers">,
   });
+  const existingClaim = useQuery(
+    api.functions.claims.getClaimForVoucher,
+    session ? { voucherId: id as Id<"vouchers"> } : "skip",
+  );
+  const claimVoucher = useMutation(api.functions.claims.claimVoucher);
+
+  const handleClaim = async () => {
+    if (!session) {
+      navigate({ to: `/sign-in?redirect=/v/${id}` as "/" });
+      return;
+    }
+    setClaiming(true);
+    setClaimError("");
+    try {
+      await claimVoucher({ voucherId: id as Id<"vouchers"> });
+      navigate({ to: "/wallet" });
+    } catch (err) {
+      setClaimError(err instanceof Error ? err.message : "Failed to claim voucher.");
+    } finally {
+      setClaiming(false);
+    }
+  };
 
   const formatDate = (timestamp: number) => {
     return new Date(timestamp).toLocaleDateString("en-GB", {
@@ -164,6 +193,32 @@ function VoucherView() {
           <div className="text-sm text-muted-foreground mb-6">
             <p>Valid from: {formatDate(voucher.voucherValidFrom)}</p>
             <p>Valid until: {formatDate(voucher.voucherValidTo)}</p>
+          </div>
+
+          {/* Claim Button */}
+          <div className="mb-6">
+            {existingClaim ? (
+              <Link
+                to="/wallet"
+                className="block w-full text-center rounded-md bg-foreground text-background px-4 py-2.5 text-sm font-medium hover:bg-foreground/90"
+              >
+                View in Wallet
+              </Link>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleClaim}
+                  disabled={claiming}
+                  className="w-full rounded-md bg-foreground text-background px-4 py-2.5 text-sm font-medium hover:bg-foreground/90 disabled:opacity-50"
+                >
+                  {claiming ? "Claiming..." : "Claim Voucher"}
+                </button>
+                {claimError && (
+                  <p className="mt-2 text-sm text-red-500">{claimError}</p>
+                )}
+              </>
+            )}
           </div>
 
           {/* Business Card */}

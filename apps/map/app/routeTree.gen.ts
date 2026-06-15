@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as VIdRouteImport } from './routes/v/$id'
 import { Route as BIdRouteImport } from './routes/b/$id'
 
@@ -30,6 +31,11 @@ const SignUpRoute = SignUpRouteImport.update({
   path: '/sign-up',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VIdRoute = VIdRouteImport.update({
   id: '/v/$id',
   path: '/v/$id',
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/wallet': typeof WalletRoute
   '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/wallet': typeof WalletRoute
   '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
@@ -60,21 +68,23 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
+  '/wallet': typeof WalletRoute
   '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/sign-up' | '/b/$id' | '/v/$id'
+  fullPaths: '/' | '/sign-in' | '/sign-up' | '/wallet' | '/b/$id' | '/v/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/sign-up' | '/b/$id' | '/v/$id'
-  id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/b/$id' | '/v/$id'
+  to: '/' | '/sign-in' | '/sign-up' | '/wallet' | '/b/$id' | '/v/$id'
+  id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/wallet' | '/b/$id' | '/v/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
+  WalletRoute: typeof WalletRoute
   BIdRoute: typeof BIdRoute
   VIdRoute: typeof VIdRoute
 }
@@ -102,6 +112,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignUpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/v/$id': {
       id: '/v/$id'
       path: '/v/$id'
@@ -123,6 +140,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
+  WalletRoute: WalletRoute,
   BIdRoute: BIdRoute,
   VIdRoute: VIdRoute,
 }

@@ -14,11 +14,22 @@ export {
 export * as VoucherService from "./voucher-service.js";
 export {
   VoucherRepo,
+  ClaimRepo,
+  RevealRepo,
   type BusinessRef,
   type VoucherDoc as VoucherServiceDoc,
   type CreateVoucherArgs,
   type UpdateVoucherArgs,
   type IVoucherRepo,
+  type ClaimDoc,
+  type RevealDoc,
+  type IClaimRepo,
+  type IRevealRepo,
+  type WalletEntry,
+  type WalletEntryState,
+  VoucherExpired,
+  AlreadyRevealed,
+  ClaimNotFound,
 } from "./voucher-service.js";
 export {
   voucherStatus,

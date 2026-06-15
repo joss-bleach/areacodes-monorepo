@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useState } from "react";
 import { authClient } from "~/lib/auth-client";
 
@@ -31,6 +31,8 @@ function GoogleIcon({ className }: { className?: string }) {
 
 function SignInPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirect = new URLSearchParams(location.search).get("redirect") ?? undefined;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -42,7 +44,7 @@ function SignInPage() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: redirect ?? "/",
       });
     } catch {
       setError("Failed to sign in with Google.");
@@ -65,7 +67,7 @@ function SignInPage() {
       if (signInError) {
         setError(signInError.message ?? "Something went wrong. Please try again.");
       } else {
-        navigate({ to: "/" });
+        navigate({ to: (redirect ?? "/") as "/" });
       }
     } catch {
       setError("Something went wrong. Please try again.");
