@@ -35,7 +35,7 @@ import { toast } from "sonner";
 type ConvexVoucher = {
   _id: Id<"vouchers">;
   _creationTime: number;
-  clerkUserId: string;
+  userId: string;
   businessId: Id<"businesses">;
   title: string;
   description: string;

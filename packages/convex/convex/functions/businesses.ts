@@ -16,15 +16,15 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-export const getBusinessByClerkUser = query({
+export const getBusinessByUser = query({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) return null;
-    const clerkUserId = identity.subject;
+    const userId = identity.subject;
     const business = await ctx.db
       .query("businesses")
-      .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .filter((q) => q.eq(q.field("deletedAt"), undefined))
       .first();
 
@@ -44,7 +44,12 @@ export const getBusinessBySlug = query({
     const business = await ctx.db
       .query("businesses")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("deletedAt"), undefined),
+          q.eq(q.field("flaggedAt"), undefined)
+        )
+      )
       .first();
 
     if (!business) return null;
@@ -69,7 +74,7 @@ export const createBusiness = mutation({
     logoStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    const userId = await requireAuth(ctx);
     const baseSlug = slugify(args.name);
 
     const existing = await ctx.db
@@ -80,7 +85,7 @@ export const createBusiness = mutation({
     const slug = existing ? `${baseSlug}-${Date.now()}` : baseSlug;
 
     const businessId = await ctx.db.insert("businesses", {
-      clerkUserId,
+      userId,
       name: args.name,
       slug,
       description: args.description,
@@ -109,11 +114,11 @@ export const updateBusiness = mutation({
     logoStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    const userId = await requireAuth(ctx);
     const business = await ctx.db.get(args.businessId);
 
     if (!business) throw new Error("Business not found");
-    if (business.clerkUserId !== clerkUserId) throw new Error("Unauthorized");
+    if (business.userId !== userId) throw new Error("Unauthorized");
 
     let newSlug = business.slug;
     if (business.name !== args.name) {
@@ -155,11 +160,11 @@ export const updateBusiness = mutation({
 export const deleteBusiness = mutation({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, { businessId }) => {
-    const clerkUserId = await requireAuth(ctx);
+    const userId = await requireAuth(ctx);
     const business = await ctx.db.get(businessId);
 
     if (!business) throw new Error("Business not found");
-    if (business.clerkUserId !== clerkUserId) throw new Error("Unauthorized");
+    if (business.userId !== userId) throw new Error("Unauthorized");
 
     const vouchers = await ctx.db
       .query("vouchers")

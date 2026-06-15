@@ -82,7 +82,7 @@ function AuditLogList() {
                     <p className="text-xs text-muted-foreground">{entry.notes}</p>
                   )}
                   <p className="text-xs text-muted-foreground font-mono">
-                    by {entry.adminClerkUserId}
+                    by {entry.userId}
                   </p>
                 </div>
                 <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">

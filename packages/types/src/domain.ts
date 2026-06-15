@@ -8,7 +8,7 @@ export interface Industry {
 
 export interface Business {
   _id: string;
-  clerkUserId: string;
+  userId: string;
   name: string;
   slug: string;
   description: string;
@@ -20,13 +20,14 @@ export interface Business {
   latitude: number;
   longitude: number;
   deletedAt?: number;
+  flaggedAt?: number;
   _creationTime: number;
 }
 
 export interface Voucher {
   _id: string;
   businessId: string;
-  clerkUserId: string;
+  userId: string;
   title: string;
   description: string;
   voucherFormat: "barcode" | "qr_code" | "generated_text";
@@ -37,6 +38,7 @@ export interface Voucher {
   voucherValidFrom: number;
   voucherValidTo: number;
   deletedAt?: number;
+  flaggedAt?: number;
   _creationTime: number;
 }
 

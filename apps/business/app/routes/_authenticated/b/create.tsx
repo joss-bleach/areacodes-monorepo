@@ -14,7 +14,7 @@ function CreatePage() {
   const navigate = useNavigate();
 
   const business = useQuery(
-    api.functions.businesses.getBusinessByClerkUser,
+    api.functions.businesses.getBusinessByUser,
     isAuthenticated ? {} : "skip",
   );
 

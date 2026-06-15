@@ -10,7 +10,12 @@ export const getBusinessesWithVouchers = query({
 
     const businesses = await ctx.db
       .query("businesses")
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("deletedAt"), undefined),
+          q.eq(q.field("flaggedAt"), undefined)
+        )
+      )
       .collect();
 
     const filtered = industryId
@@ -27,6 +32,7 @@ export const getBusinessesWithVouchers = query({
           .filter((q) =>
             q.and(
               q.eq(q.field("deletedAt"), undefined),
+              q.eq(q.field("flaggedAt"), undefined),
               q.lte(q.field("voucherValidFrom"), now),
               q.gte(q.field("voucherValidTo"), now)
             )
@@ -69,7 +75,12 @@ export const getBusinessByIdWithVouchers = query({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, { businessId }) => {
     const business = await ctx.db.get(businessId);
-    if (!business || business.deletedAt !== undefined) return null;
+    if (
+      !business ||
+      business.deletedAt !== undefined ||
+      business.flaggedAt !== undefined
+    )
+      return null;
 
     const now = Date.now();
     const vouchers = await ctx.db
@@ -78,6 +89,7 @@ export const getBusinessByIdWithVouchers = query({
       .filter((q) =>
         q.and(
           q.eq(q.field("deletedAt"), undefined),
+          q.eq(q.field("flaggedAt"), undefined),
           q.lte(q.field("voucherValidFrom"), now),
           q.gte(q.field("voucherValidTo"), now)
         )

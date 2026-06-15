@@ -11,7 +11,7 @@ export default defineSchema({
     .index("by_category", ["category"]),
 
   businesses: defineTable({
-    clerkUserId: v.string(),
+    userId: v.string(),
     name: v.string(),
     slug: v.string(),
     description: v.string(),
@@ -22,14 +22,15 @@ export default defineSchema({
     latitude: v.number(),
     longitude: v.number(),
     deletedAt: v.optional(v.number()),
+    flaggedAt: v.optional(v.number()),
   })
-    .index("by_clerk_user", ["clerkUserId"])
+    .index("by_user", ["userId"])
     .index("by_slug", ["slug"])
     .index("by_industry", ["industryId"]),
 
   vouchers: defineTable({
     businessId: v.id("businesses"),
-    clerkUserId: v.string(),
+    userId: v.string(),
     title: v.string(),
     description: v.string(),
     voucherFormat: v.union(
@@ -43,17 +44,51 @@ export default defineSchema({
     voucherValidFrom: v.number(),
     voucherValidTo: v.number(),
     deletedAt: v.optional(v.number()),
+    flaggedAt: v.optional(v.number()),
   })
     .index("by_business", ["businessId"])
-    .index("by_clerk_user", ["clerkUserId"])
+    .index("by_user", ["userId"])
     .index("by_valid_to", ["voucherValidTo"]),
 
   auditLog: defineTable({
-    adminClerkUserId: v.string(),
+    userId: v.string(),
     action: v.string(),
     targetType: v.string(),
     targetId: v.string(),
     notes: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_created", ["createdAt"]),
+
+  claims: defineTable({
+    customerId: v.string(),
+    voucherId: v.id("vouchers"),
+    claimedAt: v.number(),
+  }).index("by_customer_voucher", ["customerId", "voucherId"]),
+
+  reveals: defineTable({
+    claimId: v.id("claims"),
+    voucherCode: v.string(),
+    revealedAt: v.number(),
+    expiresAt: v.number(),
+    redeemedAt: v.optional(v.number()),
+  }).index("by_claim", ["claimId"]),
+
+  posConnections: defineTable({
+    businessId: v.id("businesses"),
+    provider: v.union(v.literal("square"), v.literal("zettle")),
+    credentials: v.string(),
+    connectedAt: v.number(),
+  }),
+
+  subscriptions: defineTable({
+    businessId: v.id("businesses"),
+    stripeCustomerId: v.string(),
+    stripeSubscriptionId: v.string(),
+    status: v.string(),
+    trialEnd: v.optional(v.number()),
+    currentPeriodEnd: v.number(),
+    priceId: v.string(),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_stripe_customer", ["stripeCustomerId"]),
 });

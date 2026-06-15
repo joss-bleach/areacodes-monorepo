@@ -5,7 +5,7 @@ import type { MutationCtx, QueryCtx } from "../_generated/server";
 async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-  // role stored as Clerk public metadata custom claim
+  // role stored as custom claim on the auth token
   if ((identity as { role?: string }).role !== "admin")
     throw new Error("Forbidden: Admin only");
   return identity.subject;
@@ -63,15 +63,40 @@ export const flagBusiness = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { businessId, notes }) => {
-    const adminClerkUserId = await requireAdmin(ctx);
+    const userId = await requireAdmin(ctx);
     const business = await ctx.db.get(businessId);
     if (!business) throw new Error("Business not found");
 
-    await ctx.db.patch(businessId, { deletedAt: Date.now() });
+    await ctx.db.patch(businessId, { flaggedAt: Date.now() });
 
     await ctx.db.insert("auditLog", {
-      adminClerkUserId,
+      userId,
       action: "flag_business",
+      targetType: "business",
+      targetId: businessId,
+      notes,
+      createdAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+export const reinstateBusiness = mutation({
+  args: {
+    businessId: v.id("businesses"),
+    notes: v.optional(v.string()),
+  },
+  handler: async (ctx, { businessId, notes }) => {
+    const userId = await requireAdmin(ctx);
+    const business = await ctx.db.get(businessId);
+    if (!business) throw new Error("Business not found");
+
+    await ctx.db.patch(businessId, { flaggedAt: undefined });
+
+    await ctx.db.insert("auditLog", {
+      userId,
+      action: "reinstate_business",
       targetType: "business",
       targetId: businessId,
       notes,
@@ -88,18 +113,14 @@ export const removeVoucher = mutation({
     notes: v.optional(v.string()),
   },
   handler: async (ctx, { voucherId, notes }) => {
-    const adminClerkUserId = await requireAdmin(ctx);
+    const userId = await requireAdmin(ctx);
     const voucher = await ctx.db.get(voucherId);
     if (!voucher) throw new Error("Voucher not found");
 
-    if (voucher.voucherStorageId) {
-      await ctx.storage.delete(voucher.voucherStorageId);
-    }
-
-    await ctx.db.patch(voucherId, { deletedAt: Date.now() });
+    await ctx.db.patch(voucherId, { flaggedAt: Date.now() });
 
     await ctx.db.insert("auditLog", {
-      adminClerkUserId,
+      userId,
       action: "remove_voucher",
       targetType: "voucher",
       targetId: voucherId,

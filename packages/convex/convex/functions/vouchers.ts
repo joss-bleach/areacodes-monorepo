@@ -15,7 +15,12 @@ export const getVouchersByBusiness = query({
     const vouchers = await ctx.db
       .query("vouchers")
       .withIndex("by_business", (q) => q.eq("businessId", businessId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("deletedAt"), undefined),
+          q.eq(q.field("flaggedAt"), undefined)
+        )
+      )
       .collect();
 
     return await Promise.all(
@@ -39,6 +44,7 @@ export const getActiveVouchersByBusiness = query({
       .filter((q) =>
         q.and(
           q.eq(q.field("deletedAt"), undefined),
+          q.eq(q.field("flaggedAt"), undefined),
           q.lte(q.field("voucherValidFrom"), now),
           q.gte(q.field("voucherValidTo"), now)
         )
@@ -67,6 +73,7 @@ export const getExpiringVouchersByBusiness = query({
       .filter((q) =>
         q.and(
           q.eq(q.field("deletedAt"), undefined),
+          q.eq(q.field("flaggedAt"), undefined),
           q.gte(q.field("voucherValidTo"), now),
           q.lte(q.field("voucherValidTo"), thirtyDaysFromNow)
         )
@@ -88,10 +95,20 @@ export const getVoucherByIdWithBusiness = query({
   args: { voucherId: v.id("vouchers") },
   handler: async (ctx, { voucherId }) => {
     const voucher = await ctx.db.get(voucherId);
-    if (!voucher || voucher.deletedAt !== undefined) return null;
+    if (
+      !voucher ||
+      voucher.deletedAt !== undefined ||
+      voucher.flaggedAt !== undefined
+    )
+      return null;
 
     const business = await ctx.db.get(voucher.businessId);
-    if (!business || business.deletedAt !== undefined) return null;
+    if (
+      !business ||
+      business.deletedAt !== undefined ||
+      business.flaggedAt !== undefined
+    )
+      return null;
 
     const [industry, voucherUrl, logoUrl] = await Promise.all([
       ctx.db.get(business.industryId),
@@ -128,15 +145,15 @@ export const createVoucher = mutation({
     voucherValidTo: v.number(),
   },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    const userId = await requireAuth(ctx);
 
     const business = await ctx.db.get(args.businessId);
     if (!business) throw new Error("Business not found");
-    if (business.clerkUserId !== clerkUserId) throw new Error("Unauthorized");
+    if (business.userId !== userId) throw new Error("Unauthorized");
 
     const voucherId = await ctx.db.insert("vouchers", {
       ...args,
-      clerkUserId,
+      userId,
     });
     return await ctx.db.get(voucherId);
   },
@@ -159,11 +176,11 @@ export const updateVoucher = mutation({
     voucherValidTo: v.number(),
   },
   handler: async (ctx, args) => {
-    const clerkUserId = await requireAuth(ctx);
+    const userId = await requireAuth(ctx);
     const voucher = await ctx.db.get(args.voucherId);
 
     if (!voucher) throw new Error("Voucher not found");
-    if (voucher.clerkUserId !== clerkUserId) throw new Error("Unauthorized");
+    if (voucher.userId !== userId) throw new Error("Unauthorized");
 
     const { voucherId, ...updates } = args;
 
@@ -183,11 +200,11 @@ export const updateVoucher = mutation({
 export const deleteVoucher = mutation({
   args: { voucherId: v.id("vouchers") },
   handler: async (ctx, { voucherId }) => {
-    const clerkUserId = await requireAuth(ctx);
+    const userId = await requireAuth(ctx);
     const voucher = await ctx.db.get(voucherId);
 
     if (!voucher) throw new Error("Voucher not found");
-    if (voucher.clerkUserId !== clerkUserId) throw new Error("Unauthorized");
+    if (voucher.userId !== userId) throw new Error("Unauthorized");
 
     if (voucher.voucherStorageId) {
       await ctx.storage.delete(voucher.voucherStorageId);
