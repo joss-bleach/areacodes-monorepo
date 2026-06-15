@@ -78,7 +78,6 @@ const existingBusiness = (overrides: Partial<BusinessDoc> = {}): BusinessDoc => 
   ...overrides,
 });
 
-// RED: test create happy path
 describe("BusinessService.create", () => {
   test("happy path: creates business with correct slug", async () => {
     const { layer, businesses } = makeTestRepo({});
@@ -111,7 +110,6 @@ describe("BusinessService.create", () => {
   });
 });
 
-// RED: test update authorization and re-slug behaviour
 describe("BusinessService.update", () => {
   test("re-slugs when name changes", async () => {
     const { layer, businesses } = makeTestRepo({
@@ -186,7 +184,6 @@ describe("BusinessService.update", () => {
   });
 });
 
-// RED: test softDelete cascade and NotFound
 describe("BusinessService.softDelete", () => {
   test("cascades soft-delete to associated vouchers", async () => {
     const { layer, businesses, vouchers } = makeTestRepo({

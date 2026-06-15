@@ -1,4 +1,4 @@
-import { Context, Data, Effect, Layer } from "effect";
+import { Context, Data, Effect } from "effect";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -173,6 +173,3 @@ export const softDelete = (
     yield* repo.patch(businessId, { deletedAt: Date.now() });
     return { success: true };
   });
-
-// Re-export Layer for convenience in adapters
-export { Layer };
