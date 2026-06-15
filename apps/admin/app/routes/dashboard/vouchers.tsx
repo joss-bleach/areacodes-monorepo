@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
+import { voucherFormatLabel } from "@areacodes/domain";
 import type { Id } from "@repo/convex";
 import {
   Card,
@@ -71,19 +72,6 @@ function VouchersList() {
     return <VouchersListLoading />;
   }
 
-  const getFormatLabel = (format: string) => {
-    switch (format) {
-      case "barcode":
-        return "Barcode";
-      case "qr_code":
-        return "QR Code";
-      case "generated_text":
-        return "Text";
-      default:
-        return format;
-    }
-  };
-
   return (
     <>
       <Card className="rounded-none border-none">
@@ -142,7 +130,7 @@ function VouchersList() {
                         {voucher.business?.name ?? "—"}
                       </td>
                       <td className="py-4 px-4 text-sm text-muted-foreground">
-                        {getFormatLabel(voucher.voucherFormat)}
+                        {voucherFormatLabel(voucher.voucherFormat)}
                       </td>
                       <td className="py-4 px-4 text-sm text-muted-foreground">
                         {new Date(voucher.voucherValidTo).toLocaleDateString()}

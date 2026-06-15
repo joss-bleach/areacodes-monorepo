@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@clerk/tanstack-react-start": "^0.29.6",
+    "@areacodes/domain": "workspace:*",
     "@repo/convex": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/ui": "workspace:*",

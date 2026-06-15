@@ -13,6 +13,7 @@
   "dependencies": {
     "@clerk/tanstack-react-start": "^0.29.6",
     "@hookform/resolvers": "^5.2.2",
+    "@areacodes/domain": "workspace:*",
     "@repo/convex": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/types": "workspace:*",

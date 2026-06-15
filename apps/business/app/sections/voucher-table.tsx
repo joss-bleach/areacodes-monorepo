@@ -3,6 +3,7 @@ import { useParams } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
+import { voucherStatus, voucherFormatLabel } from "@areacodes/domain";
 import {
   Card,
   CardTitle,
@@ -49,48 +50,6 @@ type ConvexVoucher = {
   voucherUrl: string | null;
 };
 
-const getVoucherStatus = (
-  validFrom: number,
-  validTo: number
-): "active" | "inactive" => {
-  const now = new Date();
-  const from = new Date(validFrom);
-  const to = new Date(validTo);
-
-  now.setHours(0, 0, 0, 0);
-  from.setHours(0, 0, 0, 0);
-  to.setHours(0, 0, 0, 0);
-
-  if (now < from || now > to) return "inactive";
-  return "active";
-};
-
-const getStatusDisplay = (validFrom: number, validTo: number): string => {
-  const now = new Date();
-  const from = new Date(validFrom);
-  const to = new Date(validTo);
-
-  now.setHours(0, 0, 0, 0);
-  from.setHours(0, 0, 0, 0);
-  to.setHours(0, 0, 0, 0);
-
-  if (now < from) return `Active from ${from.toLocaleDateString()}`;
-  if (now > to) return "Expired";
-  return "Active";
-};
-
-const getFormatLabel = (format: string) => {
-  switch (format) {
-    case "barcode":
-      return "Barcode";
-    case "qr_code":
-      return "QR Code";
-    case "generated_text":
-      return "Text";
-    default:
-      return format;
-  }
-};
 
 const VoucherActionsDropdown = ({ voucher }: { voucher: ConvexVoucher }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -216,10 +175,13 @@ export const VoucherTable = () => {
               </TableRow>
             ) : (
               vouchers.map((voucher) => {
-                const status = getVoucherStatus(
-                  voucher.voucherValidFrom,
-                  voucher.voucherValidTo
-                );
+                const status = voucherStatus(voucher, Date.now());
+                const statusLabel: Record<typeof status, string> = {
+                  active: "Active",
+                  expiring: "Expiring",
+                  expired: "Expired",
+                  scheduled: `Active from ${new Date(voucher.voucherValidFrom).toLocaleDateString()}`,
+                };
                 return (
                   <TableRow key={voucher._id}>
                     <TableCell className="text-sm font-medium">
@@ -229,19 +191,20 @@ export const VoucherTable = () => {
                       {voucher.description}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {getFormatLabel(voucher.voucherFormat)}
+                      {voucherFormatLabel(voucher.voucherFormat)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(voucher.voucherValidTo).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
                       <Badge
-                        variant={status === "active" ? "default" : "secondary"}
+                        variant={
+                          status === "active" || status === "expiring"
+                            ? "default"
+                            : "secondary"
+                        }
                       >
-                        {getStatusDisplay(
-                          voucher.voucherValidFrom,
-                          voucher.voucherValidTo
-                        )}
+                        {statusLabel[status]}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
