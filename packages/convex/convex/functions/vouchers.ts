@@ -66,7 +66,12 @@ export const getExpiringVouchersByBusiness = query({
       .query("vouchers")
       .withIndex("by_business", (q) => q.eq("businessId", businessId))
       .filter((q) =>
-        q.and(isActiveVoucher(q, now), q.lte(q.field("voucherValidTo"), thirtyDaysFromNow))
+        q.and(
+          q.eq(q.field("deletedAt"), undefined),
+          q.eq(q.field("flaggedAt"), undefined),
+          q.gte(q.field("voucherValidTo"), now),
+          q.lte(q.field("voucherValidTo"), thirtyDaysFromNow)
+        )
       )
       .collect();
 

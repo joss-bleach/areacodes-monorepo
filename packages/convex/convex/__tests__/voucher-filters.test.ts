@@ -201,4 +201,26 @@ describe("isActiveVoucher filter — getExpiringVouchersByBusiness", () => {
     const result = await t.query(api.functions.vouchers.getExpiringVouchersByBusiness, { businessId });
     expect(result).toHaveLength(0);
   });
+
+  test("includes not-yet-started vouchers expiring within 30 days", async () => {
+    const t = convexTest(schema, modules);
+    const businessId = await t.run(seedBusiness);
+    const now = Date.now();
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("vouchers", {
+        businessId,
+        userId: "user_vf",
+        title: "Scheduled Expiring",
+        description: "Starts soon, expires within 30 days",
+        voucherFormat: "generated_text",
+        voucherValidFrom: now + 10_000,
+        voucherValidTo: now + 20 * 24 * 60 * 60 * 1000,
+      });
+    });
+
+    const result = await t.query(api.functions.vouchers.getExpiringVouchersByBusiness, { businessId });
+    expect(result).toHaveLength(1);
+    expect(result[0]!.title).toBe("Scheduled Expiring");
+  });
 });
