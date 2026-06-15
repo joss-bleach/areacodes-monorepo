@@ -1,6 +1,9 @@
 import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import type { Id } from "../_generated/dataModel";
+import { Effect, Layer } from "effect";
+import { VoucherRepo, VoucherService, type IVoucherRepo } from "@areacodes/domain";
 import { isHidden } from "./visibility";
 import { isActiveVoucher } from "../lib/voucher-filters";
 
@@ -8,6 +11,55 @@ async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
   return identity.subject;
+}
+
+function makeConvexRepo(ctx: MutationCtx): IVoucherRepo {
+  return {
+    findBusiness: (id) =>
+      Effect.promise(() => ctx.db.get(id as Id<"businesses">)),
+    findById: (id) =>
+      Effect.promise(() => ctx.db.get(id as Id<"vouchers">)),
+    insert: (data) =>
+      Effect.promise(async () => {
+        const id = await ctx.db.insert("vouchers", {
+          businessId: data.businessId as Id<"businesses">,
+          userId: data.userId,
+          title: data.title,
+          description: data.description,
+          voucherFormat: data.voucherFormat,
+          voucherStorageId: data.voucherStorageId as Id<"_storage"> | undefined,
+          voucherGenCode: data.voucherGenCode,
+          voucherTerms: data.voucherTerms,
+          voucherValidFrom: data.voucherValidFrom,
+          voucherValidTo: data.voucherValidTo,
+        });
+        return id as unknown as string;
+      }),
+    patch: (id, data) =>
+      Effect.promise(async () => {
+        await ctx.db.patch(id as Id<"vouchers">, {
+          ...(data.title !== undefined ? { title: data.title } : {}),
+          ...(data.description !== undefined ? { description: data.description } : {}),
+          ...(data.voucherFormat !== undefined ? { voucherFormat: data.voucherFormat } : {}),
+          ...(Object.prototype.hasOwnProperty.call(data, "voucherStorageId")
+            ? { voucherStorageId: data.voucherStorageId as Id<"_storage"> | undefined }
+            : {}),
+          ...(Object.prototype.hasOwnProperty.call(data, "voucherGenCode")
+            ? { voucherGenCode: data.voucherGenCode }
+            : {}),
+          ...(Object.prototype.hasOwnProperty.call(data, "voucherTerms")
+            ? { voucherTerms: data.voucherTerms }
+            : {}),
+          ...(data.voucherValidFrom !== undefined ? { voucherValidFrom: data.voucherValidFrom } : {}),
+          ...(data.voucherValidTo !== undefined ? { voucherValidTo: data.voucherValidTo } : {}),
+          ...(data.deletedAt !== undefined ? { deletedAt: data.deletedAt } : {}),
+        });
+      }),
+    deleteStorage: (storageId) =>
+      Effect.promise(async () => {
+        await ctx.storage.delete(storageId as Id<"_storage">);
+      }),
+  };
 }
 
 export const getVouchersByBusiness = query({
@@ -131,16 +183,15 @@ export const createVoucher = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
+    const repo = makeConvexRepo(ctx);
+    const layer = Layer.succeed(VoucherRepo, repo);
 
-    const business = await ctx.db.get(args.businessId);
-    if (!business) throw new Error("Business not found");
-    if (business.userId !== userId) throw new Error("Unauthorized");
+    const { businessId, ...voucherArgs } = args;
+    const voucherId = await Effect.runPromise(
+      Effect.provide(VoucherService.create(userId, businessId, voucherArgs), layer),
+    );
 
-    const voucherId = await ctx.db.insert("vouchers", {
-      ...args,
-      userId,
-    });
-    return await ctx.db.get(voucherId);
+    return await ctx.db.get(voucherId as unknown as Id<"vouchers">);
   },
 });
 
@@ -162,22 +213,14 @@ export const updateVoucher = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
-    const voucher = await ctx.db.get(args.voucherId);
+    const repo = makeConvexRepo(ctx);
+    const layer = Layer.succeed(VoucherRepo, repo);
 
-    if (!voucher) throw new Error("Voucher not found");
-    if (voucher.userId !== userId) throw new Error("Unauthorized");
+    const { voucherId, ...voucherArgs } = args;
+    await Effect.runPromise(
+      Effect.provide(VoucherService.update(userId, voucherId, voucherArgs), layer),
+    );
 
-    const { voucherId, ...updates } = args;
-
-    if (
-      voucher.voucherStorageId &&
-      args.voucherStorageId &&
-      voucher.voucherStorageId !== args.voucherStorageId
-    ) {
-      await ctx.storage.delete(voucher.voucherStorageId);
-    }
-
-    await ctx.db.patch(voucherId, updates);
     return await ctx.db.get(voucherId);
   },
 });
@@ -186,16 +229,11 @@ export const deleteVoucher = mutation({
   args: { voucherId: v.id("vouchers") },
   handler: async (ctx, { voucherId }) => {
     const userId = await requireAuth(ctx);
-    const voucher = await ctx.db.get(voucherId);
+    const repo = makeConvexRepo(ctx);
+    const layer = Layer.succeed(VoucherRepo, repo);
 
-    if (!voucher) throw new Error("Voucher not found");
-    if (voucher.userId !== userId) throw new Error("Unauthorized");
-
-    if (voucher.voucherStorageId) {
-      await ctx.storage.delete(voucher.voucherStorageId);
-    }
-
-    await ctx.db.patch(voucherId, { deletedAt: Date.now() });
-    return { success: true };
+    return await Effect.runPromise(
+      Effect.provide(VoucherService.softDelete(userId, voucherId), layer),
+    );
   },
 });

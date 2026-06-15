@@ -11,6 +11,15 @@ export {
   type UpdateBusinessArgs,
   type IBusinessRepo,
 } from "./business-service.js";
+export * as VoucherService from "./voucher-service.js";
+export {
+  VoucherRepo,
+  type BusinessRef,
+  type VoucherDoc as VoucherServiceDoc,
+  type CreateVoucherArgs,
+  type UpdateVoucherArgs,
+  type IVoucherRepo,
+} from "./voucher-service.js";
 export {
   voucherStatus,
   voucherFormatLabel,
