@@ -38,7 +38,7 @@ type WalletEntry = {
   claimId: string;
   voucherId: string;
   claimedAt: number;
-  state: "claimed" | "revealed" | "expired";
+  state: "claimed" | "revealed" | "expired" | "suspended";
   activeCode: string | null;
   codeExpiresAt: number | null;
   voucher: { _id: string; title: string; voucherValidTo: number } | null;
@@ -153,6 +153,7 @@ function WalletCard({ entry }: { entry: WalletEntry }) {
     claimed: "bg-blue-100 text-blue-800",
     revealed: "bg-green-100 text-green-800",
     expired: "bg-muted text-muted-foreground",
+    suspended: "bg-orange-100 text-orange-800",
   }[entry.state];
 
   return (
@@ -182,7 +183,13 @@ function WalletCard({ entry }: { entry: WalletEntry }) {
           </p>
         )}
 
-        {entry.state !== "expired" && (
+        {entry.state === "suspended" && (
+          <p className="text-xs text-orange-700">
+            This offer is no longer available.
+          </p>
+        )}
+
+        {entry.state !== "expired" && entry.state !== "suspended" && (
           <button
             type="button"
             onClick={() => setShowModal(true)}

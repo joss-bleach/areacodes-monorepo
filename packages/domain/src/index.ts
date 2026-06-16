@@ -30,6 +30,7 @@ export {
   VoucherExpired,
   AlreadyRevealed,
   ClaimNotFound,
+  VouchersSuspended,
 } from "./voucher-service.js";
 export {
   voucherStatus,

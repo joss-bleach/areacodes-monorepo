@@ -1,5 +1,6 @@
 import { Context, Data, Effect } from "effect";
 import { NotFound, Unauthorized } from "./business-service.js";
+import { SubscriptionRepo, getGateStatus } from "./subscription-service.js";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export { NotFound, Unauthorized };
 export class VoucherExpired extends Data.TaggedError("VoucherExpired")<{}> {}
 export class AlreadyRevealed extends Data.TaggedError("AlreadyRevealed")<{}> {}
 export class ClaimNotFound extends Data.TaggedError("ClaimNotFound")<{ id: string }> {}
+export class VouchersSuspended extends Data.TaggedError("VouchersSuspended")<{}> {}
 
 // ── Repository interface (injected dependency) ────────────────────────────────
 
@@ -157,7 +159,7 @@ export interface RevealDoc {
   redeemedAt?: number;
 }
 
-export type WalletEntryState = "claimed" | "revealed" | "expired";
+export type WalletEntryState = "claimed" | "revealed" | "expired" | "suspended";
 
 export interface WalletEntry {
   claimId: string;
@@ -236,15 +238,28 @@ export const reveal = (
   now: number,
 ): Effect.Effect<
   { claimId: string; voucherCode: string; expiresAt: number },
-  AlreadyRevealed | ClaimNotFound,
-  ClaimRepo | RevealRepo
+  AlreadyRevealed | ClaimNotFound | VouchersSuspended,
+  ClaimRepo | RevealRepo | VoucherRepo | SubscriptionRepo
 > =>
   Effect.gen(function* () {
     const claimRepo = yield* ClaimRepo;
+    const voucherRepo = yield* VoucherRepo;
     const revealRepo = yield* RevealRepo;
 
     const claimDoc = yield* claimRepo.findById(claimId);
     if (!claimDoc) return yield* Effect.fail(new ClaimNotFound({ id: claimId }));
+
+    const voucher = yield* voucherRepo.findById(claimDoc.voucherId);
+    if (voucher) {
+      const gateStatus = yield* Effect.catchTag(
+        getGateStatus(voucher.businessId, now),
+        "BusinessNotFound",
+        () => Effect.succeed("active" as const),
+      );
+      if (gateStatus === "suspended") {
+        return yield* Effect.fail(new VouchersSuspended());
+      }
+    }
 
     const latestReveal = yield* revealRepo.findByClaim(claimId);
     if (latestReveal && latestReveal.expiresAt > now) {
@@ -264,7 +279,7 @@ export const reveal = (
 export const getWallet = (
   customerId: string,
   now: number,
-): Effect.Effect<WalletEntry[], never, ClaimRepo | VoucherRepo | RevealRepo> =>
+): Effect.Effect<WalletEntry[], never, ClaimRepo | VoucherRepo | RevealRepo | SubscriptionRepo> =>
   Effect.gen(function* () {
     const claimRepo = yield* ClaimRepo;
     const voucherRepo = yield* VoucherRepo;
@@ -279,9 +294,21 @@ export const getWallet = (
           const voucher = yield* voucherRepo.findById(c.voucherId);
           const latestReveal = yield* revealRepo.findByClaim(c._id);
 
+          let isSuspended = false;
+          if (voucher) {
+            const gateStatus = yield* Effect.catchTag(
+              getGateStatus(voucher.businessId, now),
+              "BusinessNotFound",
+              () => Effect.succeed("active" as const),
+            );
+            isSuspended = gateStatus === "suspended";
+          }
+
           let state: WalletEntryState;
           if (voucher && voucher.voucherValidTo < now) {
             state = "expired";
+          } else if (isSuspended) {
+            state = "suspended";
           } else if (latestReveal && latestReveal.expiresAt > now) {
             state = "revealed";
           } else {

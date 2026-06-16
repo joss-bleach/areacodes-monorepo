@@ -13,6 +13,7 @@ import {
   type RevealDoc,
 } from "../voucher-service.js";
 import * as VoucherService from "../voucher-service.js";
+import { SubscriptionRepo, type ISubscriptionRepo, type SubscriptionDoc } from "../subscription-service.js";
 
 function makeTestRepo(options: {
   businesses?: BusinessRef[];
@@ -307,6 +308,22 @@ function makeTestRevealRepo(options: {
   return { layer, reveals };
 }
 
+function makeTestSubscriptionRepo(options: { subscriptions?: SubscriptionDoc[] } = {}) {
+  const subscriptions = [...(options.subscriptions ?? [])];
+
+  const repo: ISubscriptionRepo = {
+    findByBusiness: (businessId) =>
+      Effect.succeed(subscriptions.find((s) => s.businessId === businessId) ?? null),
+    findByStripeCustomer: () => Effect.succeed(null),
+    findByStripeSubscription: () => Effect.succeed(null),
+    insert: () => Effect.succeed("test-sub-id"),
+    patch: () => Effect.void,
+  };
+
+  const layer = Layer.succeed(SubscriptionRepo, repo);
+  return { layer, subscriptions };
+}
+
 const NOW = 1_500_000;
 const VOUCHER_VALID = { voucherValidFrom: 1_000_000, voucherValidTo: 2_000_000 };
 const VOUCHER_EXPIRED_RANGE = { voucherValidFrom: 500_000, voucherValidTo: 1_000_000 };
@@ -407,12 +424,12 @@ describe("VoucherService.claim", () => {
 
 describe("VoucherService.reveal", () => {
   test("happy path: generates 12-char uppercase code with 2h expiry", async () => {
-    const { layer: claimLayer } = makeTestClaimRepo({
-      claims: [existingClaim()],
-    });
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
     const { layer: revealLayer, reveals } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo();
 
-    const layer = Layer.mergeAll(claimLayer, revealLayer);
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
 
     const result = await Effect.runPromise(
       Effect.provide(VoucherService.reveal("claim-1", NOW), layer),
@@ -432,14 +449,12 @@ describe("VoucherService.reveal", () => {
       expiresAt: NOW + 7_199_000,
     };
 
-    const { layer: claimLayer } = makeTestClaimRepo({
-      claims: [existingClaim()],
-    });
-    const { layer: revealLayer } = makeTestRevealRepo({
-      reveals: [unexpiredReveal],
-    });
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
+    const { layer: revealLayer } = makeTestRevealRepo({ reveals: [unexpiredReveal] });
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo();
 
-    const layer = Layer.mergeAll(claimLayer, revealLayer);
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
 
     const result = await Effect.runPromise(
       Effect.provide(
@@ -463,14 +478,12 @@ describe("VoucherService.reveal", () => {
       expiresAt: NOW - 1000,
     };
 
-    const { layer: claimLayer } = makeTestClaimRepo({
-      claims: [existingClaim()],
-    });
-    const { layer: revealLayer, reveals } = makeTestRevealRepo({
-      reveals: [expiredReveal],
-    });
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
+    const { layer: revealLayer, reveals } = makeTestRevealRepo({ reveals: [expiredReveal] });
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo();
 
-    const layer = Layer.mergeAll(claimLayer, revealLayer);
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
 
     const result = await Effect.runPromise(
       Effect.provide(VoucherService.reveal("claim-1", NOW), layer),
@@ -481,10 +494,12 @@ describe("VoucherService.reveal", () => {
   });
 
   test("returns ClaimNotFound for unknown claimId", async () => {
+    const { layer: voucherLayer } = makeTestRepo({});
     const { layer: claimLayer } = makeTestClaimRepo({});
     const { layer: revealLayer } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo();
 
-    const layer = Layer.mergeAll(claimLayer, revealLayer);
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
 
     const result = await Effect.runPromise(
       Effect.provide(
@@ -498,6 +513,77 @@ describe("VoucherService.reveal", () => {
       expect(result.left._tag).toBe("ClaimNotFound");
     }
   });
+
+  test("returns VouchersSuspended when business subscription is past_due beyond 7-day grace", async () => {
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const suspendedSub: SubscriptionDoc = {
+      _id: "sub-1",
+      businessId: "biz-1",
+      stripeCustomerId: "cus_abc",
+      stripeSubscriptionId: "sub_xyz",
+      status: "past_due",
+      currentPeriodEnd: NOW - (SEVEN_DAYS_MS + 1000), // 7 days + 1s ago → suspended
+    };
+
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
+    const { layer: revealLayer } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo({ subscriptions: [suspendedSub] });
+
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
+
+    const result = await Effect.runPromise(
+      Effect.provide(
+        Effect.either(VoucherService.reveal("claim-1", NOW)),
+        layer,
+      ),
+    );
+
+    expect(Either.isLeft(result)).toBe(true);
+    if (Either.isLeft(result)) {
+      expect(result.left._tag).toBe("VouchersSuspended");
+    }
+  });
+
+  test("succeeds for past_due business within 7-day grace period", async () => {
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const graceWindowSub: SubscriptionDoc = {
+      _id: "sub-1",
+      businessId: "biz-1",
+      stripeCustomerId: "cus_abc",
+      stripeSubscriptionId: "sub_xyz",
+      status: "past_due",
+      currentPeriodEnd: NOW - (SEVEN_DAYS_MS - 1000), // 3 days ago → still within grace
+    };
+
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
+    const { layer: revealLayer } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo({ subscriptions: [graceWindowSub] });
+
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
+
+    const result = await Effect.runPromise(
+      Effect.provide(VoucherService.reveal("claim-1", NOW), layer),
+    );
+
+    expect(result.voucherCode).toMatch(/^[A-Z0-9]{12}$/);
+  });
+
+  test("succeeds when business has no subscription (pilot / no billing)", async () => {
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
+    const { layer: revealLayer } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo(); // no subscriptions
+
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
+
+    const result = await Effect.runPromise(
+      Effect.provide(VoucherService.reveal("claim-1", NOW), layer),
+    );
+
+    expect(result.voucherCode).toMatch(/^[A-Z0-9]{12}$/);
+  });
 });
 
 // ── VoucherService.getWallet ──────────────────────────────────────────────────
@@ -507,8 +593,9 @@ describe("VoucherService.getWallet", () => {
     const { layer: voucherLayer } = makeTestRepo({});
     const { layer: claimLayer } = makeTestClaimRepo({});
     const { layer: revealLayer } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo();
 
-    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer);
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
 
     const wallet = await Effect.runPromise(
       Effect.provide(VoucherService.getWallet("customer-1", NOW), layer),
@@ -518,15 +605,12 @@ describe("VoucherService.getWallet", () => {
   });
 
   test("claimed state: claim with no reveal", async () => {
-    const { layer: voucherLayer } = makeTestRepo({
-      vouchers: [activeVoucher()],
-    });
-    const { layer: claimLayer } = makeTestClaimRepo({
-      claims: [existingClaim()],
-    });
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
     const { layer: revealLayer } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo();
 
-    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer);
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
 
     const wallet = await Effect.runPromise(
       Effect.provide(VoucherService.getWallet("customer-1", NOW), layer),
@@ -546,17 +630,12 @@ describe("VoucherService.getWallet", () => {
       expiresAt: NOW + 7_199_000,
     };
 
-    const { layer: voucherLayer } = makeTestRepo({
-      vouchers: [activeVoucher()],
-    });
-    const { layer: claimLayer } = makeTestClaimRepo({
-      claims: [existingClaim()],
-    });
-    const { layer: revealLayer } = makeTestRevealRepo({
-      reveals: [activeReveal],
-    });
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
+    const { layer: revealLayer } = makeTestRevealRepo({ reveals: [activeReveal] });
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo();
 
-    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer);
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
 
     const wallet = await Effect.runPromise(
       Effect.provide(VoucherService.getWallet("customer-1", NOW), layer),
@@ -570,13 +649,12 @@ describe("VoucherService.getWallet", () => {
 
   test("expired state: voucher past its validTo", async () => {
     const claim = existingClaim({ voucherId: "voucher-expired" });
-    const { layer: voucherLayer } = makeTestRepo({
-      vouchers: [expiredVoucher()],
-    });
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [expiredVoucher()] });
     const { layer: claimLayer } = makeTestClaimRepo({ claims: [claim] });
     const { layer: revealLayer } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo();
 
-    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer);
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
 
     const wallet = await Effect.runPromise(
       Effect.provide(VoucherService.getWallet("customer-1", NOW), layer),
@@ -584,6 +662,33 @@ describe("VoucherService.getWallet", () => {
 
     expect(wallet).toHaveLength(1);
     expect(wallet[0]!.state).toBe("expired");
+    expect(wallet[0]!.activeCode).toBeNull();
+  });
+
+  test("suspended state: business subscription is past_due beyond 7-day grace", async () => {
+    const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+    const suspendedSub: SubscriptionDoc = {
+      _id: "sub-1",
+      businessId: "biz-1",
+      stripeCustomerId: "cus_abc",
+      stripeSubscriptionId: "sub_xyz",
+      status: "past_due",
+      currentPeriodEnd: NOW - (SEVEN_DAYS_MS + 1000),
+    };
+
+    const { layer: voucherLayer } = makeTestRepo({ vouchers: [activeVoucher()] });
+    const { layer: claimLayer } = makeTestClaimRepo({ claims: [existingClaim()] });
+    const { layer: revealLayer } = makeTestRevealRepo({});
+    const { layer: subscriptionLayer } = makeTestSubscriptionRepo({ subscriptions: [suspendedSub] });
+
+    const layer = Layer.mergeAll(voucherLayer, claimLayer, revealLayer, subscriptionLayer);
+
+    const wallet = await Effect.runPromise(
+      Effect.provide(VoucherService.getWallet("customer-1", NOW), layer),
+    );
+
+    expect(wallet).toHaveLength(1);
+    expect(wallet[0]!.state).toBe("suspended");
     expect(wallet[0]!.activeCode).toBeNull();
   });
 });

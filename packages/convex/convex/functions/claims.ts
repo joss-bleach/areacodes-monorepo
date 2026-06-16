@@ -7,10 +7,13 @@ import {
   VoucherRepo,
   ClaimRepo,
   RevealRepo,
+  SubscriptionRepo,
   VoucherService,
   type IVoucherRepo,
   type IClaimRepo,
   type IRevealRepo,
+  type ISubscriptionRepo,
+  type SubscriptionDoc,
 } from "@areacodes/domain";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
@@ -28,6 +31,24 @@ function makeConvexVoucherRepo(ctx: QueryCtx | MutationCtx): IVoucherRepo {
     insert: () => Effect.die("not available in this context"),
     patch: () => Effect.die("not available in this context"),
     deleteStorage: () => Effect.die("not available in this context"),
+  };
+}
+
+function makeConvexSubscriptionQueryRepo(ctx: QueryCtx | MutationCtx): ISubscriptionRepo {
+  return {
+    findByBusiness: (businessId) =>
+      Effect.promise(async () =>
+        (await ctx.db
+          .query("subscriptions")
+          .withIndex("by_business", (q) =>
+            q.eq("businessId", businessId as Id<"businesses">),
+          )
+          .first()) as unknown as SubscriptionDoc | null,
+      ),
+    findByStripeCustomer: () => Effect.die("not available in this context"),
+    findByStripeSubscription: () => Effect.die("not available in this context"),
+    insert: () => Effect.die("not available in this context"),
+    patch: () => Effect.die("not available in this context"),
   };
 }
 
@@ -129,8 +150,10 @@ export const revealVoucher = mutation({
     const now = Date.now();
 
     const layer = Layer.mergeAll(
+      Layer.succeed(VoucherRepo, makeConvexVoucherRepo(ctx)),
       Layer.succeed(ClaimRepo, makeConvexClaimRepo(ctx)),
       Layer.succeed(RevealRepo, makeConvexRevealRepo(ctx)),
+      Layer.succeed(SubscriptionRepo, makeConvexSubscriptionQueryRepo(ctx)),
     );
 
     const result = await Effect.runPromise(
@@ -151,6 +174,7 @@ export const getWallet = query({
       Layer.succeed(VoucherRepo, makeConvexVoucherRepo(ctx)),
       Layer.succeed(ClaimRepo, makeConvexClaimQueryRepo(ctx)),
       Layer.succeed(RevealRepo, makeConvexRevealQueryRepo(ctx)),
+      Layer.succeed(SubscriptionRepo, makeConvexSubscriptionQueryRepo(ctx)),
     );
 
     return await Effect.runPromise(

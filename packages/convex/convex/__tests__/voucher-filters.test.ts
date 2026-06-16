@@ -224,3 +224,129 @@ describe("isActiveVoucher filter — getExpiringVouchersByBusiness", () => {
     expect(result[0]!.title).toBe("Scheduled Expiring");
   });
 });
+
+// ── Suspension gate — voucher queries ─────────────────────────────────────────
+
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+describe("getActiveVouchersByBusiness — suspension gate", () => {
+  test("returns empty for a past_due business beyond 7-day grace", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+
+    const businessId = await t.run(seedBusiness);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("subscriptions", {
+        businessId,
+        stripeCustomerId: "cus_vf_suspended",
+        stripeSubscriptionId: "sub_vf_suspended",
+        status: "past_due",
+        currentPeriodEnd: now - (SEVEN_DAYS_MS + 10_000),
+      });
+      await ctx.db.insert("vouchers", {
+        businessId,
+        userId: "user_vf",
+        title: "Should Not Appear",
+        description: "Business is suspended",
+        voucherFormat: "generated_text",
+        voucherValidFrom: now - 10_000,
+        voucherValidTo: now + 10_000,
+      });
+    });
+
+    const result = await t.query(api.functions.vouchers.getActiveVouchersByBusiness, { businessId });
+    expect(result).toHaveLength(0);
+  });
+
+  test("returns vouchers for past_due business still within grace period", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+
+    const businessId = await t.run(seedBusiness);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("subscriptions", {
+        businessId,
+        stripeCustomerId: "cus_vf_grace",
+        stripeSubscriptionId: "sub_vf_grace",
+        status: "past_due",
+        currentPeriodEnd: now - (SEVEN_DAYS_MS - 60_000),
+      });
+      await ctx.db.insert("vouchers", {
+        businessId,
+        userId: "user_vf",
+        title: "Grace Period Voucher",
+        description: "Business in grace period",
+        voucherFormat: "generated_text",
+        voucherValidFrom: now - 10_000,
+        voucherValidTo: now + 10_000,
+      });
+    });
+
+    const result = await t.query(api.functions.vouchers.getActiveVouchersByBusiness, { businessId });
+    expect(result).toHaveLength(1);
+  });
+});
+
+describe("getBusinessesWithVouchers — suspension gate", () => {
+  test("excludes suspended businesses from results", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+
+    const businessId = await t.run(seedBusiness);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("subscriptions", {
+        businessId,
+        stripeCustomerId: "cus_explore_suspended",
+        stripeSubscriptionId: "sub_explore_suspended",
+        status: "past_due",
+        currentPeriodEnd: now - (SEVEN_DAYS_MS + 10_000),
+      });
+      await ctx.db.insert("vouchers", {
+        businessId,
+        userId: "user_vf",
+        title: "Suspended Business Voucher",
+        description: "Should be hidden",
+        voucherFormat: "generated_text",
+        voucherValidFrom: now - 10_000,
+        voucherValidTo: now + 10_000,
+      });
+    });
+
+    const result = await t.query(api.functions.explore.getBusinessesWithVouchers, {});
+    const found = result.find((b) => b._id === businessId);
+    expect(found).toBeUndefined();
+  });
+
+  test("includes active subscription businesses in results", async () => {
+    const t = convexTest(schema, modules);
+    const now = Date.now();
+
+    const businessId = await t.run(seedBusiness);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("subscriptions", {
+        businessId,
+        stripeCustomerId: "cus_explore_active",
+        stripeSubscriptionId: "sub_explore_active",
+        status: "active",
+        currentPeriodEnd: now + 30 * 24 * 60 * 60 * 1000,
+      });
+      await ctx.db.insert("vouchers", {
+        businessId,
+        userId: "user_vf",
+        title: "Active Business Voucher",
+        description: "Should appear",
+        voucherFormat: "generated_text",
+        voucherValidFrom: now - 10_000,
+        voucherValidTo: now + 10_000,
+      });
+    });
+
+    const result = await t.query(api.functions.explore.getBusinessesWithVouchers, {});
+    const found = result.find((b) => b._id === businessId);
+    expect(found).toBeDefined();
+  });
+});
