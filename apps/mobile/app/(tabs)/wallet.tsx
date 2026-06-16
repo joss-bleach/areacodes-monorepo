@@ -8,19 +8,23 @@ import {
   type WalletState,
 } from "../lib/wallet-utils";
 
+const STATE_BADGE_STYLES: Record<
+  WalletState,
+  { background: string; text: string }
+> = {
+  revealed: { background: "bg-green-900", text: "text-green-400" },
+  claimed: { background: "bg-blue-900", text: "text-blue-400" },
+  expired: { background: "bg-gray-800", text: "text-gray-500" },
+  suspended: { background: "bg-gray-800", text: "text-gray-500" },
+};
+
 function StateBadge({ state }: { state: WalletState }) {
-  const label = getWalletStateLabel(state);
-  const colorClass =
-    state === "revealed"
-      ? "bg-green-900 text-green-400"
-      : state === "claimed"
-        ? "bg-blue-900 text-blue-400"
-        : "bg-gray-800 text-gray-500";
+  const { background, text } = STATE_BADGE_STYLES[state];
 
   return (
-    <View className={`self-start rounded-full px-2 py-0.5 ${colorClass.split(" ")[0]}`}>
-      <Text className={`text-xs font-medium ${colorClass.split(" ")[1]}`}>
-        {label}
+    <View className={`self-start rounded-full px-2 py-0.5 ${background}`}>
+      <Text className={`text-xs font-medium ${text}`}>
+        {getWalletStateLabel(state)}
       </Text>
     </View>
   );
