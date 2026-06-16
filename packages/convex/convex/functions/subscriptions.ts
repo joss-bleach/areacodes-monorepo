@@ -16,67 +16,8 @@ function toDoc(doc: unknown): SubscriptionDoc | null {
   return doc as SubscriptionDoc | null;
 }
 
-function makeConvexSubscriptionRepo(ctx: MutationCtx): ISubscriptionRepo {
-  return {
-    findByBusiness: (businessId) =>
-      Effect.promise(async () =>
-        toDoc(
-          await ctx.db
-            .query("subscriptions")
-            .withIndex("by_business", (q) =>
-              q.eq("businessId", businessId as Id<"businesses">),
-            )
-            .first(),
-        ),
-      ),
-    findByStripeCustomer: (stripeCustomerId) =>
-      Effect.promise(async () =>
-        toDoc(
-          await ctx.db
-            .query("subscriptions")
-            .withIndex("by_stripe_customer", (q) =>
-              q.eq("stripeCustomerId", stripeCustomerId),
-            )
-            .first(),
-        ),
-      ),
-    findByStripeSubscription: (stripeSubscriptionId) =>
-      Effect.promise(async () =>
-        toDoc(
-          await ctx.db
-            .query("subscriptions")
-            .withIndex("by_stripe_subscription", (q) =>
-              q.eq("stripeSubscriptionId", stripeSubscriptionId),
-            )
-            .first(),
-        ),
-      ),
-    insert: (data) =>
-      Effect.promise(async () => {
-        const id = await ctx.db.insert("subscriptions", {
-          businessId: data.businessId as Id<"businesses">,
-          stripeCustomerId: data.stripeCustomerId,
-          stripeSubscriptionId: data.stripeSubscriptionId,
-          status: data.status,
-          trialEnd: data.trialEnd,
-          currentPeriodEnd: data.currentPeriodEnd,
-          priceId: data.priceId,
-          lastStripeEventId: data.lastStripeEventId,
-        });
-        return id as unknown as string;
-      }),
-    patch: (id, data) =>
-      Effect.promise(async () => {
-        const fields = Object.fromEntries(
-          Object.entries(data).filter(([, v]) => v !== undefined),
-        );
-        if (Object.keys(fields).length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await ctx.db.patch(id as Id<"subscriptions">, fields as any);
-        }
-      }),
-  };
-}
+// The read methods work in both query and mutation contexts; only the mutation
+// repo can insert/patch. Query repos `die` on writes so misuse fails loudly.
 
 function makeConvexSubscriptionQueryRepo(ctx: QueryCtx): ISubscriptionRepo {
   return {
@@ -115,6 +56,36 @@ function makeConvexSubscriptionQueryRepo(ctx: QueryCtx): ISubscriptionRepo {
       ),
     insert: () => Effect.die("not available in query context"),
     patch: () => Effect.die("not available in query context"),
+  };
+}
+
+function makeConvexSubscriptionRepo(ctx: MutationCtx): ISubscriptionRepo {
+  return {
+    ...makeConvexSubscriptionQueryRepo(ctx),
+    insert: (data) =>
+      Effect.promise(async () => {
+        const id = await ctx.db.insert("subscriptions", {
+          businessId: data.businessId as Id<"businesses">,
+          stripeCustomerId: data.stripeCustomerId,
+          stripeSubscriptionId: data.stripeSubscriptionId,
+          status: data.status,
+          trialEnd: data.trialEnd,
+          currentPeriodEnd: data.currentPeriodEnd,
+          priceId: data.priceId,
+          lastStripeEventId: data.lastStripeEventId,
+        });
+        return id as unknown as string;
+      }),
+    patch: (id, data) =>
+      Effect.promise(async () => {
+        const fields = Object.fromEntries(
+          Object.entries(data).filter(([, v]) => v !== undefined),
+        );
+        if (Object.keys(fields).length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await ctx.db.patch(id as Id<"subscriptions">, fields as any);
+        }
+      }),
   };
 }
 
