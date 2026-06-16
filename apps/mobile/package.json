@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "expo start",
     "build": "bun run check-types",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@better-auth/expo": "^1.6.19",
+    "@maplibre/maplibre-react-native": "~10.0.0",
     "better-auth": "^1.6.19",
     "expo-apple-authentication": "~7.2.0",
     "expo": "~53.0.0",
@@ -26,8 +28,10 @@
   "devDependencies": {
     "@babel/core": "^7.20.0",
     "@repo/typescript-config": "*",
+    "@types/geojson": "^7946.0.16",
     "@types/react": "^19.0.0",
     "tailwindcss": "^3.3.2",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "vitest": "^3.0.0"
   }
 }
