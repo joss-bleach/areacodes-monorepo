@@ -25,6 +25,10 @@ ARG AGENT_GID=1000
 RUN groupmod -o -g $AGENT_GID node && usermod -o -u $AGENT_UID -g $AGENT_GID -d /home/agent -m -l agent node
 USER ${AGENT_UID}:${AGENT_GID}
 
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/home/agent/.bun/bin:$PATH"
+
 # Install Claude Code CLI
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
