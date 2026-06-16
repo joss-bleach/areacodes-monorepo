@@ -41,10 +41,15 @@ function useNotificationDeepLink() {
   ) {
     const data = response.notification.request.content.data as {
       businessId?: string;
+      voucherId?: string;
     };
-    if (!data.businessId || handled.current === response.notification.request.identifier) return;
+    if (handled.current === response.notification.request.identifier) return;
     handled.current = response.notification.request.identifier;
-    router.push(`/business/${data.businessId}`);
+    if (data.voucherId) {
+      router.push(`/v/${data.voucherId}`);
+    } else if (data.businessId) {
+      router.push(`/business/${data.businessId}`);
+    }
   }
 
   useEffect(() => {

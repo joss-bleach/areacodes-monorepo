@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["<APPLE_TEAM_ID>.com.acbrighton.consumer"],
+        "components": [
+          {
+            "/": "/v/*",
+            "comment": "Voucher deep links"
+          }
+        ]
+      }
+    ]
+  }
+}

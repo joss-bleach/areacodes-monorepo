@@ -2,5 +2,16 @@
   "version": 2,
   "buildCommand": "cd ../.. && bun run build --filter=map",
   "installCommand": "cd ../.. && bun install",
-  "framework": null
+  "framework": null,
+  "headers": [
+    {
+      "source": "/.well-known/apple-app-site-association",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        }
+      ]
+    }
+  ]
 }
