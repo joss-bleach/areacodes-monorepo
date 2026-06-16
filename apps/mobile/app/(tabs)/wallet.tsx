@@ -20,7 +20,7 @@ import {
   type CachedReveal,
   loadRevealCache,
   upsertRevealCache,
-  isRevealValid,
+  filterValidReveals,
 } from "../lib/reveal-cache";
 
 const STATE_BADGE_STYLES: Record<
@@ -181,9 +181,7 @@ function CachedRevealCard({ reveal }: { reveal: CachedReveal }) {
         <Text className="text-white font-semibold text-base flex-1 mr-2">
           {reveal.voucherTitle ?? "Voucher"}
         </Text>
-        <View className="self-start rounded-full px-2 py-0.5 bg-green-900">
-          <Text className="text-xs font-medium text-green-400">Active</Text>
-        </View>
+        <StateBadge state="revealed" />
       </View>
 
       {reveal.businessName ? (
@@ -230,8 +228,7 @@ export default function WalletScreen() {
   }
 
   if (wallet === undefined) {
-    const now = Date.now();
-    const validCached = cachedReveals.filter((r) => isRevealValid(r.expiresAt, now));
+    const validCached = filterValidReveals(cachedReveals, Date.now());
 
     if (validCached.length > 0) {
       return (
