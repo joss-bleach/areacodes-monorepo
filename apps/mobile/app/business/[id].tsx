@@ -8,8 +8,15 @@ import {
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useQuery } from "convex/react";
 import { api } from "@repo/convex";
+import type { Id } from "@repo/convex";
 import { authClient } from "../lib/auth-client";
 import { isVoucherClaimable, formatValidityWindow } from "../lib/voucher-utils";
+
+const BASE_HEADER_OPTIONS = {
+  headerShown: true,
+  headerStyle: { backgroundColor: "#000" },
+  headerTintColor: "#fff",
+} as const;
 
 export default function BusinessScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,7 +25,7 @@ export default function BusinessScreen() {
 
   const business = useQuery(
     api.functions.explore.getBusinessByIdWithVouchers,
-    id ? { businessId: id as never } : "skip"
+    id ? { businessId: id as Id<"businesses"> } : "skip"
   );
 
   if (business === undefined) {
@@ -32,7 +39,7 @@ export default function BusinessScreen() {
   if (business === null) {
     return (
       <>
-        <Stack.Screen options={{ headerShown: true, title: "Business", headerStyle: { backgroundColor: "#000" }, headerTintColor: "#fff" }} />
+        <Stack.Screen options={{ ...BASE_HEADER_OPTIONS, title: "Business" }} />
         <View className="flex-1 bg-black items-center justify-center px-6">
           <Text className="text-white text-lg font-semibold">Business not found</Text>
           <Pressable onPress={() => router.back()} className="mt-4">
@@ -55,10 +62,8 @@ export default function BusinessScreen() {
     <>
       <Stack.Screen
         options={{
-          headerShown: true,
+          ...BASE_HEADER_OPTIONS,
           title: business.name,
-          headerStyle: { backgroundColor: "#000" },
-          headerTintColor: "#fff",
           headerTitleStyle: { fontWeight: "bold" },
         }}
       />
