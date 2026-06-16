@@ -47,3 +47,20 @@ export {
   type StripeWebhookEvent,
   type ISubscriptionRepo,
 } from "./subscription-service.js";
+export * as PosGateway from "./pos-gateway.js";
+export {
+  PosConnectionRepo,
+  SquareClient,
+  ZettleClient,
+  ProviderError,
+  type PosProvider,
+  type PosConnectionDoc,
+  type RedemptionCount,
+  type SquareOrder,
+  type SquareOrderDiscount,
+  type ZettlePurchase,
+  type ZettleDiscount,
+  type IPosConnectionRepo,
+  type ISquareClient,
+  type IZettleClient,
+} from "./pos-gateway.js";

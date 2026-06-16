@@ -45,6 +45,7 @@ export default defineSchema({
     voucherValidTo: v.number(),
     deletedAt: v.optional(v.number()),
     flaggedAt: v.optional(v.number()),
+    redemptionCount: v.optional(v.number()),
   })
     .index("by_business", ["businessId"])
     .index("by_user", ["userId"])
@@ -71,14 +72,17 @@ export default defineSchema({
     revealedAt: v.number(),
     expiresAt: v.number(),
     redeemedAt: v.optional(v.number()),
-  }).index("by_claim", ["claimId"]),
+  })
+    .index("by_claim", ["claimId"])
+    .index("by_voucher_code", ["voucherCode"]),
 
   posConnections: defineTable({
     businessId: v.id("businesses"),
     provider: v.union(v.literal("square"), v.literal("zettle")),
     credentials: v.string(),
     connectedAt: v.number(),
-  }),
+    lastPolledAt: v.optional(v.number()),
+  }).index("by_business", ["businessId"]),
 
   subscriptions: defineTable({
     businessId: v.id("businesses"),
