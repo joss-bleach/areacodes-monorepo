@@ -33,7 +33,6 @@ interface ProviderCardProps {
   description: string;
   businessId: Id<"businesses">;
   isConnected: boolean;
-  onConnected: () => void;
 }
 
 const ProviderCard = ({
@@ -42,7 +41,6 @@ const ProviderCard = ({
   description,
   businessId,
   isConnected,
-  onConnected,
 }: ProviderCardProps) => {
   const [apiKey, setApiKey] = useState("");
   const [isConnecting, setIsConnecting] = useState(false);
@@ -64,7 +62,6 @@ const ProviderCard = ({
       await connectPosProvider({ businessId, provider, apiKey: apiKey.trim() });
       setApiKey("");
       toast.success(`${label} connected successfully`);
-      onConnected();
     } catch {
       toast.error(`Failed to connect ${label}`);
     } finally {
@@ -177,9 +174,6 @@ function PosSettingsPage() {
     businessId ? { businessId } : "skip",
   );
 
-  const [refreshKey, setRefreshKey] = useState(0);
-  void refreshKey;
-
   if (business === null) {
     return (
       <BoundaryAlert title="Error" description="Business not found." />
@@ -221,7 +215,6 @@ function PosSettingsPage() {
                 description="Connect your Square account to sync redemptions from Square Orders."
                 businessId={businessId!}
                 isConnected={isSquareConnected}
-                onConnected={() => setRefreshKey((k) => k + 1)}
               />
               <ProviderCard
                 provider="zettle"
@@ -229,7 +222,6 @@ function PosSettingsPage() {
                 description="Connect your Zettle account to sync redemptions from Zettle purchases."
                 businessId={businessId!}
                 isConnected={isZettleConnected}
-                onConnected={() => setRefreshKey((k) => k + 1)}
               />
             </div>
           )}

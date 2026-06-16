@@ -8,121 +8,13 @@ import {
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import type { Id } from "../_generated/dataModel";
-import { Effect, Layer } from "effect";
-import {
-  PosConnectionRepo,
-  PosGateway,
-  SquareClient,
-  ZettleClient,
-  type IPosConnectionRepo,
-  type PosConnectionDoc,
-  type RedemptionCount,
-} from "@areacodes/domain";
+import { Effect } from "effect";
+import { PosGateway, type RedemptionCount } from "@areacodes/domain";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
   return identity.subject;
-}
-
-function makeConvexPosRepo(ctx: MutationCtx): IPosConnectionRepo {
-  return {
-    findById: (id) =>
-      Effect.promise(() =>
-        ctx.db.get(id as Id<"posConnections">).then((doc) =>
-          doc
-            ? ({
-                _id: doc._id as unknown as string,
-                businessId: doc.businessId as unknown as string,
-                provider: doc.provider,
-                credentials: doc.credentials,
-                connectedAt: doc.connectedAt,
-                lastPolledAt: doc.lastPolledAt,
-              } satisfies PosConnectionDoc)
-            : null,
-        ),
-      ),
-    findByBusiness: (businessId) =>
-      Effect.promise(() =>
-        ctx.db
-          .query("posConnections")
-          .withIndex("by_business", (q) =>
-            q.eq("businessId", businessId as Id<"businesses">),
-          )
-          .collect()
-          .then((docs) =>
-            docs.map(
-              (doc) =>
-                ({
-                  _id: doc._id as unknown as string,
-                  businessId: doc.businessId as unknown as string,
-                  provider: doc.provider,
-                  credentials: doc.credentials,
-                  connectedAt: doc.connectedAt,
-                  lastPolledAt: doc.lastPolledAt,
-                }) satisfies PosConnectionDoc,
-            ),
-          ),
-      ),
-    insert: (data) =>
-      Effect.promise(async () => {
-        const id = await ctx.db.insert("posConnections", {
-          businessId: data.businessId as Id<"businesses">,
-          provider: data.provider,
-          credentials: data.credentials,
-          connectedAt: data.connectedAt,
-          lastPolledAt: data.lastPolledAt,
-        });
-        return id as unknown as string;
-      }),
-    remove: (id) =>
-      Effect.promise(() => ctx.db.delete(id as Id<"posConnections">)),
-  };
-}
-
-function makeConvexPosQueryRepo(ctx: QueryCtx): IPosConnectionRepo {
-  return {
-    findById: (id) =>
-      Effect.promise(() =>
-        ctx.db.get(id as Id<"posConnections">).then((doc) =>
-          doc
-            ? ({
-                _id: doc._id as unknown as string,
-                businessId: doc.businessId as unknown as string,
-                provider: doc.provider,
-                credentials: doc.credentials,
-                connectedAt: doc.connectedAt,
-                lastPolledAt: doc.lastPolledAt,
-              } satisfies PosConnectionDoc)
-            : null,
-        ),
-      ),
-    findByBusiness: (businessId) =>
-      Effect.promise(() =>
-        ctx.db
-          .query("posConnections")
-          .withIndex("by_business", (q) =>
-            q.eq("businessId", businessId as Id<"businesses">),
-          )
-          .collect()
-          .then((docs) =>
-            docs.map(
-              (doc) =>
-                ({
-                  _id: doc._id as unknown as string,
-                  businessId: doc.businessId as unknown as string,
-                  provider: doc.provider,
-                  credentials: doc.credentials,
-                  connectedAt: doc.connectedAt,
-                  lastPolledAt: doc.lastPolledAt,
-                }) satisfies PosConnectionDoc,
-            ),
-          ),
-      ),
-    insert: () => Effect.die("not available in query context"),
-    remove: () => Effect.die("not available in query context"),
-  };
 }
 
 // ── Public mutations ──────────────────────────────────────────────────────────
@@ -244,44 +136,26 @@ export const runRedemptionPolling = internalAction({
 
     for (const conn of connections) {
       const since = conn.lastPolledAt ?? conn.connectedAt;
-      const credObj = JSON.parse(conn.credentials) as { apiKey: string };
-      const apiKey = credObj.apiKey;
+      const { apiKey } = JSON.parse(conn.credentials) as { apiKey: string };
 
-      let counts: readonly RedemptionCount[];
+      const poll =
+        conn.provider === "square"
+          ? PosGateway.pollSquareRedemptions(since).pipe(
+              Effect.provide(PosGateway.makeSquareLayer(apiKey)),
+            )
+          : PosGateway.pollZettleRedemptions(since).pipe(
+              Effect.provide(PosGateway.makeZettleLayer(apiKey)),
+            );
 
-      if (conn.provider === "square") {
-        const squareLayer = PosGateway.makeSquareLayer(apiKey);
-        const result = await Effect.runPromise(
-          Effect.provide(
-            Effect.either(PosGateway.pollSquareRedemptions(since)),
-            squareLayer,
-          ),
+      const result = await Effect.runPromise(Effect.either(poll));
+      if (result._tag === "Left") {
+        console.error(
+          `${conn.provider} poll failed for connection ${conn._id}:`,
+          result.left.message,
         );
-        if (result._tag === "Left") {
-          console.error(
-            `Square poll failed for connection ${conn._id}:`,
-            result.left.message,
-          );
-          continue;
-        }
-        counts = result.right;
-      } else {
-        const zettleLayer = PosGateway.makeZettleLayer(apiKey);
-        const result = await Effect.runPromise(
-          Effect.provide(
-            Effect.either(PosGateway.pollZettleRedemptions(since)),
-            zettleLayer,
-          ),
-        );
-        if (result._tag === "Left") {
-          console.error(
-            `Zettle poll failed for connection ${conn._id}:`,
-            result.left.message,
-          );
-          continue;
-        }
-        counts = result.right;
+        continue;
       }
+      const counts = result.right;
 
       if (counts.length > 0) {
         await ctx.runMutation(
