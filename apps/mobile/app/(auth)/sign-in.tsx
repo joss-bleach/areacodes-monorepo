@@ -8,16 +8,25 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { Link, useRouter } from "expo-router";
+import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { authClient } from "../lib/auth-client";
 import { SocialAuthButtons } from "../components/social-auth-buttons";
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  function navigateAfterAuth() {
+    if (returnTo) {
+      router.replace(returnTo as never);
+    } else {
+      router.replace("/(tabs)/");
+    }
+  }
 
   async function handleSignIn() {
     if (!email || !password) return;
@@ -31,7 +40,7 @@ export default function SignInScreen() {
       if (signInError) {
         setError(signInError.message ?? "Something went wrong. Please try again.");
       } else {
-        router.replace("/(tabs)/");
+        navigateAfterAuth();
       }
     } catch {
       setError("Something went wrong. Please try again.");

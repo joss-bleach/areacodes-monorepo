@@ -1,6 +1,10 @@
 import { StyleSheet, View } from "react-native";
 import MapLibreGL from "@maplibre/maplibre-react-native";
+import { useRouter } from "expo-router";
+import { useQuery } from "convex/react";
+import { api } from "@repo/convex";
 import { SERVICE_AREA_BOUNDARY } from "~/lib/service-area";
+import { buildBusinessGeoJSON } from "~/lib/business-pins";
 
 MapLibreGL.setAccessToken(null);
 
@@ -13,6 +17,19 @@ const BRIGHTON_HOVE_CENTER: [number, number] = [-0.1368, 50.8503];
 const DEFAULT_ZOOM = 11.5;
 
 export default function MapScreen() {
+  const router = useRouter();
+  const businesses = useQuery(api.functions.explore.getBusinessesWithVouchers, {});
+
+  const businessGeoJSON = buildBusinessGeoJSON(businesses ?? []);
+
+  function handlePinPress(e: { features: Array<{ properties?: Record<string, unknown> | null }> }) {
+    const feature = e.features[0];
+    const id = feature?.properties?.id;
+    if (typeof id === "string") {
+      router.push(`/business/${id}`);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <MapLibreGL.MapView
@@ -26,6 +43,7 @@ export default function MapScreen() {
           centerCoordinate={BRIGHTON_HOVE_CENTER}
           animationMode="moveTo"
         />
+
         <MapLibreGL.ShapeSource
           id="service-area"
           shape={SERVICE_AREA_BOUNDARY}
@@ -46,6 +64,24 @@ export default function MapScreen() {
             }}
           />
         </MapLibreGL.ShapeSource>
+
+        {businesses !== undefined && businesses.length > 0 && (
+          <MapLibreGL.ShapeSource
+            id="businesses"
+            shape={businessGeoJSON}
+            onPress={handlePinPress}
+          >
+            <MapLibreGL.CircleLayer
+              id="business-pins"
+              style={{
+                circleRadius: 8,
+                circleColor: "#ffffff",
+                circleStrokeColor: "#000000",
+                circleStrokeWidth: 2,
+              }}
+            />
+          </MapLibreGL.ShapeSource>
+        )}
       </MapLibreGL.MapView>
     </View>
   );
