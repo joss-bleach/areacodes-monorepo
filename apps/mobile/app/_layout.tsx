@@ -15,7 +15,7 @@ function useAuthGuard() {
     if (isPending) return;
 
     const inAuthGroup = segments[0] === "(auth)";
-    const secondSegment = segments.length > 1 ? segments[1] : undefined;
+    const secondSegment = segments[1];
     const inProtectedTab =
       segments[0] === "(tabs)" && secondSegment !== undefined && PROTECTED_TABS.has(secondSegment);
 
