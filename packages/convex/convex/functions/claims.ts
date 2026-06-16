@@ -169,6 +169,7 @@ export const getWallet = query({
         const business = voucher ? await ctx.db.get(voucher.businessId) : null;
         return {
           ...entry,
+          businessId: business?._id ?? null,
           businessName: business?.name ?? null,
           voucherValidFrom: voucher?.voucherValidFrom ?? null,
         };

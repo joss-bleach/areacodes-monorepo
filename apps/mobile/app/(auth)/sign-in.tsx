@@ -11,6 +11,7 @@ import {
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { authClient } from "../lib/auth-client";
 import { SocialAuthButtons } from "../components/social-auth-buttons";
+import { captureSignInCompleted } from "../lib/analytics";
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -40,6 +41,7 @@ export default function SignInScreen() {
       if (signInError) {
         setError(signInError.message ?? "Something went wrong. Please try again.");
       } else {
+        captureSignInCompleted("email");
         navigateAfterAuth();
       }
     } catch {

@@ -22,6 +22,7 @@ import {
   upsertRevealCache,
   filterValidReveals,
 } from "../lib/reveal-cache";
+import { captureVoucherRevealed, posthog } from "../lib/analytics";
 
 const STATE_BADGE_STYLES: Record<
   WalletState,
@@ -51,6 +52,7 @@ type WalletEntry = {
   state: WalletState;
   activeCode: string | null;
   codeExpiresAt: number | null;
+  businessId: string | null;
   businessName: string | null;
   voucherValidFrom: number | null;
   voucher: { _id: string; title: string; voucherValidTo: number } | null;
@@ -111,6 +113,9 @@ function WalletCard({
       const result = await revealVoucher({
         claimId: entry.claimId as Id<"claims">,
       });
+      if (entry.businessId) {
+        captureVoucherRevealed(entry.voucherId, entry.businessId);
+      }
       const cached: CachedReveal = {
         claimId: entry.claimId,
         voucherCode: result.voucherCode,
@@ -201,6 +206,7 @@ export default function WalletScreen() {
   const [cachedReveals, setCachedReveals] = useState<CachedReveal[]>([]);
 
   useEffect(() => {
+    void posthog?.screen("Wallet");
     loadRevealCache().then(setCachedReveals);
   }, []);
 

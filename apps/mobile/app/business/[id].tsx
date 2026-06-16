@@ -5,7 +5,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
@@ -13,6 +13,11 @@ import type { Id } from "@repo/convex";
 import { authClient } from "../lib/auth-client";
 import { isVoucherClaimable, formatValidityWindow } from "../lib/voucher-utils";
 import { requestPushPermissionAndRegister } from "../lib/use-push-notifications";
+import {
+  captureVoucherClaimed,
+  captureBusinessFollowed,
+  posthog,
+} from "../lib/analytics";
 
 const BASE_HEADER_OPTIONS = {
   headerShown: true,
@@ -62,6 +67,7 @@ function VoucherCard({
     setClaimError(null);
     try {
       await claimVoucher({ voucherId: voucher._id as Id<"vouchers"> });
+      captureVoucherClaimed(voucher._id, businessId);
     } catch {
       setClaimError("Could not claim voucher. Please try again.");
     } finally {
@@ -132,6 +138,7 @@ function FollowButton({ businessId }: { businessId: Id<"businesses"> }) {
     try {
       await requestPushPermissionAndRegister(registerPushToken);
       await followBusiness({ businessId });
+      captureBusinessFollowed(businessId);
     } catch {
       setError("Could not follow. Please try again.");
     } finally {
@@ -193,6 +200,10 @@ export default function BusinessScreen() {
     api.functions.explore.getBusinessByIdWithVouchers,
     id ? { businessId: id as Id<"businesses"> } : "skip",
   );
+
+  useEffect(() => {
+    void posthog?.screen("Business");
+  }, []);
 
   if (business === undefined) {
     return (

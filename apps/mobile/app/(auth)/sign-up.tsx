@@ -11,6 +11,7 @@ import {
 import { Link, useRouter } from "expo-router";
 import { authClient } from "../lib/auth-client";
 import { SocialAuthButtons } from "../components/social-auth-buttons";
+import { captureSignUpCompleted } from "../lib/analytics";
 
 export default function SignUpScreen() {
   const router = useRouter();
@@ -33,6 +34,7 @@ export default function SignUpScreen() {
       if (signUpError) {
         setError(signUpError.message ?? "Something went wrong. Please try again.");
       } else {
+        captureSignUpCompleted("email");
         router.replace("/(tabs)/");
       }
     } catch {

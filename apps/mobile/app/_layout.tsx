@@ -8,6 +8,11 @@ import { authClient } from "./lib/auth-client";
 import { convex } from "./lib/convex-client";
 import { useConvexAuth } from "./lib/use-convex-auth";
 import { useRegisterPushTokenOnAuth } from "./lib/use-push-notifications";
+import {
+  captureAppOpened,
+  capturePushNotificationTapped,
+  posthog,
+} from "./lib/analytics";
 
 const PROTECTED_TABS = new Set(["wallet", "account"]);
 
@@ -46,6 +51,7 @@ function useNotificationDeepLink() {
     if (handled.current === response.notification.request.identifier) return;
     handled.current = response.notification.request.identifier;
     if (data.voucherId) {
+      capturePushNotificationTapped(data.voucherId);
       router.push(`/v/${data.voucherId}`);
     } else if (data.businessId) {
       router.push(`/business/${data.businessId}`);
@@ -71,6 +77,14 @@ function AppProviders({ children }: { children: React.ReactNode }) {
   useAuthGuard();
   useRegisterPushTokenOnAuth();
   useNotificationDeepLink();
+
+  useEffect(() => {
+    captureAppOpened();
+    return () => {
+      void posthog?.flush();
+    };
+  }, []);
+
   return <>{children}</>;
 }
 

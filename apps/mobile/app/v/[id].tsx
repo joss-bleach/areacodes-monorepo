@@ -5,13 +5,18 @@ import {
   Text,
   View,
 } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import { authClient } from "../lib/auth-client";
 import { isVoucherClaimable, formatValidityWindow } from "../lib/voucher-utils";
+import {
+  captureVoucherViewed,
+  captureVoucherClaimed,
+  posthog,
+} from "../lib/analytics";
 
 const BASE_HEADER_OPTIONS = {
   headerShown: true,
@@ -37,6 +42,18 @@ export default function VoucherDeepLinkScreen() {
   const claimVoucher = useMutation(api.functions.claims.claimVoucher);
   const [claiming, setClaiming] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void posthog?.screen("VoucherDeepLink");
+  }, []);
+
+  useEffect(() => {
+    if (voucher) {
+      captureVoucherViewed(voucher._id, voucher.business._id);
+    }
+  // fire once when voucher loads
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [voucher?._id]);
 
   if (voucher === undefined) {
     return (
@@ -78,6 +95,9 @@ export default function VoucherDeepLinkScreen() {
     setClaimError(null);
     try {
       await claimVoucher({ voucherId: id as Id<"vouchers"> });
+      if (voucher) {
+        captureVoucherClaimed(voucher._id, voucher.business._id);
+      }
     } catch {
       setClaimError("Could not claim voucher. Please try again.");
     } finally {

@@ -3,6 +3,10 @@ import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native
 import { useRouter } from "expo-router";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { authClient } from "../lib/auth-client";
+import {
+  captureSignInCompleted,
+  captureSignUpCompleted,
+} from "../lib/analytics";
 
 function GoogleIcon() {
   return <Text className="text-base mr-2">G</Text>;
@@ -29,6 +33,12 @@ export function SocialAuthButtons({ mode, onError }: SocialAuthButtonsProps) {
       });
       if (error) {
         onError(error.message ?? "Google sign-in failed. Please try again.");
+      } else {
+        if (mode === "sign-up") {
+          captureSignUpCompleted("google");
+        } else {
+          captureSignInCompleted("google");
+        }
       }
     } catch {
       onError("Google sign-in failed. Please try again.");
@@ -69,6 +79,11 @@ export function SocialAuthButtons({ mode, onError }: SocialAuthButtonsProps) {
       if (error) {
         onError(error.message ?? "Apple sign-in failed. Please try again.");
       } else {
+        if (mode === "sign-up") {
+          captureSignUpCompleted("apple");
+        } else {
+          captureSignInCompleted("apple");
+        }
         router.replace("/(tabs)/");
       }
     } catch (err: unknown) {
