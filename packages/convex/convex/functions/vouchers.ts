@@ -204,7 +204,7 @@ export const createVoucher = mutation({
         internal.functions.pushTokens.sendVoucherPushNotifications,
         {
           businessId: voucher.businessId,
-          voucherId: voucherId as unknown as Id<"vouchers">,
+          voucherId: voucher._id,
           businessName: business.name,
           voucherTitle: voucher.title,
         },

@@ -8,6 +8,8 @@ import { authClient } from "./auth-client";
 // re-export it in its type declarations. Use a local type to avoid the gap.
 type PermStatus = { granted: boolean };
 
+type RegisterToken = (args: { token: string }) => Promise<unknown>;
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -18,17 +20,22 @@ Notifications.setNotificationHandler({
   }),
 });
 
-async function getAndRegisterToken(
-  registerToken: (args: { token: string }) => Promise<unknown>,
+async function fetchAndRegisterToken(
+  projectId: string,
+  registerToken: RegisterToken,
 ): Promise<void> {
+  const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
+  await registerToken({ token: tokenData.data });
+}
+
+async function getAndRegisterToken(registerToken: RegisterToken): Promise<void> {
   const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
   if (!projectId) return;
 
   const perms = (await Notifications.getPermissionsAsync()) as unknown as PermStatus;
   if (!perms.granted) return;
 
-  const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-  await registerToken({ token: tokenData.data });
+  await fetchAndRegisterToken(projectId, registerToken);
 }
 
 export function useRegisterPushTokenOnAuth() {
@@ -44,7 +51,7 @@ export function useRegisterPushTokenOnAuth() {
 }
 
 export async function requestPushPermissionAndRegister(
-  registerToken: (args: { token: string }) => Promise<unknown>,
+  registerToken: RegisterToken,
 ): Promise<boolean> {
   const projectId = process.env.EXPO_PUBLIC_EAS_PROJECT_ID;
   if (!projectId) return false;
@@ -59,7 +66,6 @@ export async function requestPushPermissionAndRegister(
 
   if (!granted) return false;
 
-  const tokenData = await Notifications.getExpoPushTokenAsync({ projectId });
-  await registerToken({ token: tokenData.data });
+  await fetchAndRegisterToken(projectId, registerToken);
   return true;
 }
