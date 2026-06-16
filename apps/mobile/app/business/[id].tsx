@@ -5,8 +5,9 @@ import {
   Text,
   View,
 } from "react-native";
+import { useState } from "react";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import { authClient } from "../lib/auth-client";
@@ -18,14 +19,106 @@ const BASE_HEADER_OPTIONS = {
   headerTintColor: "#fff",
 } as const;
 
+type Voucher = {
+  _id: string;
+  title: string;
+  description: string;
+  voucherValidFrom: number;
+  voucherValidTo: number;
+};
+
+function VoucherCard({
+  voucher,
+  businessId,
+}: {
+  voucher: Voucher;
+  businessId: string;
+}) {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
+  const claimForVoucher = useQuery(api.functions.claims.getClaimForVoucher, {
+    voucherId: voucher._id as Id<"vouchers">,
+  });
+  const claimVoucher = useMutation(api.functions.claims.claimVoucher);
+  const [claiming, setClaiming] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
+
+  const claimable = isVoucherClaimable(
+    voucher.voucherValidFrom,
+    voucher.voucherValidTo,
+  );
+  const alreadyClaimed = claimForVoucher != null;
+
+  async function handleClaim() {
+    if (!session?.user) {
+      router.push(
+        `/(auth)/sign-in?returnTo=/business/${businessId}&voucherId=${voucher._id}`,
+      );
+      return;
+    }
+
+    setClaiming(true);
+    setClaimError(null);
+    try {
+      await claimVoucher({ voucherId: voucher._id as Id<"vouchers"> });
+    } catch {
+      setClaimError("Could not claim voucher. Please try again.");
+    } finally {
+      setClaiming(false);
+    }
+  }
+
+  return (
+    <View className="bg-gray-900 border border-gray-700 rounded-xl p-4 mb-4">
+      <Text className="text-white font-semibold text-base mb-1">
+        {voucher.title}
+      </Text>
+      <Text className="text-gray-500 text-xs mb-4">
+        Valid: {formatValidityWindow(voucher.voucherValidFrom, voucher.voucherValidTo)}
+      </Text>
+
+      {claimError ? (
+        <Text className="text-red-400 text-xs mb-2">{claimError}</Text>
+      ) : null}
+
+      {claimable && !alreadyClaimed && (
+        <Pressable
+          onPress={handleClaim}
+          disabled={claiming}
+          className="bg-white rounded-lg px-4 py-3 items-center disabled:opacity-50"
+        >
+          {claiming ? (
+            <ActivityIndicator color="#000000" />
+          ) : (
+            <Text className="text-black font-semibold text-sm">Claim</Text>
+          )}
+        </Pressable>
+      )}
+
+      {claimable && alreadyClaimed && (
+        <View className="bg-gray-800 rounded-lg px-4 py-3 items-center">
+          <Text className="text-green-400 font-semibold text-sm">
+            Claimed ✓
+          </Text>
+        </View>
+      )}
+
+      {!claimable && (
+        <View className="bg-gray-800 rounded-lg px-4 py-3 items-center">
+          <Text className="text-gray-500 text-sm">Expired</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 export default function BusinessScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { data: session } = authClient.useSession();
 
   const business = useQuery(
     api.functions.explore.getBusinessByIdWithVouchers,
-    id ? { businessId: id as Id<"businesses"> } : "skip"
+    id ? { businessId: id as Id<"businesses"> } : "skip",
   );
 
   if (business === undefined) {
@@ -41,21 +134,15 @@ export default function BusinessScreen() {
       <>
         <Stack.Screen options={{ ...BASE_HEADER_OPTIONS, title: "Business" }} />
         <View className="flex-1 bg-black items-center justify-center px-6">
-          <Text className="text-white text-lg font-semibold">Business not found</Text>
+          <Text className="text-white text-lg font-semibold">
+            Business not found
+          </Text>
           <Pressable onPress={() => router.back()} className="mt-4">
             <Text className="text-gray-400 text-sm underline">Go back</Text>
           </Pressable>
         </View>
       </>
     );
-  }
-
-  function handleClaim(voucherId: string) {
-    if (!session?.user) {
-      router.push(`/(auth)/sign-in?returnTo=/business/${id}&voucherId=${voucherId}`);
-      return;
-    }
-    // Auth is in place — claim flow (requires Convex auth bridge, tracked separately)
   }
 
   return (
@@ -67,8 +154,13 @@ export default function BusinessScreen() {
           headerTitleStyle: { fontWeight: "bold" },
         }}
       />
-      <ScrollView className="flex-1 bg-black" contentContainerClassName="px-4 py-6">
-        <Text className="text-white text-2xl font-bold mb-2">{business.name}</Text>
+      <ScrollView
+        className="flex-1 bg-black"
+        contentContainerClassName="px-4 py-6"
+      >
+        <Text className="text-white text-2xl font-bold mb-2">
+          {business.name}
+        </Text>
 
         {business.industry && (
           <Text className="text-gray-400 text-xs uppercase tracking-wide mb-4">
@@ -80,41 +172,22 @@ export default function BusinessScreen() {
           {business.description}
         </Text>
 
-        <Text className="text-white text-lg font-semibold mb-4">Active vouchers</Text>
+        <Text className="text-white text-lg font-semibold mb-4">
+          Active vouchers
+        </Text>
 
         {business.vouchers.length === 0 ? (
-          <Text className="text-gray-500 text-sm">No active vouchers right now.</Text>
+          <Text className="text-gray-500 text-sm">
+            No active vouchers right now.
+          </Text>
         ) : (
-          business.vouchers.map((voucher) => {
-            const claimable = isVoucherClaimable(voucher.voucherValidFrom, voucher.voucherValidTo);
-            return (
-              <View
-                key={voucher._id}
-                className="bg-gray-900 border border-gray-700 rounded-xl p-4 mb-4"
-              >
-                <Text className="text-white font-semibold text-base mb-1">
-                  {voucher.title}
-                </Text>
-                <Text className="text-gray-300 text-sm mb-3">{voucher.description}</Text>
-                <Text className="text-gray-500 text-xs mb-4">
-                  Valid: {formatValidityWindow(voucher.voucherValidFrom, voucher.voucherValidTo)}
-                </Text>
-
-                {claimable ? (
-                  <Pressable
-                    onPress={() => handleClaim(voucher._id)}
-                    className="bg-white rounded-lg px-4 py-3 items-center"
-                  >
-                    <Text className="text-black font-semibold text-sm">Claim</Text>
-                  </Pressable>
-                ) : (
-                  <View className="bg-gray-800 rounded-lg px-4 py-3 items-center">
-                    <Text className="text-gray-500 text-sm">Expired</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })
+          business.vouchers.map((voucher) => (
+            <VoucherCard
+              key={voucher._id}
+              voucher={voucher}
+              businessId={id ?? ""}
+            />
+          ))
         )}
       </ScrollView>
     </>

@@ -158,8 +158,21 @@ export const getWallet = query({
       Layer.succeed(SubscriptionRepo, makeConvexSubscriptionQueryRepo(ctx)),
     );
 
-    return await Effect.runPromise(
+    const entries = await Effect.runPromise(
       Effect.provide(VoucherService.getWallet(customerId, now), layer),
+    );
+
+    // Enrich each entry with business name and voucherValidFrom for display.
+    return await Promise.all(
+      entries.map(async (entry) => {
+        const voucher = await ctx.db.get(entry.voucherId as Id<"vouchers">);
+        const business = voucher ? await ctx.db.get(voucher.businessId) : null;
+        return {
+          ...entry,
+          businessName: business?.name ?? null,
+          voucherValidFrom: voucher?.voucherValidFrom ?? null,
+        };
+      }),
     );
   },
 });

@@ -2,9 +2,10 @@ import "../global.css";
 import { useEffect } from "react";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { ConvexProvider } from "convex/react";
+import { ConvexProviderWithAuth } from "convex/react";
 import { authClient } from "./lib/auth-client";
 import { convex } from "./lib/convex-client";
+import { useConvexAuth } from "./lib/use-convex-auth";
 
 const PROTECTED_TABS = new Set(["wallet", "account"]);
 
@@ -33,9 +34,9 @@ export default function RootLayout() {
   useAuthGuard();
 
   return (
-    <ConvexProvider client={convex}>
+    <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }} />
-    </ConvexProvider>
+    </ConvexProviderWithAuth>
   );
 }
