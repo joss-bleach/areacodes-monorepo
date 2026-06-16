@@ -9,6 +9,9 @@ const BRIGHTON_HOVE_BOUNDS = {
 };
 
 describe("service area boundary", () => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  const coords = SERVICE_AREA_BOUNDARY.geometry.coordinates[0]!;
+
   it("is a GeoJSON Feature", () => {
     expect(SERVICE_AREA_BOUNDARY.type).toBe("Feature");
   });
@@ -18,20 +21,14 @@ describe("service area boundary", () => {
   });
 
   it("is a closed polygon (first and last coordinate identical)", () => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const coords = SERVICE_AREA_BOUNDARY.geometry.coordinates[0]!;
     expect(coords[0]).toEqual(coords[coords.length - 1]);
   });
 
   it("has at least 4 coordinate pairs (minimum valid polygon)", () => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const coords = SERVICE_AREA_BOUNDARY.geometry.coordinates[0]!;
     expect(coords.length).toBeGreaterThanOrEqual(4);
   });
 
   it("has all coordinates within Brighton & Hove bounds", () => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const coords = SERVICE_AREA_BOUNDARY.geometry.coordinates[0]!;
     for (const [lng, lat] of coords) {
       expect(lng).toBeGreaterThan(BRIGHTON_HOVE_BOUNDS.minLng);
       expect(lng).toBeLessThan(BRIGHTON_HOVE_BOUNDS.maxLng);
