@@ -70,9 +70,7 @@ export default function VoucherDeepLinkScreen() {
 
   async function handleClaim() {
     if (!session?.user) {
-      router.push(
-        `/(auth)/sign-in?returnTo=/v/${id}`,
-      );
+      router.push(`/(auth)/sign-in?returnTo=/v/${id}`);
       return;
     }
 
