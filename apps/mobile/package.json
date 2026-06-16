@@ -9,8 +9,11 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@better-auth/expo": "^1.6.19",
+    "better-auth": "^1.6.19",
     "expo": "~53.0.0",
     "expo-router": "~4.0.0",
+    "expo-secure-store": "^56.0.4",
     "expo-status-bar": "~2.0.0",
     "nativewind": "^4.0.36",
     "react": "^19.0.0",

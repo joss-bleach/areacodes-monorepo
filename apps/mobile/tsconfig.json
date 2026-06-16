@@ -8,7 +8,8 @@
   },
   "include": [
     "app/**/*",
-    "nativewind-env.d.ts"
+    "nativewind-env.d.ts",
+    "env.d.ts"
   ],
   "exclude": ["node_modules"]
 }

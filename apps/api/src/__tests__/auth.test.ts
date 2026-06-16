@@ -1,6 +1,79 @@
 import { describe, expect, test } from "vitest";
 import app from "../index";
 
+describe("email/password auth", () => {
+  const uniqueEmail = () => `test-${Math.random().toString(36).slice(2)}@example.com`;
+
+  test("sign-up creates a new customer account", async () => {
+    const email = uniqueEmail();
+    const res = await app.request("/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: "Password123!", name: "Test User" }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { user?: { email: string; role?: string } };
+    expect(body.user?.email).toBe(email);
+    expect(body.user?.role).toBe("customer");
+  });
+
+  test("sign-up with duplicate email returns an error", async () => {
+    const email = uniqueEmail();
+    await app.request("/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: "Password123!", name: "Test User" }),
+    });
+    const res = await app.request("/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: "Password123!", name: "Test User" }),
+    });
+    expect(res.status).not.toBe(200);
+  });
+
+  test("sign-in with correct credentials succeeds", async () => {
+    const email = uniqueEmail();
+    await app.request("/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: "Password123!", name: "Test User" }),
+    });
+    const res = await app.request("/auth/sign-in/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: "Password123!" }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json() as { user?: { email: string } };
+    expect(body.user?.email).toBe(email);
+  });
+
+  test("sign-in with wrong password returns an error", async () => {
+    const email = uniqueEmail();
+    await app.request("/auth/sign-up/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: "Password123!", name: "Test User" }),
+    });
+    const res = await app.request("/auth/sign-in/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password: "wrong-password" }),
+    });
+    expect(res.status).not.toBe(200);
+  });
+
+  test("sign-in with unknown email returns an error", async () => {
+    const res = await app.request("/auth/sign-in/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: "nobody@example.com", password: "Password123!" }),
+    });
+    expect(res.status).not.toBe(200);
+  });
+});
+
 describe("auth routes", () => {
   test("Apple Sign-In is disabled with 501", async () => {
     const res = await app.request("/auth/apple/sign-in", { method: "POST" });
