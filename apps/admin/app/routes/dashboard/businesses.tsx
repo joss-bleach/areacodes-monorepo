@@ -19,7 +19,7 @@ import {
 } from "@repo/ui";
 import { AdminNavbar } from "~/components/admin-navbar";
 import { RequireAdmin } from "~/components/require-admin";
-import { Flag } from "lucide-react";
+import { Flag, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/businesses")({
@@ -47,11 +47,17 @@ function BusinessesList() {
   const { isAuthenticated } = useConvexAuth();
   const businesses = useQuery(api.functions.admin.getAllBusinesses, isAuthenticated ? {} : "skip");
   const flagBusiness = useMutation(api.functions.admin.flagBusiness);
+  const reinstateBusiness = useMutation(api.functions.admin.reinstateBusiness);
   const [flagTarget, setFlagTarget] = useState<{
     id: Id<"businesses">;
     name: string;
   } | null>(null);
+  const [reinstateTarget, setReinstateTarget] = useState<{
+    id: Id<"businesses">;
+    name: string;
+  } | null>(null);
   const [isFlagging, setIsFlagging] = useState(false);
+  const [isReinstating, setIsReinstating] = useState(false);
 
   const handleFlag = async () => {
     if (!flagTarget) return;
@@ -64,6 +70,20 @@ function BusinessesList() {
       toast.error("Failed to flag business");
     } finally {
       setIsFlagging(false);
+    }
+  };
+
+  const handleReinstate = async () => {
+    if (!reinstateTarget) return;
+    setIsReinstating(true);
+    try {
+      await reinstateBusiness({ businessId: reinstateTarget.id });
+      toast.success(`Business "${reinstateTarget.name}" has been reinstated`);
+      setReinstateTarget(null);
+    } catch {
+      toast.error("Failed to reinstate business");
+    } finally {
+      setIsReinstating(false);
     }
   };
 
@@ -148,18 +168,31 @@ function BusinessesList() {
                       <td className="py-4 px-4">
                         <span
                           className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
-                            business.deletedAt !== undefined
+                            business.flaggedAt !== undefined
                               ? "border-red-500/50 text-red-700 dark:text-red-400"
                               : "border-green-500/50 text-green-700 dark:text-green-400"
                           }`}
                         >
-                          {business.deletedAt !== undefined
-                            ? "Flagged"
-                            : "Active"}
+                          {business.flaggedAt !== undefined ? "Flagged" : "Active"}
                         </span>
                       </td>
                       <td className="py-4 px-4 text-right">
-                        {business.deletedAt === undefined && (
+                        {business.flaggedAt !== undefined ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-green-700 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/20"
+                            onClick={() =>
+                              setReinstateTarget({
+                                id: business._id as Id<"businesses">,
+                                name: business.name,
+                              })
+                            }
+                          >
+                            <RotateCcw className="h-4 w-4 mr-1" />
+                            Reinstate
+                          </Button>
+                        ) : (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -190,7 +223,7 @@ function BusinessesList() {
           <DialogHeader>
             <DialogTitle>Flag Business</DialogTitle>
             <DialogDescription>
-              Are you sure you want to flag "{flagTarget?.name}"? This will soft-delete the business and all its vouchers.
+              Are you sure you want to flag "{flagTarget?.name}"? This will suspend the business and all its vouchers.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
@@ -211,6 +244,36 @@ function BusinessesList() {
               className="w-full sm:w-auto"
             >
               {isFlagging ? "Flagging..." : "Flag Business"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!reinstateTarget} onOpenChange={(open) => !open && setReinstateTarget(null)}>
+        <DialogContent className="rounded-none border-none sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Reinstate Business</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reinstate "{reinstateTarget?.name}"? This will restore the business and its vouchers.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setReinstateTarget(null)}
+              disabled={isReinstating}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={handleReinstate}
+              disabled={isReinstating}
+              className="w-full sm:w-auto"
+            >
+              {isReinstating ? "Reinstating..." : "Reinstate Business"}
             </Button>
           </DialogFooter>
         </DialogContent>

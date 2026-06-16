@@ -48,6 +48,7 @@ export const CreateBusinessForm = () => {
 
   const { upload } = useConvexUpload();
   const createBusiness = useMutation(api.functions.businesses.createBusiness);
+  const startPilot = useMutation(api.functions.subscriptions.startPilot);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(businessProfileFormSchema),
@@ -191,7 +192,13 @@ export const CreateBusinessForm = () => {
         return;
       }
 
-      toast.success("Business created successfully");
+      // Start Pilot — stripeCustomerId is set server-side when Stripe is integrated
+      await startPilot({
+        businessId: business._id,
+        stripeCustomerId: `pilot_${business._id}`,
+      });
+
+      toast.success("Business created — your Pilot has started!");
       navigate({ to: "/b/$slug", params: { slug: business.slug! } });
     } catch {
       toast.error("Failed to create business");

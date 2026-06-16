@@ -37,3 +37,13 @@ export {
   type VoucherStatus,
   type VoucherFormat,
 } from "./voucher-presentation.js";
+export * as SubscriptionService from "./subscription-service.js";
+export {
+  SubscriptionRepo,
+  BusinessNotFound,
+  type SubscriptionDoc,
+  type SubscriptionStatus,
+  type GateStatus,
+  type StripeWebhookEvent,
+  type ISubscriptionRepo,
+} from "./subscription-service.js";

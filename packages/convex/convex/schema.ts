@@ -83,12 +83,14 @@ export default defineSchema({
   subscriptions: defineTable({
     businessId: v.id("businesses"),
     stripeCustomerId: v.string(),
-    stripeSubscriptionId: v.string(),
+    stripeSubscriptionId: v.optional(v.string()),
     status: v.string(),
     trialEnd: v.optional(v.number()),
-    currentPeriodEnd: v.number(),
-    priceId: v.string(),
+    currentPeriodEnd: v.optional(v.number()),
+    priceId: v.optional(v.string()),
+    lastStripeEventId: v.optional(v.string()),
   })
     .index("by_business", ["businessId"])
-    .index("by_stripe_customer", ["stripeCustomerId"]),
+    .index("by_stripe_customer", ["stripeCustomerId"])
+    .index("by_stripe_subscription", ["stripeSubscriptionId"]),
 });

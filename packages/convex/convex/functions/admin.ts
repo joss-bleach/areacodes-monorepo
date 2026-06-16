@@ -67,7 +67,18 @@ export const flagBusiness = mutation({
     const business = await ctx.db.get(businessId);
     if (!business) throw new Error("Business not found");
 
-    await ctx.db.patch(businessId, { flaggedAt: Date.now() });
+    const now = Date.now();
+    await ctx.db.patch(businessId, { flaggedAt: now });
+
+    const vouchers = await ctx.db
+      .query("vouchers")
+      .withIndex("by_business", (q) => q.eq("businessId", businessId))
+      .collect();
+    for (const voucher of vouchers) {
+      if (!voucher.deletedAt) {
+        await ctx.db.patch(voucher._id, { flaggedAt: now });
+      }
+    }
 
     await ctx.db.insert("auditLog", {
       userId,
@@ -75,7 +86,7 @@ export const flagBusiness = mutation({
       targetType: "business",
       targetId: businessId,
       notes,
-      createdAt: Date.now(),
+      createdAt: now,
     });
 
     return { success: true };
@@ -94,13 +105,24 @@ export const reinstateBusiness = mutation({
 
     await ctx.db.patch(businessId, { flaggedAt: undefined });
 
+    const vouchers = await ctx.db
+      .query("vouchers")
+      .withIndex("by_business", (q) => q.eq("businessId", businessId))
+      .collect();
+    for (const voucher of vouchers) {
+      if (voucher.flaggedAt !== undefined) {
+        await ctx.db.patch(voucher._id, { flaggedAt: undefined });
+      }
+    }
+
+    const now = Date.now();
     await ctx.db.insert("auditLog", {
       userId,
       action: "reinstate_business",
       targetType: "business",
       targetId: businessId,
       notes,
-      createdAt: Date.now(),
+      createdAt: now,
     });
 
     return { success: true };
