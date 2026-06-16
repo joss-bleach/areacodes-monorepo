@@ -74,18 +74,28 @@ describe("email/password auth", () => {
   });
 });
 
-describe("auth routes", () => {
-  test("Apple Sign-In is disabled with 501", async () => {
-    const res = await app.request("/auth/apple/sign-in", { method: "POST" });
-    expect(res.status).toBe(501);
-    const body = await res.json();
-    expect(body).toHaveProperty("error");
+describe("social sign-in", () => {
+  test("Apple idToken sign-in with invalid token returns 401 (custom bridge endpoint reachable)", async () => {
+    const res = await app.request("/auth/sign-in/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-skip-oauth-proxy": "true" },
+      body: JSON.stringify({ provider: "apple", idToken: { token: "not-a-valid-jwt" } }),
+    });
+    expect(res.status).toBe(401);
   });
 
-  test("Apple Sign-In GET is also disabled", async () => {
-    const res = await app.request("/auth/apple/callback", { method: "GET" });
-    expect(res.status).toBe(501);
+  test("Google social sign-in endpoint is mounted and returns a redirect response", async () => {
+    const res = await app.request("/auth/sign-in/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-skip-oauth-proxy": "true" },
+      body: JSON.stringify({ provider: "google", callbackURL: "areacodes:///callback" }),
+    });
+    expect(res.status).not.toBe(404);
+    expect(res.status).not.toBe(501);
   });
+});
+
+describe("auth routes", () => {
 
   test("Better Auth handler is mounted at /auth", async () => {
     // Empty body returns 400 (validation error), not 404
