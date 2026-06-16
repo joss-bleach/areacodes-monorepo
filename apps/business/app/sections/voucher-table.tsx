@@ -52,6 +52,7 @@ type ConvexVoucher = {
   voucherValidTo: number;
   deletedAt?: number;
   voucherUrl: string | null;
+  redemptionCount?: number;
 };
 
 
@@ -164,6 +165,7 @@ export const VoucherTable = () => {
               <TableHead>Format</TableHead>
               <TableHead>Valid Until</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Redemptions</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -171,7 +173,7 @@ export const VoucherTable = () => {
             {vouchers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={6}
+                  colSpan={7}
                   className="py-8 text-center text-sm text-muted-foreground"
                 >
                   No vouchers found. Create your first voucher to get started.
@@ -211,6 +213,9 @@ export const VoucherTable = () => {
                         {statusLabel[status]}
                       </Badge>
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {(voucher as ConvexVoucher).redemptionCount ?? "—"}
+                    </TableCell>
                     <TableCell className="text-right">
                       <VoucherActionsDropdown
                         voucher={voucher as ConvexVoucher}
@@ -243,7 +248,7 @@ const VoucherTableLoading = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              {["Title", "Description", "Format", "Valid Until", "Status", "Actions"].map(
+              {["Title", "Description", "Format", "Valid Until", "Status", "Redemptions", "Actions"].map(
                 (h) => (
                   <TableHead key={h}>{h}</TableHead>
                 )
@@ -267,6 +272,9 @@ const VoucherTableLoading = () => {
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-6 w-16" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-10" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-8 w-8 ml-auto" />

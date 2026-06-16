@@ -19,6 +19,7 @@ import { Route as ApiLocationRouteImport } from './routes/api/location'
 import { Route as AuthenticatedBCreateRouteImport } from './routes/_authenticated/b/create'
 import { Route as AuthenticatedBSlugIndexRouteImport } from './routes/_authenticated/b/$slug/index'
 import { Route as AuthenticatedBSlugEditRouteImport } from './routes/_authenticated/b/$slug/edit'
+import { Route as AuthenticatedBSlugPosRouteImport } from './routes/_authenticated/b/$slug/pos'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -69,6 +70,11 @@ const AuthenticatedBSlugEditRoute = AuthenticatedBSlugEditRouteImport.update({
   path: '/b/$slug/edit',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedBSlugPosRoute = AuthenticatedBSlugPosRouteImport.update({
+  id: '/b/$slug/pos',
+  path: '/b/$slug/pos',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,6 +85,7 @@ export interface FileRoutesByFullPath {
   '/sign-up/$': typeof SignUpSplatRoute
   '/b/create': typeof AuthenticatedBCreateRoute
   '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
+  '/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/b/$slug/': typeof AuthenticatedBSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -90,6 +97,7 @@ export interface FileRoutesByTo {
   '/sign-up/$': typeof SignUpSplatRoute
   '/b/create': typeof AuthenticatedBCreateRoute
   '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
+  '/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/b/$slug': typeof AuthenticatedBSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -103,6 +111,7 @@ export interface FileRoutesById {
   '/sign-up/$': typeof SignUpSplatRoute
   '/_authenticated/b/create': typeof AuthenticatedBCreateRoute
   '/_authenticated/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
+  '/_authenticated/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/_authenticated/b/$slug/': typeof AuthenticatedBSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/sign-up/$'
     | '/b/create'
     | '/b/$slug/edit'
+    | '/b/$slug/pos'
     | '/b/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/sign-up/$'
     | '/b/create'
     | '/b/$slug/edit'
+    | '/b/$slug/pos'
     | '/b/$slug'
   id:
     | '__root__'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/sign-up/$'
     | '/_authenticated/b/create'
     | '/_authenticated/b/$slug/edit'
+    | '/_authenticated/b/$slug/pos'
     | '/_authenticated/b/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -222,18 +234,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBSlugEditRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/b/$slug/pos': {
+      id: '/_authenticated/b/$slug/pos'
+      path: '/b/$slug/pos'
+      fullPath: '/b/$slug/pos'
+      preLoaderRoute: typeof AuthenticatedBSlugPosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedBCreateRoute: typeof AuthenticatedBCreateRoute
   AuthenticatedBSlugEditRoute: typeof AuthenticatedBSlugEditRoute
+  AuthenticatedBSlugPosRoute: typeof AuthenticatedBSlugPosRoute
   AuthenticatedBSlugIndexRoute: typeof AuthenticatedBSlugIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBCreateRoute: AuthenticatedBCreateRoute,
   AuthenticatedBSlugEditRoute: AuthenticatedBSlugEditRoute,
+  AuthenticatedBSlugPosRoute: AuthenticatedBSlugPosRoute,
   AuthenticatedBSlugIndexRoute: AuthenticatedBSlugIndexRoute,
 }
 
