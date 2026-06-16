@@ -1,13 +1,28 @@
-import { UserButton } from "@clerk/tanstack-react-start";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui";
+import { authClient } from "~/lib/auth-client";
 
 export const AdminNavbar = () => {
+  const navigate = useNavigate();
+  const { data: session } = authClient.useSession();
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const initial = (session?.user.name?.[0] ?? session?.user.email?.[0] ?? "?").toUpperCase();
+
+  async function handleSignOut() {
+    await authClient.signOut();
+    navigate({ to: "/sign-in" });
+  }
 
   return (
     <header className="py-4 bg-background border-b border-border">
@@ -48,7 +63,18 @@ export const AdminNavbar = () => {
           </div>
         </div>
         {isMounted ? (
-          <UserButton />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
+                {initial}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleSignOut}>
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
         )}
