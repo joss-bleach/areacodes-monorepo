@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "Areacodes",
+    "slug": "areacodes",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "areacodes",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "imageWidth": 200,
+      "backgroundColor": "#000000"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.acbrighton.consumer",
+      "minimumOsVersion": "16.0"
+    },
+    "android": {
+      "package": "com.acbrighton.consumer",
+      "minSdkVersion": 24,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#000000"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.0"
+          },
+          "android": {
+            "minSdkVersion": 24
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
