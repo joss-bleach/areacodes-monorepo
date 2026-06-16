@@ -97,4 +97,18 @@ export default defineSchema({
     .index("by_business", ["businessId"])
     .index("by_stripe_customer", ["stripeCustomerId"])
     .index("by_stripe_subscription", ["stripeSubscriptionId"]),
+
+  follows: defineTable({
+    customerId: v.string(),
+    businessId: v.id("businesses"),
+    followedAt: v.number(),
+  })
+    .index("by_customer_business", ["customerId", "businessId"])
+    .index("by_business", ["businessId"]),
+
+  pushTokens: defineTable({
+    customerId: v.string(),
+    token: v.string(),
+    registeredAt: v.number(),
+  }).index("by_customer", ["customerId"]),
 });

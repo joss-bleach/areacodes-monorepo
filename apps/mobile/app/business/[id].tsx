@@ -12,6 +12,7 @@ import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import { authClient } from "../lib/auth-client";
 import { isVoucherClaimable, formatValidityWindow } from "../lib/voucher-utils";
+import { requestPushPermissionAndRegister } from "../lib/use-push-notifications";
 
 const BASE_HEADER_OPTIONS = {
   headerShown: true,
@@ -112,6 +113,78 @@ function VoucherCard({
   );
 }
 
+function FollowButton({ businessId }: { businessId: Id<"businesses"> }) {
+  const { data: session } = authClient.useSession();
+  const follow = useQuery(api.functions.follows.getFollowForBusiness, { businessId });
+  const followBusiness = useMutation(api.functions.follows.followBusiness);
+  const unfollowBusiness = useMutation(api.functions.follows.unfollowBusiness);
+  const registerPushToken = useMutation(api.functions.pushTokens.registerPushToken);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (!session?.user) return null;
+
+  const isFollowing = follow != null;
+
+  async function handleFollow() {
+    setLoading(true);
+    setError(null);
+    try {
+      await requestPushPermissionAndRegister(registerPushToken);
+      await followBusiness({ businessId });
+    } catch {
+      setError("Could not follow. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleUnfollow() {
+    setLoading(true);
+    setError(null);
+    try {
+      await unfollowBusiness({ businessId });
+    } catch {
+      setError("Could not unfollow. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <View className="mb-8">
+      {error ? (
+        <Text className="text-red-400 text-xs mb-2">{error}</Text>
+      ) : null}
+      {isFollowing ? (
+        <Pressable
+          onPress={handleUnfollow}
+          disabled={loading}
+          className="border border-gray-600 rounded-lg px-4 py-3 items-center disabled:opacity-50"
+        >
+          {loading ? (
+            <ActivityIndicator color="#ffffff" />
+          ) : (
+            <Text className="text-gray-300 font-semibold text-sm">Following ✓</Text>
+          )}
+        </Pressable>
+      ) : (
+        <Pressable
+          onPress={handleFollow}
+          disabled={loading}
+          className="bg-white rounded-lg px-4 py-3 items-center disabled:opacity-50"
+        >
+          {loading ? (
+            <ActivityIndicator color="#000000" />
+          ) : (
+            <Text className="text-black font-semibold text-sm">Follow</Text>
+          )}
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
 export default function BusinessScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -168,9 +241,11 @@ export default function BusinessScreen() {
           </Text>
         )}
 
-        <Text className="text-gray-300 text-sm leading-relaxed mb-8">
+        <Text className="text-gray-300 text-sm leading-relaxed mb-6">
           {business.description}
         </Text>
+
+        <FollowButton businessId={id as Id<"businesses">} />
 
         <Text className="text-white text-lg font-semibold mb-4">
           Active vouchers

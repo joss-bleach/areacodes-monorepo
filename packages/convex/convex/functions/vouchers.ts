@@ -7,6 +7,7 @@ import { VoucherRepo, VoucherService, type IVoucherRepo } from "@areacodes/domai
 import { isHidden } from "./visibility";
 import { isActiveVoucher } from "../lib/voucher-filters";
 import { isBusinessSuspended } from "../lib/subscription-gate";
+import { internal } from "../_generated/api";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
@@ -194,7 +195,23 @@ export const createVoucher = mutation({
       Effect.provide(VoucherService.create(userId, businessId, voucherArgs), layer),
     );
 
-    return await ctx.db.get(voucherId as unknown as Id<"vouchers">);
+    const voucher = await ctx.db.get(voucherId as unknown as Id<"vouchers">);
+    const business = voucher ? await ctx.db.get(voucher.businessId) : null;
+
+    if (voucher && business) {
+      await ctx.scheduler.runAfter(
+        0,
+        internal.functions.pushTokens.sendVoucherPushNotifications,
+        {
+          businessId: voucher.businessId,
+          voucherId: voucherId as unknown as Id<"vouchers">,
+          businessName: business.name,
+          voucherTitle: voucher.title,
+        },
+      );
+    }
+
+    return voucher;
   },
 });
 
