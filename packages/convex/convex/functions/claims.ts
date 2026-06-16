@@ -12,9 +12,8 @@ import {
   type IVoucherRepo,
   type IClaimRepo,
   type IRevealRepo,
-  type ISubscriptionRepo,
-  type SubscriptionDoc,
 } from "@areacodes/domain";
+import { makeConvexSubscriptionQueryRepo } from "../lib/subscription-gate";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
@@ -31,24 +30,6 @@ function makeConvexVoucherRepo(ctx: QueryCtx | MutationCtx): IVoucherRepo {
     insert: () => Effect.die("not available in this context"),
     patch: () => Effect.die("not available in this context"),
     deleteStorage: () => Effect.die("not available in this context"),
-  };
-}
-
-function makeConvexSubscriptionQueryRepo(ctx: QueryCtx | MutationCtx): ISubscriptionRepo {
-  return {
-    findByBusiness: (businessId) =>
-      Effect.promise(async () =>
-        (await ctx.db
-          .query("subscriptions")
-          .withIndex("by_business", (q) =>
-            q.eq("businessId", businessId as Id<"businesses">),
-          )
-          .first()) as unknown as SubscriptionDoc | null,
-      ),
-    findByStripeCustomer: () => Effect.die("not available in this context"),
-    findByStripeSubscription: () => Effect.die("not available in this context"),
-    insert: () => Effect.die("not available in this context"),
-    patch: () => Effect.die("not available in this context"),
   };
 }
 

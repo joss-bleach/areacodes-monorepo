@@ -3,42 +3,10 @@ import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { Effect, Layer } from "effect";
-import { VoucherRepo, VoucherService, SubscriptionRepo, SubscriptionService, type IVoucherRepo, type ISubscriptionRepo, type SubscriptionDoc } from "@areacodes/domain";
+import { VoucherRepo, VoucherService, type IVoucherRepo } from "@areacodes/domain";
 import { isHidden } from "./visibility";
 import { isActiveVoucher } from "../lib/voucher-filters";
-
-function makeConvexSubscriptionQueryRepo(ctx: QueryCtx): ISubscriptionRepo {
-  return {
-    findByBusiness: (businessId) =>
-      Effect.promise(async () =>
-        (await ctx.db
-          .query("subscriptions")
-          .withIndex("by_business", (q) =>
-            q.eq("businessId", businessId as Id<"businesses">),
-          )
-          .first()) as unknown as SubscriptionDoc | null,
-      ),
-    findByStripeCustomer: () => Effect.die("not available in this context"),
-    findByStripeSubscription: () => Effect.die("not available in this context"),
-    insert: () => Effect.die("not available in this context"),
-    patch: () => Effect.die("not available in this context"),
-  };
-}
-
-async function isBusinessSuspended(
-  ctx: QueryCtx,
-  businessId: Id<"businesses">,
-  now: number,
-): Promise<boolean> {
-  const layer = Layer.succeed(SubscriptionRepo, makeConvexSubscriptionQueryRepo(ctx));
-  const result = await Effect.runPromise(
-    Effect.either(
-      Effect.provide(SubscriptionService.getGateStatus(businessId, now), layer),
-    ),
-  );
-  if (result._tag === "Left") return false; // no subscription → not suspended
-  return result.right === "suspended";
-}
+import { isBusinessSuspended } from "../lib/subscription-gate";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
