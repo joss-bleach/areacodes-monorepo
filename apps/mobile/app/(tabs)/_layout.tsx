@@ -1,4 +1,7 @@
 import { Tabs } from "expo-router";
+import { MapTabIcon } from "~/components/icons/MapTabIcon";
+import { WalletTabIcon } from "~/components/icons/WalletTabIcon";
+import { AccountTabIcon } from "~/components/icons/AccountTabIcon";
 
 export default function TabLayout() {
   return (
@@ -10,9 +13,27 @@ export default function TabLayout() {
         tabBarInactiveTintColor: "#666666",
       }}
     >
-      <Tabs.Screen name="index" options={{ title: "Map" }} />
-      <Tabs.Screen name="wallet" options={{ title: "Wallet" }} />
-      <Tabs.Screen name="account" options={{ title: "Account" }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: "Map",
+          tabBarIcon: ({ color }) => <MapTabIcon color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="wallet"
+        options={{
+          title: "Wallet",
+          tabBarIcon: ({ color }) => <WalletTabIcon color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="account"
+        options={{
+          title: "Account",
+          tabBarIcon: ({ color }) => <AccountTabIcon color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
