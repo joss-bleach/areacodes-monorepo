@@ -1,7 +1,35 @@
 import "../global.css";
-import { useEffect, useRef } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { useEffect, useRef, useState } from "react";
+import { Appearance, Text, TextInput } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
+import * as SecureStore from "expo-secure-store";
+import { ONBOARDING_KEY } from "./(onboarding)/index";
 import { StatusBar } from "expo-status-bar";
+
+// Expo Go ignores the `userInterfaceStyle` app config, so force dark at
+// runtime. This also makes native views (e.g. Apple Maps) render in dark mode.
+Appearance.setColorScheme("dark");
+
+// React Native has no font cascade: only Text with an explicit fontFamily uses
+// Poppins. Patch the base render so every Text/TextInput defaults to Poppins
+// while still letting per-element font-poppins-* classes override the weight.
+function applyDefaultFont(Component: typeof Text | typeof TextInput) {
+  const target = Component as unknown as {
+    render: (props: { style?: unknown }, ref: unknown) => unknown;
+  };
+  const original = target.render;
+  target.render = function render(props, ref) {
+    return original.call(
+      this,
+      { ...props, style: [{ fontFamily: "Poppins_400Regular" }, props.style] },
+      ref,
+    );
+  };
+}
+applyDefaultFont(Text);
+applyDefaultFont(TextInput);
+import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { ConvexProviderWithAuth } from "convex/react";
 import * as Notifications from "expo-notifications";
 import { authClient } from "./lib/auth-client";
@@ -30,9 +58,9 @@ function useAuthGuard() {
       segments[0] === "(tabs)" && secondSegment !== undefined && PROTECTED_TABS.has(secondSegment);
 
     if (!session?.user && inProtectedTab) {
-      router.replace("/(auth)/sign-in");
+      router.push("/sign-up");
     } else if (session?.user && inAuthGroup) {
-      router.replace("/(tabs)/");
+      router.replace("/(tabs)");
     }
   }, [session, isPending, segments, router]);
 }
@@ -89,12 +117,44 @@ function AppProviders({ children }: { children: React.ReactNode }) {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_500Medium,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (__DEV__) {
+      setHasSeenOnboarding(false);
+      return;
+    }
+    void SecureStore.getItemAsync(ONBOARDING_KEY).then((value) => {
+      setHasSeenOnboarding(value === "true");
+    });
+  }, []);
+
+  if (!fontsLoaded || hasSeenOnboarding === null) return null;
+
   return (
-    <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
-      <AppProviders>
-        <StatusBar style="light" />
-        <Stack screenOptions={{ headerShown: false }} />
-      </AppProviders>
-    </ConvexProviderWithAuth>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
+        <AppProviders>
+          <StatusBar style="light" />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Protected guard={!hasSeenOnboarding}>
+              <Stack.Screen name="(onboarding)" />
+            </Stack.Protected>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(auth)" />
+            <Stack.Screen
+              name="sign-up"
+              options={{ presentation: "modal", gestureEnabled: false }}
+            />
+          </Stack>
+        </AppProviders>
+      </ConvexProviderWithAuth>
+    </GestureHandlerRootView>
   );
 }
