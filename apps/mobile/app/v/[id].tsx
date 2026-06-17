@@ -51,7 +51,6 @@ export default function VoucherDeepLinkScreen() {
     if (voucher) {
       captureVoucherViewed(voucher._id, voucher.business._id);
     }
-  // fire once when voucher loads
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [voucher?._id]);
 
