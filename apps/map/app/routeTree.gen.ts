@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as VIdRouteImport } from './routes/v/$id'
 import { Route as BIdRouteImport } from './routes/b/$id'
 
@@ -36,6 +37,11 @@ const WalletRoute = WalletRouteImport.update({
   path: '/wallet',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const VIdRoute = VIdRouteImport.update({
   id: '/v/$id',
   path: '/v/$id',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/wallet': typeof WalletRoute
+  '/privacy': typeof PrivacyRoute
   '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/wallet': typeof WalletRoute
+  '/privacy': typeof PrivacyRoute
   '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
@@ -69,15 +77,16 @@ export interface FileRoutesById {
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
   '/wallet': typeof WalletRoute
+  '/privacy': typeof PrivacyRoute
   '/b/$id': typeof BIdRoute
   '/v/$id': typeof VIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/sign-up' | '/wallet' | '/b/$id' | '/v/$id'
+  fullPaths: '/' | '/sign-in' | '/sign-up' | '/wallet' | '/privacy' | '/b/$id' | '/v/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/sign-up' | '/wallet' | '/b/$id' | '/v/$id'
-  id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/wallet' | '/b/$id' | '/v/$id'
+  to: '/' | '/sign-in' | '/sign-up' | '/wallet' | '/privacy' | '/b/$id' | '/v/$id'
+  id: '__root__' | '/' | '/sign-in' | '/sign-up' | '/wallet' | '/privacy' | '/b/$id' | '/v/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -85,6 +94,7 @@ export interface RootRouteChildren {
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
   WalletRoute: typeof WalletRoute
+  PrivacyRoute: typeof PrivacyRoute
   BIdRoute: typeof BIdRoute
   VIdRoute: typeof VIdRoute
 }
@@ -119,6 +129,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WalletRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/v/$id': {
       id: '/v/$id'
       path: '/v/$id'
@@ -141,6 +158,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,
   WalletRoute: WalletRoute,
+  PrivacyRoute: PrivacyRoute,
   BIdRoute: BIdRoute,
   VIdRoute: VIdRoute,
 }
