@@ -4,6 +4,21 @@ export const Route = createFileRoute("/privacy")({
   component: PrivacyPage,
 });
 
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <h2 className="text-xl font-bold mb-3">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
 function PrivacyPage() {
   return (
     <main className="min-h-screen bg-black text-white px-6 py-12 max-w-3xl mx-auto">
@@ -15,8 +30,7 @@ function PrivacyPage() {
       <p className="text-neutral-400 mb-10">Last updated: 17 June 2026</p>
 
       <section className="space-y-8 text-base leading-relaxed">
-        <div>
-          <h2 className="text-xl font-bold mb-3">Who we are</h2>
+        <Section title="Who we are">
           <p>
             Areacodes is operated by AC Brighton Ltd, a company registered in England and Wales. We run
             the platform at map.acbrighton.com and the Areacodes mobile app ("Areacodes", "we", "us").
@@ -24,10 +38,9 @@ function PrivacyPage() {
           <p className="mt-2">
             Questions about this policy: <a href="mailto:hello@acbrighton.com" className="underline">hello@acbrighton.com</a>
           </p>
-        </div>
+        </Section>
 
-        <div>
-          <h2 className="text-xl font-bold mb-3">What data we collect</h2>
+        <Section title="What data we collect">
           <ul className="list-disc pl-5 space-y-1 text-neutral-300">
             <li>
               <strong>Account data:</strong> email address, display name, and authentication tokens when you
@@ -48,28 +61,25 @@ function PrivacyPage() {
               via PostHog, hosted in the EU. No advertising IDs or fingerprinting.
             </li>
           </ul>
-        </div>
+        </Section>
 
-        <div>
-          <h2 className="text-xl font-bold mb-3">Why we collect it</h2>
+        <Section title="Why we collect it">
           <ul className="list-disc pl-5 space-y-1 text-neutral-300">
             <li>To provide the service: account management, wallet, voucher delivery.</li>
             <li>To send you push notifications you have opted in to.</li>
             <li>To understand how people use Areacodes so we can improve it.</li>
           </ul>
-        </div>
+        </Section>
 
-        <div>
-          <h2 className="text-xl font-bold mb-3">Legal basis (UK GDPR)</h2>
+        <Section title="Legal basis (UK GDPR)">
           <ul className="list-disc pl-5 space-y-1 text-neutral-300">
             <li><strong>Contract:</strong> processing necessary to provide the service you signed up for.</li>
             <li><strong>Consent:</strong> push notifications (you can withdraw via device settings at any time).</li>
             <li><strong>Legitimate interests:</strong> anonymised analytics to improve the platform.</li>
           </ul>
-        </div>
+        </Section>
 
-        <div>
-          <h2 className="text-xl font-bold mb-3">Who we share data with</h2>
+        <Section title="Who we share data with">
           <ul className="list-disc pl-5 space-y-1 text-neutral-300">
             <li>
               <strong>Convex (database & backend):</strong> your account and voucher data is stored on
@@ -84,18 +94,16 @@ function PrivacyPage() {
             </li>
           </ul>
           <p className="mt-2 text-neutral-400">We do not sell your data. We do not share it with advertisers.</p>
-        </div>
+        </Section>
 
-        <div>
-          <h2 className="text-xl font-bold mb-3">How long we keep it</h2>
+        <Section title="How long we keep it">
           <p className="text-neutral-300">
             Account data is retained while your account is active. If you delete your account we will
             remove your personal data within 30 days, except where we are required to retain it by law.
           </p>
-        </div>
+        </Section>
 
-        <div>
-          <h2 className="text-xl font-bold mb-3">Your rights</h2>
+        <Section title="Your rights">
           <p className="text-neutral-300">
             Under UK GDPR you have the right to access, correct, or delete your data, to object to
             processing, and to data portability. Email{" "}
@@ -103,23 +111,21 @@ function PrivacyPage() {
             to exercise any of these rights. You also have the right to complain to the ICO
             (ico.org.uk) if you believe we have mishandled your data.
           </p>
-        </div>
+        </Section>
 
-        <div>
-          <h2 className="text-xl font-bold mb-3">Cookies</h2>
+        <Section title="Cookies">
           <p className="text-neutral-300">
             The web app (map.acbrighton.com) uses a single functional cookie to maintain your
             login session. No advertising or tracking cookies are set.
           </p>
-        </div>
+        </Section>
 
-        <div>
-          <h2 className="text-xl font-bold mb-3">Changes to this policy</h2>
+        <Section title="Changes to this policy">
           <p className="text-neutral-300">
             We will post any material changes here and update the date above. Continued use of Areacodes
             after changes constitutes acceptance.
           </p>
-        </div>
+        </Section>
       </section>
     </main>
   );
