@@ -44,8 +44,10 @@ import {
 } from "./lib/analytics";
 import { WalletAnimationProvider } from "./lib/wallet-animation-context";
 import { AuthSheetProvider, useAuthSheet } from "./lib/auth-sheet-context";
+import { VoucherSheetProvider, useVoucherSheet } from "./lib/voucher-sheet-context";
 import { AnimationOverlay } from "./components/animation-overlay";
 import { AuthSheet } from "./components/auth-sheet";
+import { VoucherSheet } from "./components/voucher-sheet";
 
 const PROTECTED_TABS = new Set(["wallet", "account"]);
 
@@ -111,7 +113,8 @@ function useNotificationDeepLink() {
 }
 
 function AppProviders({ children }: { children: React.ReactNode }) {
-  const { sheetRef } = useAuthSheet();
+  const { sheetRef: authSheetRef } = useAuthSheet();
+  const { sheetRef: voucherSheetRef } = useVoucherSheet();
   useAuthGuard();
   useRegisterPushTokenOnAuth();
   useNotificationDeepLink();
@@ -127,7 +130,8 @@ function AppProviders({ children }: { children: React.ReactNode }) {
     <>
       {children}
       <AnimationOverlay />
-      <AuthSheet ref={sheetRef} />
+      <AuthSheet ref={authSheetRef} />
+      <VoucherSheet ref={voucherSheetRef} />
     </>
   );
 }
@@ -159,6 +163,7 @@ export default function RootLayout() {
         <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
           <WalletAnimationProvider>
             <AuthSheetProvider>
+              <VoucherSheetProvider>
               <AppProviders>
                 <StatusBar style="light" />
                 <Stack screenOptions={{ headerShown: false }}>
@@ -173,6 +178,7 @@ export default function RootLayout() {
                   />
                 </Stack>
               </AppProviders>
+              </VoucherSheetProvider>
             </AuthSheetProvider>
           </WalletAnimationProvider>
         </ConvexProviderWithAuth>
