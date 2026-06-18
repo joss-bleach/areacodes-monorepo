@@ -167,10 +167,15 @@ export const getWallet = query({
       entries.map(async (entry) => {
         const voucher = await ctx.db.get(entry.voucherId as Id<"vouchers">);
         const business = voucher ? await ctx.db.get(voucher.businessId) : null;
+        const businessLogoUrl =
+          business?.logoStorageId
+            ? await ctx.storage.getUrl(business.logoStorageId)
+            : null;
         return {
           ...entry,
           businessId: business?._id ?? null,
           businessName: business?.name ?? null,
+          businessLogoUrl,
           voucherValidFrom: voucher?.voucherValidFrom ?? null,
         };
       }),
