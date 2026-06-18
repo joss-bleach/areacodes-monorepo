@@ -40,6 +40,7 @@ function walletEntryToRevealEntry(entry: WalletEntry): RevealEntry {
   return {
     claimId: entry.claimId,
     voucherId: entry.voucherId,
+    businessId: entry.businessId ?? null,
     businessName: entry.businessName,
     businessLogoUrl: entry.businessLogoUrl,
     voucherTitle: entry.voucher?.title ?? "Voucher",
@@ -143,6 +144,7 @@ export default function WalletScreen() {
                   openReveal({
                     claimId: reveal.claimId,
                     voucherId: "",
+                    businessId: null,
                     businessName: reveal.businessName ?? null,
                     businessLogoUrl: null,
                     voucherTitle: reveal.voucherTitle ?? "Voucher",

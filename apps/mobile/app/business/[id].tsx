@@ -18,6 +18,7 @@ import {
   captureBusinessFollowed,
   posthog,
 } from "../lib/analytics";
+import { useAuthSheet } from "../lib/auth-sheet-context";
 
 const BASE_HEADER_OPTIONS = {
   headerShown: true,
@@ -40,8 +41,8 @@ function VoucherCard({
   voucher: Voucher;
   businessId: string;
 }) {
-  const router = useRouter();
   const { data: session } = authClient.useSession();
+  const { openAuthSheet } = useAuthSheet();
   const claimForVoucher = useQuery(api.functions.claims.getClaimForVoucher, {
     voucherId: voucher._id as Id<"vouchers">,
   });
@@ -57,9 +58,7 @@ function VoucherCard({
 
   async function handleClaim() {
     if (!session?.user) {
-      router.push(
-        `/(auth)/sign-in?returnTo=/business/${businessId}&voucherId=${voucher._id}`,
-      );
+      openAuthSheet();
       return;
     }
 
@@ -77,7 +76,7 @@ function VoucherCard({
 
   return (
     <View className="bg-gray-900 border border-gray-700 rounded-xl p-4 mb-4">
-      <Text className="text-white font-semibold text-base mb-1">
+      <Text className="text-white font-poppins-semibold text-base mb-1">
         {voucher.title}
       </Text>
       <Text className="text-gray-500 text-xs mb-4">
@@ -92,26 +91,26 @@ function VoucherCard({
         <Pressable
           onPress={handleClaim}
           disabled={claiming}
-          className="bg-white rounded-lg px-4 py-3 items-center disabled:opacity-50"
+          className="bg-white px-4 py-3 items-center disabled:opacity-50"
         >
           {claiming ? (
             <ActivityIndicator color="#000000" />
           ) : (
-            <Text className="text-black font-semibold text-sm">Claim</Text>
+            <Text className="text-black font-poppins-semibold text-sm">Claim</Text>
           )}
         </Pressable>
       )}
 
       {claimable && alreadyClaimed && (
-        <View className="bg-gray-800 rounded-lg px-4 py-3 items-center">
-          <Text className="text-green-400 font-semibold text-sm">
+        <View className="bg-gray-800 px-4 py-3 items-center">
+          <Text className="text-green-400 font-poppins-semibold text-sm">
             Claimed ✓
           </Text>
         </View>
       )}
 
       {!claimable && (
-        <View className="bg-gray-800 rounded-lg px-4 py-3 items-center">
+        <View className="bg-gray-800 px-4 py-3 items-center">
           <Text className="text-gray-500 text-sm">Expired</Text>
         </View>
       )}
@@ -167,24 +166,24 @@ function FollowButton({ businessId }: { businessId: Id<"businesses"> }) {
         <Pressable
           onPress={handleUnfollow}
           disabled={loading}
-          className="border border-gray-600 rounded-lg px-4 py-3 items-center disabled:opacity-50"
+          className="border border-gray-600 px-4 py-3 items-center disabled:opacity-50"
         >
           {loading ? (
             <ActivityIndicator color="#ffffff" />
           ) : (
-            <Text className="text-gray-300 font-semibold text-sm">Following ✓</Text>
+            <Text className="text-gray-300 font-poppins-semibold text-sm">Following ✓</Text>
           )}
         </Pressable>
       ) : (
         <Pressable
           onPress={handleFollow}
           disabled={loading}
-          className="bg-white rounded-lg px-4 py-3 items-center disabled:opacity-50"
+          className="bg-white px-4 py-3 items-center disabled:opacity-50"
         >
           {loading ? (
             <ActivityIndicator color="#000000" />
           ) : (
-            <Text className="text-black font-semibold text-sm">Follow</Text>
+            <Text className="text-black font-poppins-semibold text-sm">Follow</Text>
           )}
         </Pressable>
       )}
@@ -218,7 +217,7 @@ export default function BusinessScreen() {
       <>
         <Stack.Screen options={{ ...BASE_HEADER_OPTIONS, title: "Business" }} />
         <View className="flex-1 bg-black items-center justify-center px-6">
-          <Text className="text-white text-lg font-semibold">
+          <Text className="text-white text-lg font-poppins-semibold">
             Business not found
           </Text>
           <Pressable onPress={() => router.back()} className="mt-4">
@@ -242,7 +241,7 @@ export default function BusinessScreen() {
         className="flex-1 bg-black"
         contentContainerClassName="px-4 py-6"
       >
-        <Text className="text-white text-2xl font-bold mb-2">
+        <Text className="text-white text-2xl font-poppins-bold mb-2">
           {business.name}
         </Text>
 
@@ -258,7 +257,7 @@ export default function BusinessScreen() {
 
         <FollowButton businessId={id as Id<"businesses">} />
 
-        <Text className="text-white text-lg font-semibold mb-4">
+        <Text className="text-white text-lg font-poppins-semibold mb-4">
           Active vouchers
         </Text>
 

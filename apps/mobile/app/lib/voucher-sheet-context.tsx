@@ -10,6 +10,7 @@ import { type BottomSheetModal } from "@gorhom/bottom-sheet";
 export type RevealEntry = {
   claimId: string;
   voucherId: string;
+  businessId: string | null;
   businessName: string | null;
   businessLogoUrl: string | null;
   voucherTitle: string;
@@ -31,6 +32,7 @@ type VoucherSheetContextType = {
   openClaim: (voucherId: string, distanceMetres?: number) => void;
   openReveal: (entry: RevealEntry) => void;
   close: () => void;
+  clearMode: () => void;
 };
 
 const VoucherSheetContext = createContext<VoucherSheetContextType | null>(null);
@@ -51,12 +53,15 @@ export function VoucherSheetProvider({ children }: { children: ReactNode }) {
 
   function close() {
     sheetRef.current?.dismiss();
+  }
+
+  function clearMode() {
     setMode(null);
   }
 
   return (
     <VoucherSheetContext.Provider
-      value={{ mode, sheetRef, openClaim, openReveal, close }}
+      value={{ mode, sheetRef, openClaim, openReveal, close, clearMode }}
     >
       {children}
     </VoucherSheetContext.Provider>

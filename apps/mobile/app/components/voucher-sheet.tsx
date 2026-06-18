@@ -245,7 +245,7 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
       const result = await revealVoucher({
         claimId: entry.claimId as Id<"claims">,
       });
-      captureVoucherRevealed(entry.voucherId, entry.claimId);
+      captureVoucherRevealed(entry.voucherId, entry.businessId ?? "");
       await upsertRevealCache({
         claimId: entry.claimId,
         voucherCode: result.voucherCode,
@@ -331,7 +331,7 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
 
 export const VoucherSheet = forwardRef<BottomSheetModal>(
   function VoucherSheet(_props, ref) {
-    const { mode, close } = useVoucherSheet();
+    const { mode, clearMode } = useVoucherSheet();
 
     return (
       <BottomSheetModal
@@ -339,7 +339,7 @@ export const VoucherSheet = forwardRef<BottomSheetModal>(
         snapPoints={["75%"]}
         backgroundStyle={{ backgroundColor: "#111111" }}
         handleIndicatorStyle={{ backgroundColor: "#444444" }}
-        onDismiss={close}
+        onDismiss={clearMode}
         enableDynamicSizing={false}
       >
         {mode?.type === "claim" && (
