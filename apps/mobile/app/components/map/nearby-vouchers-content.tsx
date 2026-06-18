@@ -4,11 +4,13 @@ import { NearbyBusinessCard } from "./nearby-business-card";
 import { LatestOfferRow } from "./latest-offer-row";
 import { formatDistance } from "~/lib/distance";
 import type { MOCK_BUSINESSES, MOCK_LATEST_VOUCHERS } from "~/lib/mock-map-data";
+import { useVoucherSheet } from "../../lib/voucher-sheet-context";
 
 interface NearbyVouchersContentProps {
   nearbyBusinesses: Array<(typeof MOCK_BUSINESSES)[number] & { distanceMetres: number }>;
   latestVouchers: typeof MOCK_LATEST_VOUCHERS;
   userLocation: { latitude: number; longitude: number } | null;
+  isOutsideServiceArea: boolean;
   onBusinessPress: (businessId: string) => void;
   onClose: () => void;
 }
@@ -17,9 +19,11 @@ export function NearbyVouchersContent({
   nearbyBusinesses,
   latestVouchers,
   userLocation,
+  isOutsideServiceArea,
   onBusinessPress,
   onClose,
 }: NearbyVouchersContentProps) {
+  const { openClaim } = useVoucherSheet();
   return (
     <BottomSheetScrollView>
       <View className="flex-row items-center justify-between px-4 pb-3">
@@ -29,7 +33,11 @@ export function NearbyVouchersContent({
         </Pressable>
       </View>
 
-      {userLocation && nearbyBusinesses.length > 0 && (
+      {isOutsideServiceArea ? (
+        <Text className="text-gray-500 text-xs px-4 pb-4">
+          Areacodes currently only serves Brighton & Hove
+        </Text>
+      ) : userLocation && nearbyBusinesses.length > 0 ? (
         <FlatList
           horizontal
           data={nearbyBusinesses}
@@ -47,13 +55,11 @@ export function NearbyVouchersContent({
             />
           )}
         />
-      )}
-
-      {!userLocation && (
+      ) : !userLocation ? (
         <Text className="text-gray-500 text-xs px-4 pb-4">
           Enable location to see nearby vouchers
         </Text>
-      )}
+      ) : null}
 
       <Text className="text-white text-lg font-poppins-semibold px-4 pb-3">
         Latest offers
@@ -64,9 +70,7 @@ export function NearbyVouchersContent({
             voucherTitle={voucher.title}
             businessName={voucher.businessName}
             industryName={voucher.industryName}
-            onPress={() => {
-              // TBD: navigate to voucher — pending voucher UI decisions
-            }}
+            onPress={() => openClaim(voucher._id)}
           />
         </View>
       ))}

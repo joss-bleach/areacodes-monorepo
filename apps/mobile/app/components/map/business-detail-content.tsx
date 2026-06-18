@@ -2,6 +2,7 @@ import { Pressable, Text, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { formatDistance } from "~/lib/distance";
 import type { MOCK_BUSINESSES } from "~/lib/mock-map-data";
+import { useVoucherSheet } from "../../lib/voucher-sheet-context";
 
 interface BusinessDetailContentProps {
   business: (typeof MOCK_BUSINESSES)[number];
@@ -14,6 +15,7 @@ export function BusinessDetailContent({
   distanceMetres,
   onClose,
 }: BusinessDetailContentProps) {
+  const { openClaim } = useVoucherSheet();
   return (
     <BottomSheetScrollView>
       <View className="flex-row items-start justify-between px-4 pb-3">
@@ -50,7 +52,11 @@ export function BusinessDetailContent({
         Active vouchers
       </Text>
       {business.vouchers.map((voucher) => (
-        <View key={voucher._id} className="bg-gray-900 rounded-lg mx-4 mb-3 p-4">
+        <Pressable
+          key={voucher._id}
+          onPress={() => openClaim(voucher._id as string, distanceMetres ?? undefined)}
+          className="bg-zinc-800 rounded-lg mx-4 mb-3 p-4 active:opacity-70"
+        >
           <Text className="text-white font-poppins-semibold text-sm mb-1">
             {voucher.title}
           </Text>
@@ -65,7 +71,7 @@ export function BusinessDetailContent({
               year: "numeric",
             })}
           </Text>
-        </View>
+        </Pressable>
       ))}
     </BottomSheetScrollView>
   );
