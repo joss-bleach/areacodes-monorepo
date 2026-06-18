@@ -30,6 +30,7 @@ function applyDefaultFont(Component: typeof Text | typeof TextInput) {
 applyDefaultFont(Text);
 applyDefaultFont(TextInput);
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from "@expo-google-fonts/poppins";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { ConvexProviderWithAuth } from "convex/react";
 import * as Notifications from "expo-notifications";
 import { authClient } from "./lib/auth-client";
@@ -41,11 +42,16 @@ import {
   capturePushNotificationTapped,
   posthog,
 } from "./lib/analytics";
+import { WalletAnimationProvider } from "./lib/wallet-animation-context";
+import { AuthSheetProvider, useAuthSheet } from "./lib/auth-sheet-context";
+import { AnimationOverlay } from "./components/animation-overlay";
+import { AuthSheet } from "./components/auth-sheet";
 
 const PROTECTED_TABS = new Set(["wallet", "account"]);
 
 function useAuthGuard() {
   const { data: session, isPending } = authClient.useSession();
+  const { openAuthSheet } = useAuthSheet();
   const segments = useSegments() as string[];
   const router = useRouter();
 
@@ -55,14 +61,17 @@ function useAuthGuard() {
     const inAuthGroup = segments[0] === "(auth)";
     const secondSegment = segments[1];
     const inProtectedTab =
-      segments[0] === "(tabs)" && secondSegment !== undefined && PROTECTED_TABS.has(secondSegment);
+      segments[0] === "(tabs)" &&
+      secondSegment !== undefined &&
+      PROTECTED_TABS.has(secondSegment);
 
     if (!session?.user && inProtectedTab) {
-      router.push("/sign-up");
+      openAuthSheet();
+      router.replace("/(tabs)");
     } else if (session?.user && inAuthGroup) {
       router.replace("/(tabs)");
     }
-  }, [session, isPending, segments, router]);
+  }, [session, isPending, segments, router, openAuthSheet]);
 }
 
 function useNotificationDeepLink() {
@@ -102,6 +111,7 @@ function useNotificationDeepLink() {
 }
 
 function AppProviders({ children }: { children: React.ReactNode }) {
+  const { sheetRef } = useAuthSheet();
   useAuthGuard();
   useRegisterPushTokenOnAuth();
   useNotificationDeepLink();
@@ -113,7 +123,13 @@ function AppProviders({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <AnimationOverlay />
+      <AuthSheet ref={sheetRef} />
+    </>
+  );
 }
 
 export default function RootLayout() {
@@ -139,22 +155,28 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
-        <AppProviders>
-          <StatusBar style="light" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Protected guard={!hasSeenOnboarding}>
-              <Stack.Screen name="(onboarding)" />
-            </Stack.Protected>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen
-              name="sign-up"
-              options={{ presentation: "modal", gestureEnabled: false }}
-            />
-          </Stack>
-        </AppProviders>
-      </ConvexProviderWithAuth>
+      <BottomSheetModalProvider>
+        <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
+          <WalletAnimationProvider>
+            <AuthSheetProvider>
+              <AppProviders>
+                <StatusBar style="light" />
+                <Stack screenOptions={{ headerShown: false }}>
+                  <Stack.Protected guard={!hasSeenOnboarding}>
+                    <Stack.Screen name="(onboarding)" />
+                  </Stack.Protected>
+                  <Stack.Screen name="(tabs)" />
+                  <Stack.Screen name="(auth)" />
+                  <Stack.Screen
+                    name="sign-up"
+                    options={{ presentation: "modal", gestureEnabled: false }}
+                  />
+                </Stack>
+              </AppProviders>
+            </AuthSheetProvider>
+          </WalletAnimationProvider>
+        </ConvexProviderWithAuth>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }
