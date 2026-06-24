@@ -4,10 +4,11 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
+import { ConvexReactClient } from "convex/react";
+import { ConvexBetterAuthProvider, type AuthClient } from "@convex-dev/better-auth/react";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { CookieBanner, Toaster } from "@repo/ui";
-import { useConvexAuth } from "~/lib/use-convex-auth";
+import { authClient } from "~/lib/auth-client";
 import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(
@@ -65,13 +66,13 @@ export const Route = createRootRoute({
 function RootComponent() {
   return (
     <RootDocument>
-      <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
+      <ConvexBetterAuthProvider client={convex} authClient={authClient as unknown as AuthClient}>
         <NuqsAdapter>
           <Outlet />
           <Toaster />
           <CookieBanner />
         </NuqsAdapter>
-      </ConvexProviderWithAuth>
+      </ConvexBetterAuthProvider>
     </RootDocument>
   );
 }

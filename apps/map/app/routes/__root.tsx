@@ -5,10 +5,11 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
+import { ConvexReactClient } from "convex/react";
+import { ConvexBetterAuthProvider, type AuthClient } from "@convex-dev/better-auth/react";
 import { CookieBanner } from "@repo/ui";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
-import { useConvexAuth } from "~/lib/use-convex-auth";
+import { authClient } from "~/lib/auth-client";
 import appCss from "~/styles/globals.css?url";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -79,10 +80,10 @@ function RootDocument({ children }: { children: ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
+        <ConvexBetterAuthProvider client={convex} authClient={authClient as unknown as AuthClient}>
           <NuqsAdapter>{children}</NuqsAdapter>
           <CookieBanner />
-        </ConvexProviderWithAuth>
+        </ConvexBetterAuthProvider>
         <Scripts />
       </body>
     </html>

@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@areacodes/domain": "workspace:*",
+    "@convex-dev/better-auth": "^0.12.4",
     "@repo/convex": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/ui": "workspace:*",
