@@ -2,14 +2,12 @@ import { z } from "zod";
 
 export const betterAuthServerSchema = {
   BETTER_AUTH_SECRET: z.string().min(1),
-  BETTER_AUTH_URL: z.string().url(),
-  DATABASE_URL: z.string().optional(),
   GOOGLE_CLIENT_ID: z.string().optional(),
   GOOGLE_CLIENT_SECRET: z.string().optional(),
 };
 
 export const betterAuthClientSchema = {
-  VITE_API_URL: z.string().url(),
+  VITE_CONVEX_SITE_URL: z.string().url(),
 };
 
 export const convexClientSchema = {
