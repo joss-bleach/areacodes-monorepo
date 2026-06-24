@@ -1,13 +1,16 @@
 import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { authComponent } from "../betterAuth/auth";
 
 async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-  // role stored as custom claim on the auth token
-  if ((identity as { role?: string }).role !== "admin")
+
+  const user = await authComponent.getAuthUser(ctx);
+  if (!user || (user as { role?: string }).role !== "admin") {
     throw new Error("Forbidden: Admin only");
+  }
   return identity.subject;
 }
 
