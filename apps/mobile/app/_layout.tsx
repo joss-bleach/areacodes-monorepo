@@ -31,11 +31,10 @@ applyDefaultFont(Text);
 applyDefaultFont(TextInput);
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from "@expo-google-fonts/poppins";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { ConvexProviderWithAuth } from "convex/react";
+import { ConvexBetterAuthProvider, type AuthClient } from "@convex-dev/better-auth/react";
 import * as Notifications from "expo-notifications";
 import { authClient } from "./lib/auth-client";
 import { convex } from "./lib/convex-client";
-import { useConvexAuth } from "./lib/use-convex-auth";
 import { useRegisterPushTokenOnAuth } from "./lib/use-push-notifications";
 import {
   captureAppOpened,
@@ -159,30 +158,30 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <BottomSheetModalProvider>
-        <ConvexProviderWithAuth client={convex} useAuth={useConvexAuth}>
-          <WalletAnimationProvider>
-            <AuthSheetProvider>
-              <VoucherSheetProvider>
-              <AppProviders>
-                <StatusBar style="light" />
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Protected guard={!hasSeenOnboarding}>
-                    <Stack.Screen name="(onboarding)" />
-                  </Stack.Protected>
-                  <Stack.Screen name="(tabs)" />
-                  <Stack.Screen name="(auth)" />
-                  <Stack.Screen
-                    name="sign-up"
-                    options={{ presentation: "modal", gestureEnabled: false }}
-                  />
-                </Stack>
-              </AppProviders>
-              </VoucherSheetProvider>
-            </AuthSheetProvider>
-          </WalletAnimationProvider>
-        </ConvexProviderWithAuth>
-      </BottomSheetModalProvider>
+      <WalletAnimationProvider>
+        <ConvexBetterAuthProvider client={convex} authClient={authClient as unknown as AuthClient}>
+          <AuthSheetProvider>
+            <VoucherSheetProvider>
+              <BottomSheetModalProvider>
+                <AppProviders>
+                  <StatusBar style="light" />
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Protected guard={!hasSeenOnboarding}>
+                      <Stack.Screen name="(onboarding)" />
+                    </Stack.Protected>
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="(auth)" />
+                    <Stack.Screen
+                      name="sign-up"
+                      options={{ presentation: "modal", gestureEnabled: false }}
+                    />
+                  </Stack>
+                </AppProviders>
+              </BottomSheetModalProvider>
+            </VoucherSheetProvider>
+          </AuthSheetProvider>
+        </ConvexBetterAuthProvider>
+      </WalletAnimationProvider>
     </GestureHandlerRootView>
   );
 }
