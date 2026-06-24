@@ -10,7 +10,12 @@
     "convex:generate": "turbo run convex:generate",
     "test": "turbo run test --filter=!e2e",
     "test:e2e": "turbo run test:e2e",
-    "sandcastle": "bun .sandcastle/main.mts"
+    "postinstall": "node scripts/fix-nativewind.js",
+    "sandcastle": "bun .sandcastle/main.mts",
+    "mobile:dev": "bash scripts/dev-mobile.sh",
+    "dev:business": "bash scripts/dev-web.sh business 3000",
+    "dev:admin": "bash scripts/dev-web.sh admin 3002",
+    "dev:map": "bash scripts/dev-web.sh map 3001"
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
@@ -29,6 +34,7 @@
   ],
   "dependencies": {
     "@ai-hero/sandcastle": "^0.8.0",
+    "better-auth": "^1.6.20",
     "nuqs": "^2.7.2",
     "zod": "^4.1.12"
   }
