@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "@tanstack/react-router";
@@ -37,6 +38,30 @@ const STEP_VALUES = [
 ] as const;
 
 type StepValue = (typeof STEP_VALUES)[number];
+
+const geocodeAddressEffect = (
+  address: string
+): Effect.Effect<{ latitude: number; longitude: number }, Error> =>
+  Effect.gen(function* () {
+    const response = yield* Effect.tryPromise({
+      try: () =>
+        fetch("/api/location", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: "geocode", q: address }),
+        }),
+      catch: () => new Error("Failed to determine business location"),
+    });
+    if (!response.ok) return yield* Effect.fail(new Error("Failed to determine business location"));
+    const results = yield* Effect.tryPromise({
+      try: () => response.json(),
+      catch: () => new Error("Failed to determine business location"),
+    });
+    if (!results?.length || results[0].lat == null || results[0].lon == null) {
+      return yield* Effect.fail(new Error("Failed to determine business location"));
+    }
+    return { latitude: Number(results[0].lat), longitude: Number(results[0].lon) };
+  });
 
 export const CreateBusinessForm = () => {
   const navigate = useNavigate();
@@ -114,29 +139,6 @@ export const CreateBusinessForm = () => {
   const isFirstStep = currentStep === STEP_VALUES[0];
   const isLastStep = currentStep === STEP_VALUES[STEP_VALUES.length - 1];
 
-  const geocodeAddress = async (
-    address: string
-  ): Promise<{ latitude: number; longitude: number } | null> => {
-    try {
-      const response = await fetch("/api/location", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "geocode", q: address }),
-      });
-      if (!response.ok) return null;
-      const results = await response.json();
-      if (results?.length > 0 && results[0].lat != null && results[0].lon != null) {
-        return {
-          latitude: Number(results[0].lat),
-          longitude: Number(results[0].lon),
-        };
-      }
-      return null;
-    } catch {
-      return null;
-    }
-  };
-
   const onSubmit = async (data: FormValues) => {
     if (isSubmitting || isUploadingLogo) return;
     if (!logoFileRef.current) {
@@ -144,67 +146,75 @@ export const CreateBusinessForm = () => {
       return;
     }
 
+    const logoFile = logoFileRef.current;
     setIsSubmitting(true);
 
-    try {
-      setIsUploadingLogo(true);
-      const storageId = await upload(logoFileRef.current);
-      setIsUploadingLogo(false);
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        yield* Effect.sync(() => setIsUploadingLogo(true));
+        const storageId = yield* Effect.tryPromise({
+          try: () => upload(logoFile),
+          catch: () => new Error("Logo upload failed"),
+        }).pipe(Effect.ensuring(Effect.sync(() => setIsUploadingLogo(false))));
 
-      // Format address
-      const address = [
-        data.addressLine1,
-        data.addressLine2,
-        data.townOrCity,
-        data.county,
-        data.postcode,
-      ]
-        .filter(Boolean)
-        .join(", ");
+        const address = [
+          data.addressLine1,
+          data.addressLine2,
+          data.townOrCity,
+          data.county,
+          data.postcode,
+        ]
+          .filter(Boolean)
+          .join(", ");
 
-      // Geocode if coordinates missing
-      let latitude = data.latitude;
-      let longitude = data.longitude;
-
-      if (latitude == null || longitude == null) {
-        const coordinates = await geocodeAddress(address);
-        if (!coordinates) {
-          toast.error("Failed to determine business location");
-          return;
+        let latitude: number;
+        let longitude: number;
+        if (data.latitude != null && data.longitude != null) {
+          latitude = data.latitude;
+          longitude = data.longitude;
+        } else {
+          const coords = yield* geocodeAddressEffect(address);
+          latitude = coords.latitude;
+          longitude = coords.longitude;
         }
-        latitude = coordinates.latitude;
-        longitude = coordinates.longitude;
-      }
 
-      const business = await createBusiness({
-        name: data.name,
-        description: data.description,
-        websiteUrl: data.websiteUrl || "",
-        industryId: data.industryId as Id<"industries">,
-        address,
-        latitude,
-        longitude,
-        logoStorageId: storageId,
-      });
+        const business = yield* Effect.tryPromise({
+          try: () =>
+            createBusiness({
+              name: data.name,
+              description: data.description,
+              websiteUrl: data.websiteUrl || "",
+              industryId: data.industryId as Id<"industries">,
+              address,
+              latitude,
+              longitude,
+              logoStorageId: storageId,
+            }),
+          catch: () => new Error("Failed to create business"),
+        });
 
-      if (!business) {
-        toast.error("Failed to create business");
-        return;
-      }
+        if (!business) return yield* Effect.fail(new Error("Failed to create business"));
 
-      // Start Pilot — stripeCustomerId is set server-side when Stripe is integrated
-      await startPilot({
-        businessId: business._id,
-        stripeCustomerId: `pilot_${business._id}`,
-      });
+        yield* Effect.tryPromise({
+          try: () =>
+            startPilot({
+              businessId: business._id,
+              stripeCustomerId: `pilot_${business._id}`,
+            }),
+          catch: () => new Error("Failed to start pilot"),
+        });
 
-      toast.success("Business created — your Pilot has started!");
-      navigate({ to: "/b/$slug", params: { slug: business.slug! } });
-    } catch {
-      toast.error("Failed to create business");
-    } finally {
-      setIsSubmitting(false);
-    }
+        yield* Effect.sync(() => {
+          toast.success("Business created — your Pilot has started!");
+          navigate({ to: "/b/$slug", params: { slug: business.slug! } });
+        });
+      }).pipe(
+        Effect.catchAll((err) =>
+          Effect.sync(() => toast.error((err as Error).message || "Failed to create business"))
+        ),
+        Effect.ensuring(Effect.sync(() => setIsSubmitting(false)))
+      )
+    );
   };
 
   const isPending = isSubmitting || isUploadingLogo;

@@ -28,3 +28,15 @@ export const SERVICE_AREA_BOUNDARY: Feature<Polygon> = {
     ],
   },
 };
+
+export function isInServiceArea(lat: number, lng: number): boolean {
+  const coords = SERVICE_AREA_BOUNDARY.geometry.coordinates[0] ?? [];
+  let inside = false;
+  for (let i = 0, j = coords.length - 1; i < coords.length; j = i++) {
+    const [xi, yi] = coords[i] as [number, number];
+    const [xj, yj] = coords[j] as [number, number];
+    const intersects = yi > lat !== yj > lat && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}

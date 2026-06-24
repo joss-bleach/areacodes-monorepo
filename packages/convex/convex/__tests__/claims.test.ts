@@ -159,7 +159,8 @@ describe("getWallet", () => {
     const customerT = t.withIdentity({ subject: "customer-empty" });
 
     const wallet = await customerT.query(api.functions.claims.getWallet, {});
-    expect(wallet).toHaveLength(0);
+    expect(wallet.ok).toBe(true);
+    expect(wallet.ok && wallet.entries).toHaveLength(0);
   });
 
   test("returns claimed entry for a claimed voucher", async () => {
@@ -170,9 +171,11 @@ describe("getWallet", () => {
     await customerT.mutation(api.functions.claims.claimVoucher, { voucherId });
 
     const wallet = await customerT.query(api.functions.claims.getWallet, {});
-    expect(wallet).toHaveLength(1);
-    expect(wallet[0]!.state).toBe("claimed");
-    expect(wallet[0]!.activeCode).toBeNull();
+    expect(wallet.ok).toBe(true);
+    if (!wallet.ok) return;
+    expect(wallet.entries).toHaveLength(1);
+    expect(wallet.entries[0]!.state).toBe("claimed");
+    expect(wallet.entries[0]!.activeCode).toBeNull();
   });
 
   test("returns revealed entry after revealVoucher", async () => {
@@ -186,9 +189,11 @@ describe("getWallet", () => {
     });
 
     const wallet = await customerT.query(api.functions.claims.getWallet, {});
-    expect(wallet).toHaveLength(1);
-    expect(wallet[0]!.state).toBe("revealed");
-    expect(wallet[0]!.activeCode).toBe(voucherCode);
+    expect(wallet.ok).toBe(true);
+    if (!wallet.ok) return;
+    expect(wallet.entries).toHaveLength(1);
+    expect(wallet.entries[0]!.state).toBe("revealed");
+    expect(wallet.entries[0]!.activeCode).toBe(voucherCode);
   });
 
   test("getClaimForVoucher returns null when not claimed", async () => {
@@ -283,8 +288,10 @@ describe("revealVoucher — suspension gate", () => {
     await customerT.mutation(api.functions.claims.claimVoucher, { voucherId });
 
     const wallet = await customerT.query(api.functions.claims.getWallet, {});
-    expect(wallet).toHaveLength(1);
-    expect(wallet[0]!.state).toBe("suspended");
-    expect(wallet[0]!.activeCode).toBeNull();
+    expect(wallet.ok).toBe(true);
+    if (!wallet.ok) return;
+    expect(wallet.entries).toHaveLength(1);
+    expect(wallet.entries[0]!.state).toBe("suspended");
+    expect(wallet.entries[0]!.activeCode).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import {
+  Animated,
   ActivityIndicator,
   Image,
   Pressable,
@@ -10,7 +11,8 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from "@gorhom/bottom-sheet";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useConvexAuth } from "convex/react";
+import { Effect } from "effect";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import { authClient } from "../lib/auth-client";
@@ -32,20 +34,63 @@ import {
   loadRevealCache,
   upsertRevealCache,
 } from "../lib/reveal-cache";
+import { tryClaim, tryReveal, ClaimError } from "../lib/mutation-effects";
+
+// --- Skeletons ---
+
+function SkeletonBox({ className }: { className?: string }) {
+  const opacity = useRef(new Animated.Value(0.3)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.7, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 700, useNativeDriver: true }),
+      ]),
+    ).start();
+  }, [opacity]);
+  return <Animated.View style={{ opacity }} className={`bg-zinc-800 rounded-md ${className ?? ""}`} />;
+}
+
+function ClaimSkeleton() {
+  return (
+    <View className="px-4 pb-8 pt-2">
+      <View className="flex-row items-center mb-4">
+        <SkeletonBox className="w-10 h-10 rounded-full mr-3" />
+        <View className="flex-1 gap-1.5">
+          <SkeletonBox className="h-5 w-40" />
+          <SkeletonBox className="h-3 w-24" />
+        </View>
+      </View>
+      <View className="border-b border-gray-800 mb-4" />
+      <SkeletonBox className="h-3 w-14 mb-2" />
+      <SkeletonBox className="h-5 w-48 mb-3" />
+      <SkeletonBox className="h-4 w-full mb-1.5" />
+      <SkeletonBox className="h-4 w-3/4 mb-4" />
+      <View className="border-b border-gray-800 mb-4" />
+      <SkeletonBox className="h-3 w-10 mb-2" />
+      <SkeletonBox className="h-4 w-48 mb-6" />
+      <SkeletonBox className="h-12 w-full rounded" />
+    </View>
+  );
+}
 
 // --- Claim mode inner component ---
 
 function ClaimContent({
   voucherId,
   distanceMetres,
+  close,
 }: {
   voucherId: string;
   distanceMetres?: number;
+  close: () => void;
 }) {
-  const { close } = useVoucherSheet();
   const { triggerClaimAnimation } = useWalletAnimation();
   const { openAuthSheet } = useAuthSheet();
   const { data: session } = authClient.useSession();
+  const { isAuthenticated: convexAuthed } = useConvexAuth();
+  const convexAuthedRef = useRef(convexAuthed);
+  convexAuthedRef.current = convexAuthed;
 
   const voucher = useQuery(
     api.functions.vouchers.getVoucherByIdWithBusiness,
@@ -68,45 +113,71 @@ function ClaimContent({
     }
   }, [voucher?._id]);
 
-  // If server confirms already claimed, reflect that
   const alreadyClaimed = claimed || claimRecord != null;
 
-  async function handleClaim() {
+  // Poll convexAuthedRef until Convex confirms the auth handshake (≤5 s).
+  // Needed because WebSocket reconnects reset auth state; calling the mutation
+  // before the handshake completes causes UNAUTHENTICATED even with a valid JWT.
+  function waitForConvexAuth(): Effect.Effect<void, ClaimError> {
+    return Effect.async<void, ClaimError>((resume) => {
+      const deadline = Date.now() + 5000;
+      const poll = () => {
+        if (convexAuthedRef.current) {
+          resume(Effect.succeed(undefined));
+        } else if (Date.now() >= deadline) {
+          resume(Effect.fail(new ClaimError({ code: "UNAUTHENTICATED" })));
+        } else {
+          setTimeout(poll, 250);
+        }
+      };
+      poll();
+    });
+  }
+
+  function handleClaim() {
     if (!session?.user) {
       openAuthSheet();
       return;
     }
 
-    setClaiming(true);
-    setClaimError(null);
-    try {
-      await claimVoucher({ voucherId: voucherId as Id<"vouchers"> });
-      if (voucher) {
-        captureVoucherClaimed(voucher._id, voucher.business._id);
-      }
-      setClaimed(true);
-
-      // Measure voucher content area to animate from
-      contentRef.current?.measure((_x, _y, width, height, pageX, pageY) => {
-        const layout: LayoutRect = { x: pageX, y: pageY, width, height };
-        triggerClaimAnimation(layout);
-      });
-
-      // Auto-dismiss after 1 second
-      setTimeout(() => close(), 1000);
-    } catch {
-      setClaimError("Could not save voucher. Please try again.");
-    } finally {
-      setClaiming(false);
-    }
+    return Effect.runPromise(
+      Effect.sync(() => { setClaiming(true); setClaimError(null); }).pipe(
+        Effect.flatMap(() => waitForConvexAuth()),
+        Effect.flatMap(() =>
+          tryClaim(() => claimVoucher({ voucherId: voucherId as Id<"vouchers"> })),
+        ),
+        // If UNAUTHENTICATED still fires (server-side race), wait for auth
+        // to settle again then do one more attempt.
+        Effect.catchIf(
+          (e) => e instanceof ClaimError && e.code === "UNAUTHENTICATED",
+          () =>
+            Effect.sleep(500).pipe(
+              Effect.flatMap(() => waitForConvexAuth()),
+              Effect.flatMap(() =>
+                tryClaim(() => claimVoucher({ voucherId: voucherId as Id<"vouchers"> })),
+              ),
+            ),
+        ),
+        Effect.tap(() =>
+          Effect.sync(() => {
+            if (voucher) captureVoucherClaimed(voucher._id, voucher.business._id);
+            setClaimed(true);
+            contentRef.current?.measure((_x, _y, width, height, pageX, pageY) => {
+              const layout: LayoutRect = { x: pageX, y: pageY, width, height };
+              triggerClaimAnimation(layout);
+            });
+            setTimeout(() => close(), 1000);
+          }),
+        ),
+        Effect.tapError((err) => Effect.sync(() => setClaimError(err.message))),
+        Effect.ensuring(Effect.sync(() => setClaiming(false))),
+        Effect.ignore,
+      ),
+    );
   }
 
   if (voucher === undefined) {
-    return (
-      <View className="flex-1 items-center justify-center py-12">
-        <ActivityIndicator color="#ffffff" />
-      </View>
-    );
+    return <ClaimSkeleton />;
   }
 
   if (voucher === null) {
@@ -213,53 +284,51 @@ function ClaimContent({
 
 function RevealContent({ entry }: { entry: RevealEntry }) {
   const revealVoucher = useMutation(api.functions.claims.revealVoucher);
-  const [voucherCode, setVoucherCode] = useState<string | null>(
-    entry.activeCode,
-  );
+  const [voucherCode, setVoucherCode] = useState<string | null>(entry.activeCode);
   const [revealing, setRevealing] = useState(false);
   const [revealError, setRevealError] = useState<string | null>(null);
 
+  function doReveal() {
+    return Effect.runPromise(
+      Effect.sync(() => { setRevealing(true); setRevealError(null); }).pipe(
+        Effect.flatMap(() =>
+          tryReveal(() => revealVoucher({ claimId: entry.claimId as Id<"claims"> })),
+        ),
+        Effect.tap(({ voucherCode: code, expiresAt }) =>
+          Effect.promise(async () => {
+            captureVoucherRevealed(entry.voucherId, entry.businessId ?? "");
+            await upsertRevealCache({
+              claimId: entry.claimId,
+              voucherCode: code,
+              expiresAt,
+              voucherTitle: entry.voucherTitle,
+              businessName: entry.businessName ?? undefined,
+            });
+            setVoucherCode(code);
+          }),
+        ),
+        Effect.tapError((err) => Effect.sync(() => setRevealError(err.message))),
+        Effect.ensuring(Effect.sync(() => setRevealing(false))),
+        Effect.ignore,
+      ),
+    );
+  }
+
   useEffect(() => {
-    // Check cache first; reveal if code absent or expired
     void (async () => {
       if (entry.activeCode && entry.codeExpiresAt && entry.codeExpiresAt > Date.now()) {
         setVoucherCode(entry.activeCode);
         return;
       }
-      // Check local cache
       const cached = await loadRevealCache();
       const match = cached.find((r) => r.claimId === entry.claimId);
       if (match && match.expiresAt > Date.now()) {
         setVoucherCode(match.voucherCode);
         return;
       }
-      // Generate new
-      await doReveal();
+      doReveal();
     })();
   }, [entry.claimId]);
-
-  async function doReveal() {
-    setRevealing(true);
-    setRevealError(null);
-    try {
-      const result = await revealVoucher({
-        claimId: entry.claimId as Id<"claims">,
-      });
-      captureVoucherRevealed(entry.voucherId, entry.businessId ?? "");
-      await upsertRevealCache({
-        claimId: entry.claimId,
-        voucherCode: result.voucherCode,
-        expiresAt: result.expiresAt,
-        voucherTitle: entry.voucherTitle,
-        businessName: entry.businessName ?? undefined,
-      });
-      setVoucherCode(result.voucherCode);
-    } catch {
-      setRevealError("Could not load voucher code. Please try again.");
-    } finally {
-      setRevealing(false);
-    }
-  }
 
   return (
     <BottomSheetScrollView>
@@ -331,7 +400,7 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
 
 export const VoucherSheet = forwardRef<BottomSheetModal>(
   function VoucherSheet(_props, ref) {
-    const { mode, clearMode } = useVoucherSheet();
+    const { mode, clearMode, close } = useVoucherSheet();
 
     return (
       <BottomSheetModal
@@ -346,6 +415,7 @@ export const VoucherSheet = forwardRef<BottomSheetModal>(
           <ClaimContent
             voucherId={mode.voucherId}
             distanceMetres={mode.distanceMetres}
+            close={close}
           />
         )}
         {mode?.type === "reveal" && <RevealContent entry={mode.entry} />}

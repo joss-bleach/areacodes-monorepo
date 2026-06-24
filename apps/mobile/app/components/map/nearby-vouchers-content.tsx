@@ -3,12 +3,12 @@ import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { NearbyBusinessCard } from "./nearby-business-card";
 import { LatestOfferRow } from "./latest-offer-row";
 import { formatDistance } from "~/lib/distance";
-import type { MOCK_BUSINESSES, MOCK_LATEST_VOUCHERS } from "~/lib/mock-map-data";
+import type { NearbyBusiness, LatestVoucher } from "~/lib/map-types";
 import { useVoucherSheet } from "../../lib/voucher-sheet-context";
 
 interface NearbyVouchersContentProps {
-  nearbyBusinesses: Array<(typeof MOCK_BUSINESSES)[number] & { distanceMetres: number }>;
-  latestVouchers: typeof MOCK_LATEST_VOUCHERS;
+  nearbyBusinesses: NearbyBusiness[];
+  latestVouchers: LatestVoucher[];
   userLocation: { latitude: number; longitude: number } | null;
   isOutsideServiceArea: boolean;
   onBusinessPress: (businessId: string) => void;

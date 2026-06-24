@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { useState } from "react";
 import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
@@ -54,32 +55,51 @@ const ProviderCard = ({
     api.functions.posConnections.disconnectPosProvider,
   );
 
-  const handleConnect = async (e: React.FormEvent) => {
+  const handleConnect = (e: React.FormEvent) => {
     e.preventDefault();
     if (!apiKey.trim()) return;
+
+    void Effect.runPromise(
+      Effect.gen(function* () {
+        yield* Effect.tryPromise({
+          try: () => connectPosProvider({ businessId, provider, apiKey: apiKey.trim() }),
+          catch: () => new Error(`Failed to connect ${label}`),
+        });
+        yield* Effect.sync(() => {
+          setApiKey("");
+          toast.success(`${label} connected successfully`);
+        });
+      }).pipe(
+        Effect.catchAll((err) =>
+          Effect.sync(() => toast.error((err as Error).message || `Failed to connect ${label}`))
+        ),
+        Effect.ensuring(Effect.sync(() => setIsConnecting(false)))
+      )
+    );
+
     setIsConnecting(true);
-    try {
-      await connectPosProvider({ businessId, provider, apiKey: apiKey.trim() });
-      setApiKey("");
-      toast.success(`${label} connected successfully`);
-    } catch {
-      toast.error(`Failed to connect ${label}`);
-    } finally {
-      setIsConnecting(false);
-    }
   };
 
-  const handleDisconnect = async () => {
+  const handleDisconnect = () => {
+    void Effect.runPromise(
+      Effect.gen(function* () {
+        yield* Effect.tryPromise({
+          try: () => disconnectPosProvider({ businessId, provider }),
+          catch: () => new Error(`Failed to disconnect ${label}`),
+        });
+        yield* Effect.sync(() => {
+          toast.success(`${label} disconnected`);
+          setShowDisconnectDialog(false);
+        });
+      }).pipe(
+        Effect.catchAll((err) =>
+          Effect.sync(() => toast.error((err as Error).message || `Failed to disconnect ${label}`))
+        ),
+        Effect.ensuring(Effect.sync(() => setIsDisconnecting(false)))
+      )
+    );
+
     setIsDisconnecting(true);
-    try {
-      await disconnectPosProvider({ businessId, provider });
-      toast.success(`${label} disconnected`);
-      setShowDisconnectDialog(false);
-    } catch {
-      toast.error(`Failed to disconnect ${label}`);
-    } finally {
-      setIsDisconnecting(false);
-    }
   };
 
   return (

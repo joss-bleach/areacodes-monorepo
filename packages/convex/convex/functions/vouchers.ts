@@ -5,8 +5,8 @@ import type { Id } from "../_generated/dataModel";
 import { Effect, Layer } from "effect";
 import { VoucherRepo, VoucherService, type IVoucherRepo } from "@areacodes/domain";
 import { isHidden } from "./visibility";
-import { isActiveVoucher } from "../lib/voucher-filters";
-import { isBusinessSuspended } from "../lib/subscription-gate";
+import { isActiveVoucher } from "../lib/voucher_filters";
+import { isBusinessSuspended } from "../lib/subscription_gate";
 import { internal } from "../_generated/api";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {

@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useNavigate, useParams } from "@tanstack/react-router";
@@ -57,7 +58,6 @@ export const EditBusinessForm = () => {
     mode: "onBlur",
   });
 
-  // Populate form once business data is loaded
   useEffect(() => {
     if (!business) return;
     const parsedAddress = parseAddress(business.address);
@@ -92,53 +92,61 @@ export const EditBusinessForm = () => {
 
     setIsSubmitting(true);
 
-    try {
-      let logoStorageId: Id<"_storage"> | undefined = undefined;
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        let logoStorageId: Id<"_storage"> | undefined;
 
-      if (logoFileRef.current) {
-        setIsUploadingLogo(true);
-        logoStorageId = await upload(logoFileRef.current);
-        setIsUploadingLogo(false);
-      }
+        if (logoFileRef.current) {
+          yield* Effect.sync(() => setIsUploadingLogo(true));
+          logoStorageId = yield* Effect.tryPromise({
+            try: () => upload(logoFileRef.current!),
+            catch: () => new Error("Logo upload failed"),
+          }).pipe(Effect.ensuring(Effect.sync(() => setIsUploadingLogo(false))));
+        }
 
-      // Format address
-      const address = [
-        data.addressLine1,
-        data.addressLine2,
-        data.townOrCity,
-        data.county,
-        data.postcode,
-      ]
-        .filter(Boolean)
-        .join(", ");
+        const address = [
+          data.addressLine1,
+          data.addressLine2,
+          data.townOrCity,
+          data.county,
+          data.postcode,
+        ]
+          .filter(Boolean)
+          .join(", ");
 
-      if (data.latitude == null || data.longitude == null) {
-        toast.error("Please set a location for the business");
-        return;
-      }
+        if (data.latitude == null || data.longitude == null) {
+          return yield* Effect.fail(new Error("Please set a location for the business"));
+        }
 
-      const updatedBusiness = await updateBusiness({
-        businessId: business._id as Id<"businesses">,
-        name: data.name,
-        description: data.description,
-        websiteUrl: data.websiteUrl || "",
-        industryId: data.industryId as Id<"industries">,
-        address,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        logoStorageId: logoStorageId ?? (business.logoStorageId as Id<"_storage"> | undefined),
-      });
+        const updatedBusiness = yield* Effect.tryPromise({
+          try: () =>
+            updateBusiness({
+              businessId: business._id as Id<"businesses">,
+              name: data.name,
+              description: data.description,
+              websiteUrl: data.websiteUrl || "",
+              industryId: data.industryId as Id<"industries">,
+              address,
+              latitude: data.latitude!,
+              longitude: data.longitude!,
+              logoStorageId:
+                logoStorageId ?? (business.logoStorageId as Id<"_storage"> | undefined),
+            }),
+          catch: () => new Error("Failed to update business"),
+        });
 
-      toast.success("Business updated successfully");
-
-      const newSlug = updatedBusiness?.slug ?? slug;
-      navigate({ to: "/b/$slug", params: { slug: newSlug } });
-    } catch {
-      toast.error("Failed to update business");
-    } finally {
-      setIsSubmitting(false);
-      setIsUploadingLogo(false);
-    }
+        yield* Effect.sync(() => {
+          toast.success("Business updated successfully");
+          const newSlug = updatedBusiness?.slug ?? slug;
+          navigate({ to: "/b/$slug", params: { slug: newSlug } });
+        });
+      }).pipe(
+        Effect.catchAll((err) =>
+          Effect.sync(() => toast.error((err as Error).message || "Failed to update business"))
+        ),
+        Effect.ensuring(Effect.sync(() => setIsSubmitting(false)))
+      )
+    );
   };
 
   const isPending = isSubmitting || isUploadingLogo;

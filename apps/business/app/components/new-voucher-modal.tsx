@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { useState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { useParams } from "@tanstack/react-router";
@@ -74,7 +75,6 @@ export const NewVoucherModal = () => {
     mode: "onBlur",
   });
 
-  // Populate form when editing
   useEffect(() => {
     if (isEditMode && editVoucherData) {
       const formFormat =
@@ -116,7 +116,6 @@ export const NewVoucherModal = () => {
     }
   }, [editVoucherData, isEditMode]);
 
-  // Reset edit mode when modal closes
   useEffect(() => {
     if (!isOpen) {
       setEditVoucherId(null);
@@ -130,87 +129,97 @@ export const NewVoucherModal = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
-    const qrFile = qrRef.current?.getFile() ?? null;
-    const barcodeFile = barcodeRef.current?.getFile() ?? null;
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const qrFile = qrRef.current?.getFile() ?? null;
+        const barcodeFile = barcodeRef.current?.getFile() ?? null;
 
-    // Validate file requirements
-    if (data.voucherFormat === "qr-code" && !qrFile && (!isEditMode || !existingImageUrl)) {
-      setIsSubmitting(false);
-      toast.error("Please upload a QR code image");
-      return;
-    }
-    if (data.voucherFormat === "barcode" && !barcodeFile && (!isEditMode || !existingImageUrl)) {
-      setIsSubmitting(false);
-      toast.error("Please upload a barcode image");
-      return;
-    }
-    if (data.voucherFormat === "generated-text" && !data.voucherGenCode) {
-      setIsSubmitting(false);
-      toast.error("Please generate a voucher code");
-      return;
-    }
-
-    try {
-      let voucherStorageId: Id<"_storage"> | undefined;
-
-      if (data.voucherFormat === "qr-code" && qrFile) {
-        voucherStorageId = await upload(qrFile);
-      } else if (data.voucherFormat === "barcode" && barcodeFile) {
-        voucherStorageId = await upload(barcodeFile);
-      }
-
-      const apiVoucherFormat =
-        data.voucherFormat === "qr-code"
-          ? "qr_code"
-          : data.voucherFormat === "barcode"
-            ? "barcode"
-            : ("generated_text" as const);
-
-      if (isEditMode && editVoucherId) {
-        await updateVoucher({
-          voucherId: editVoucherId as Id<"vouchers">,
-          title: data.title,
-          description: data.description,
-          voucherFormat: apiVoucherFormat,
-          voucherStorageId,
-          voucherGenCode: data.voucherGenCode || undefined,
-          voucherTerms: data.voucherTerms || undefined,
-          voucherValidFrom: data.voucherValidFrom!.getTime(),
-          voucherValidTo: data.voucherValidTo!.getTime(),
-        });
-        toast.success("Voucher updated successfully");
-      } else {
-        if (!business?._id) {
-          toast.error("Business not loaded");
-          setIsSubmitting(false);
-          return;
+        if (data.voucherFormat === "qr-code" && !qrFile && (!isEditMode || !existingImageUrl)) {
+          return yield* Effect.fail(new Error("Please upload a QR code image"));
         }
-        await createVoucher({
-          businessId: business._id as Id<"businesses">,
-          title: data.title,
-          description: data.description,
-          voucherFormat: apiVoucherFormat,
-          voucherStorageId,
-          voucherGenCode: data.voucherGenCode || undefined,
-          voucherTerms: data.voucherTerms || undefined,
-          voucherValidFrom: data.voucherValidFrom!.getTime(),
-          voucherValidTo: data.voucherValidTo!.getTime(),
-        });
-        toast.success("Voucher created successfully");
-      }
+        if (data.voucherFormat === "barcode" && !barcodeFile && (!isEditMode || !existingImageUrl)) {
+          return yield* Effect.fail(new Error("Please upload a barcode image"));
+        }
+        if (data.voucherFormat === "generated-text" && !data.voucherGenCode) {
+          return yield* Effect.fail(new Error("Please generate a voucher code"));
+        }
 
-      form.reset();
-      setGeneratedCode("");
-      setExistingImageUrl(null);
-      setEditVoucherId(null);
-      setIsOpen(false);
-    } catch {
-      toast.error(
-        isEditMode ? "Failed to update voucher" : "Failed to create voucher"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+        let voucherStorageId: Id<"_storage"> | undefined;
+
+        if (data.voucherFormat === "qr-code" && qrFile) {
+          voucherStorageId = yield* Effect.tryPromise({
+            try: () => upload(qrFile),
+            catch: () => new Error("Failed to upload QR code image"),
+          });
+        } else if (data.voucherFormat === "barcode" && barcodeFile) {
+          voucherStorageId = yield* Effect.tryPromise({
+            try: () => upload(barcodeFile),
+            catch: () => new Error("Failed to upload barcode image"),
+          });
+        }
+
+        const apiVoucherFormat =
+          data.voucherFormat === "qr-code"
+            ? "qr_code"
+            : data.voucherFormat === "barcode"
+              ? "barcode"
+              : ("generated_text" as const);
+
+        if (isEditMode && editVoucherId) {
+          yield* Effect.tryPromise({
+            try: () =>
+              updateVoucher({
+                voucherId: editVoucherId as Id<"vouchers">,
+                title: data.title,
+                description: data.description,
+                voucherFormat: apiVoucherFormat,
+                voucherStorageId,
+                voucherGenCode: data.voucherGenCode || undefined,
+                voucherTerms: data.voucherTerms || undefined,
+                voucherValidFrom: data.voucherValidFrom!.getTime(),
+                voucherValidTo: data.voucherValidTo!.getTime(),
+              }),
+            catch: () => new Error("Failed to update voucher"),
+          });
+          yield* Effect.sync(() => toast.success("Voucher updated successfully"));
+        } else {
+          if (!business?._id) {
+            return yield* Effect.fail(new Error("Business not loaded"));
+          }
+          yield* Effect.tryPromise({
+            try: () =>
+              createVoucher({
+                businessId: business._id as Id<"businesses">,
+                title: data.title,
+                description: data.description,
+                voucherFormat: apiVoucherFormat,
+                voucherStorageId,
+                voucherGenCode: data.voucherGenCode || undefined,
+                voucherTerms: data.voucherTerms || undefined,
+                voucherValidFrom: data.voucherValidFrom!.getTime(),
+                voucherValidTo: data.voucherValidTo!.getTime(),
+              }),
+            catch: () => new Error("Failed to create voucher"),
+          });
+          yield* Effect.sync(() => toast.success("Voucher created successfully"));
+        }
+
+        yield* Effect.sync(() => {
+          form.reset();
+          setGeneratedCode("");
+          setExistingImageUrl(null);
+          setEditVoucherId(null);
+          setIsOpen(false);
+        });
+      }).pipe(
+        Effect.catchAll((err) =>
+          Effect.sync(() =>
+            toast.error((err as Error).message || (isEditMode ? "Failed to update voucher" : "Failed to create voucher"))
+          )
+        ),
+        Effect.ensuring(Effect.sync(() => setIsSubmitting(false)))
+      )
+    );
   };
 
   const handleDialogOpenChange = (open: boolean) => {
@@ -247,9 +256,7 @@ export const NewVoucherModal = () => {
               <VoucherImageUpload
                 ref={qrRef}
                 type="qr-code"
-                existingImageUrl={
-                  voucherFormat === "qr-code" ? existingImageUrl : null
-                }
+                existingImageUrl={voucherFormat === "qr-code" ? existingImageUrl : null}
                 onExistingImageClear={() => setExistingImageUrl(null)}
               />
             )}
@@ -258,9 +265,7 @@ export const NewVoucherModal = () => {
               <VoucherImageUpload
                 ref={barcodeRef}
                 type="barcode"
-                existingImageUrl={
-                  voucherFormat === "barcode" ? existingImageUrl : null
-                }
+                existingImageUrl={voucherFormat === "barcode" ? existingImageUrl : null}
                 onExistingImageClear={() => setExistingImageUrl(null)}
               />
             )}

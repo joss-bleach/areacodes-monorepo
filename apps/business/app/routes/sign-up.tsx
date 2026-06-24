@@ -56,6 +56,7 @@ function SignUpPage() {
       await authClient.signIn.social({
         provider: "google",
         callbackURL: "/",
+        newUserCallbackURL: "/b/create?_nb=1",
       });
     } catch {
       setError("Failed to sign up with Google.");
@@ -73,15 +74,18 @@ function SignUpPage() {
         email,
         password,
         name,
+        role: "business",
         callbackURL: "/",
       });
 
       if (signUpError) {
+        console.error("[sign-up] error object:", signUpError);
         setError(signUpError.message ?? "Something went wrong. Please try again.");
       } else {
         navigate({ to: "/" });
       }
-    } catch {
+    } catch (err) {
+      console.error("[sign-up] caught exception:", err);
       setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);

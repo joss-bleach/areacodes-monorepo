@@ -7,7 +7,7 @@ A time-bounded discount offer created by a Business. Has a validity window (`vou
 The act of a Customer saving a Voucher to their account. Represents intent — the Customer has expressed interest but has not yet used the Voucher. A Claim is a distinct record linking a Customer to a Voucher. Does not generate a Voucher Code.
 
 ## Reveal
-The act of a Customer tapping "Use Now" on a saved Voucher. Triggers generation of a unique, time-limited Voucher Code. A revealed code expires after a fixed window (target: 2 hours). The Reveal is the event that initiates POS push (integrated path) or displays the code for manual presentation (non-integrated path).
+The server-side generation of a unique, time-limited Voucher Code. Triggered automatically when a Customer opens a saved Voucher in the Wallet — not an explicit user action. The 2-hour expiry window is a caching and POS-integration concern; if a code has expired when the Customer opens the voucher, a new one is generated silently. Customers are never shown the code expiry countdown.
 
 ## Voucher Code
 A unique alphanumeric identifier generated at Reveal time. Displayed to the Customer as both text and QR. On the integrated path, the code is matched against POS transaction records to confirm Redemption. On the non-integrated path, the code is presented to the business manually with no automated verification.
@@ -34,7 +34,7 @@ An end consumer who browses the map app or uses the Consumer App. Requires an au
 The Expo mobile app (iOS and Android) serving Customers. Feature-equal with the map web app — supports the full browse → claim → reveal → wallet flow. Shares the same backend and Customer identity as the web surface.
 
 ## Wallet
-A Customer's personal view of their Voucher interactions — all claimed, revealed, and redeemed Vouchers with their current state. Available on both the map web app and the Consumer App.
+A Customer's personal view of their saved Vouchers. Displays two user-facing sections: **Active** (voucher validity window still open, not yet redeemed) and **Past** (validity window expired, or Redemption confirmed on the integrated path). The internal Claim/Reveal/Redemption state machine is an implementation detail — not exposed to the Customer. Available on both the map web app and the Consumer App.
 
 ## Follow
 The act of a Customer subscribing to a Business. A followed Business triggers a push notification to the Customer when a new Voucher is created.

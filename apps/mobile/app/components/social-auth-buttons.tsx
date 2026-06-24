@@ -2,22 +2,32 @@ import { useState } from "react";
 import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native";
 import { useRouter } from "expo-router";
 import * as AppleAuthentication from "expo-apple-authentication";
+import Svg, { Path } from "react-native-svg";
 import { authClient } from "../lib/auth-client";
 import {
   captureSignInCompleted,
   captureSignUpCompleted,
 } from "../lib/analytics";
 
-function GoogleIcon() {
-  return <Text className="text-base mr-2">G</Text>;
+function GoogleIcon({ color }: { color: string }) {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" style={{ marginRight: 8 }}>
+      <Path
+        fill={color}
+        d="M12.545 10.239v3.821h5.445c-.712 2.315-2.647 3.972-5.445 3.972a6.033 6.033 0 1 1 0-12.064c1.498 0 2.866.549 3.921 1.453l2.814-2.814A9.969 9.969 0 0 0 12.545 2C7.021 2 2.543 6.477 2.543 12s4.478 10 10.002 10c8.396 0 10.249-7.85 9.426-11.748z"
+      />
+    </Svg>
+  );
 }
 
 type SocialAuthButtonsProps = {
   mode: "sign-in" | "sign-up";
   onError: (message: string) => void;
+  onSuccess?: () => void;
+  theme?: "dark" | "light";
 };
 
-export function SocialAuthButtons({ mode, onError }: SocialAuthButtonsProps) {
+export function SocialAuthButtons({ mode, onError, onSuccess, theme = "dark" }: SocialAuthButtonsProps) {
   const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
@@ -39,6 +49,8 @@ export function SocialAuthButtons({ mode, onError }: SocialAuthButtonsProps) {
         } else {
           captureSignInCompleted("google");
         }
+        if (onSuccess) onSuccess();
+        else router.replace("/(tabs)");
       }
     } catch {
       onError("Google sign-in failed. Please try again.");
@@ -84,7 +96,8 @@ export function SocialAuthButtons({ mode, onError }: SocialAuthButtonsProps) {
         } else {
           captureSignInCompleted("apple");
         }
-        router.replace("/(tabs)/");
+        if (onSuccess) onSuccess();
+        else router.replace("/(tabs)");
       }
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
@@ -98,21 +111,6 @@ export function SocialAuthButtons({ mode, onError }: SocialAuthButtonsProps) {
 
   return (
     <>
-      <Pressable
-        onPress={handleGoogleSignIn}
-        disabled={socialLoading}
-        className="flex-row items-center justify-center bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 mb-3 disabled:opacity-50"
-      >
-        {googleLoading ? (
-          <ActivityIndicator color="#ffffff" />
-        ) : (
-          <>
-            <GoogleIcon />
-            <Text className="text-white font-semibold text-sm">Continue with Google</Text>
-          </>
-        )}
-      </Pressable>
-
       {Platform.OS === "ios" && (
         <AppleAuthentication.AppleAuthenticationButton
           buttonType={
@@ -120,18 +118,49 @@ export function SocialAuthButtons({ mode, onError }: SocialAuthButtonsProps) {
               ? AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP
               : AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
           }
-          buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
-          cornerRadius={8}
+          buttonStyle={
+            theme === "light"
+              ? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              : AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+          }
+          cornerRadius={0}
           style={{ height: 44, marginBottom: 12, opacity: appleLoading ? 0.5 : 1 }}
           onPress={handleAppleSignIn}
         />
       )}
 
-      <View className="flex-row items-center mb-6">
-        <View className="flex-1 h-px bg-gray-800" />
-        <Text className="text-gray-500 text-xs mx-3">or</Text>
-        <View className="flex-1 h-px bg-gray-800" />
-      </View>
+      <Pressable
+        onPress={handleGoogleSignIn}
+        disabled={socialLoading}
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "center",
+          paddingVertical: 12,
+          marginBottom: 12,
+          opacity: socialLoading ? 0.5 : 1,
+          borderWidth: 1,
+          backgroundColor: theme === "light" ? "white" : "#111827",
+          borderColor: theme === "light" ? "#E5E7EB" : "#374151",
+        }}
+      >
+        {googleLoading ? (
+          <ActivityIndicator color={theme === "light" ? "#111827" : "#ffffff"} />
+        ) : (
+          <>
+            <GoogleIcon color={theme === "light" ? "#111827" : "white"} />
+            <Text
+              style={{
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: 14,
+                color: theme === "light" ? "#111827" : "white",
+              }}
+            >
+              Continue with Google
+            </Text>
+          </>
+        )}
+      </Pressable>
     </>
   );
 }

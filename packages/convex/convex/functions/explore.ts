@@ -1,8 +1,8 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 import { isHidden } from "./visibility";
-import { isActiveVoucher } from "../lib/voucher-filters";
-import { isBusinessSuspended } from "../lib/subscription-gate";
+import { isActiveVoucher } from "../lib/voucher_filters";
+import { isBusinessSuspended } from "../lib/subscription_gate";
 
 export const getBusinessesWithVouchers = query({
   args: {

@@ -18,8 +18,8 @@ import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as ApiLocationRouteImport } from './routes/api/location'
 import { Route as AuthenticatedBCreateRouteImport } from './routes/_authenticated/b/create'
 import { Route as AuthenticatedBSlugIndexRouteImport } from './routes/_authenticated/b/$slug/index'
-import { Route as AuthenticatedBSlugEditRouteImport } from './routes/_authenticated/b/$slug/edit'
 import { Route as AuthenticatedBSlugPosRouteImport } from './routes/_authenticated/b/$slug/pos'
+import { Route as AuthenticatedBSlugEditRouteImport } from './routes/_authenticated/b/$slug/edit'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -65,14 +65,14 @@ const AuthenticatedBSlugIndexRoute = AuthenticatedBSlugIndexRouteImport.update({
   path: '/b/$slug/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedBSlugEditRoute = AuthenticatedBSlugEditRouteImport.update({
-  id: '/b/$slug/edit',
-  path: '/b/$slug/edit',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedBSlugPosRoute = AuthenticatedBSlugPosRouteImport.update({
   id: '/b/$slug/pos',
   path: '/b/$slug/pos',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBSlugEditRoute = AuthenticatedBSlugEditRouteImport.update({
+  id: '/b/$slug/edit',
+  path: '/b/$slug/edit',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 
@@ -227,18 +227,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBSlugIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/b/$slug/edit': {
-      id: '/_authenticated/b/$slug/edit'
-      path: '/b/$slug/edit'
-      fullPath: '/b/$slug/edit'
-      preLoaderRoute: typeof AuthenticatedBSlugEditRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/b/$slug/pos': {
       id: '/_authenticated/b/$slug/pos'
       path: '/b/$slug/pos'
       fullPath: '/b/$slug/pos'
       preLoaderRoute: typeof AuthenticatedBSlugPosRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/b/$slug/edit': {
+      id: '/_authenticated/b/$slug/edit'
+      path: '/b/$slug/edit'
+      fullPath: '/b/$slug/edit'
+      preLoaderRoute: typeof AuthenticatedBSlugEditRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
   }

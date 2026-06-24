@@ -1,5 +1,5 @@
 import { mutation, query } from "../_generated/server";
-import { v } from "convex/values";
+import { v, ConvexError } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { Effect, Layer } from "effect";
@@ -9,17 +9,16 @@ import {
   RevealRepo,
   SubscriptionRepo,
   VoucherService,
+  VoucherExpired,
+  AlreadyRevealed,
+  ClaimNotFound,
+  VouchersSuspended,
   type IVoucherRepo,
   type IClaimRepo,
   type IRevealRepo,
 } from "@areacodes/domain";
-import { makeConvexSubscriptionQueryRepo } from "../lib/subscription-gate";
-
-async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Unauthenticated");
-  return identity.subject;
-}
+import { makeConvexSubscriptionQueryRepo } from "../lib/subscription_gate";
+import type { ClaimErrorPayload, RevealErrorPayload, GetWalletErrorCode } from "../lib/errors";
 
 function makeConvexVoucherRepo(ctx: QueryCtx | MutationCtx): IVoucherRepo {
   return {
@@ -108,8 +107,8 @@ function makeConvexRevealRepo(ctx: MutationCtx): IRevealRepo {
 export const claimVoucher = mutation({
   args: { voucherId: v.id("vouchers") },
   handler: async (ctx, { voucherId }) => {
-    const customerId = await requireAuth(ctx);
-    const now = Date.now();
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError({ code: "UNAUTHENTICATED" } satisfies ClaimErrorPayload);
 
     const layer = Layer.mergeAll(
       Layer.succeed(VoucherRepo, makeConvexVoucherRepo(ctx)),
@@ -117,7 +116,11 @@ export const claimVoucher = mutation({
     );
 
     const claimId = await Effect.runPromise(
-      Effect.provide(VoucherService.claim(customerId, voucherId, now), layer),
+      Effect.provide(VoucherService.claim(identity.subject, voucherId, Date.now()), layer).pipe(
+        Effect.orDieWith(
+          (_: VoucherExpired) => new ConvexError({ code: "VOUCHER_EXPIRED" } satisfies ClaimErrorPayload),
+        ),
+      ),
     );
 
     return claimId as Id<"claims">;
@@ -127,8 +130,8 @@ export const claimVoucher = mutation({
 export const revealVoucher = mutation({
   args: { claimId: v.id("claims") },
   handler: async (ctx, { claimId }) => {
-    await requireAuth(ctx);
-    const now = Date.now();
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new ConvexError({ code: "UNAUTHENTICATED" } satisfies RevealErrorPayload);
 
     const layer = Layer.mergeAll(
       Layer.succeed(VoucherRepo, makeConvexVoucherRepo(ctx)),
@@ -137,19 +140,27 @@ export const revealVoucher = mutation({
       Layer.succeed(SubscriptionRepo, makeConvexSubscriptionQueryRepo(ctx)),
     );
 
-    const result = await Effect.runPromise(
-      Effect.provide(VoucherService.reveal(claimId, now), layer),
+    return await Effect.runPromise(
+      Effect.provide(VoucherService.reveal(claimId, Date.now()), layer).pipe(
+        Effect.orDieWith(
+          (err: AlreadyRevealed | ClaimNotFound | VouchersSuspended) => {
+            const code: RevealErrorPayload["code"] =
+              err._tag === "AlreadyRevealed" ? "ALREADY_REVEALED"
+              : err._tag === "ClaimNotFound" ? "CLAIM_NOT_FOUND"
+              : "VOUCHER_SUSPENDED";
+            return new ConvexError({ code } satisfies RevealErrorPayload);
+          },
+        ),
+      ),
     );
-
-    return result;
   },
 });
 
 export const getWallet = query({
   args: {},
   handler: async (ctx) => {
-    const customerId = await requireAuth(ctx);
-    const now = Date.now();
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return { ok: false as const, error: "UNAUTHENTICATED" as GetWalletErrorCode };
 
     const layer = Layer.mergeAll(
       Layer.succeed(VoucherRepo, makeConvexVoucherRepo(ctx)),
@@ -159,11 +170,10 @@ export const getWallet = query({
     );
 
     const entries = await Effect.runPromise(
-      Effect.provide(VoucherService.getWallet(customerId, now), layer),
+      Effect.provide(VoucherService.getWallet(identity.subject, Date.now()), layer),
     );
 
-    // Enrich each entry with business name and voucherValidFrom for display.
-    return await Promise.all(
+    const enriched = await Promise.all(
       entries.map(async (entry) => {
         const voucher = await ctx.db.get(entry.voucherId as Id<"vouchers">);
         const business = voucher ? await ctx.db.get(voucher.businessId) : null;
@@ -180,6 +190,8 @@ export const getWallet = query({
         };
       }),
     );
+
+    return { ok: true as const, entries: enriched };
   },
 });
 

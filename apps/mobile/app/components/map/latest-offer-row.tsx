@@ -16,7 +16,7 @@ export function LatestOfferRow({
   return (
     <Pressable
       onPress={onPress}
-      className="bg-gray-900 px-4 py-3 mb-2 rounded-lg"
+      className="bg-zinc-800 px-4 py-3 mb-2 rounded-lg"
     >
       <Text
         className="text-white text-sm font-poppins-medium mb-0.5"

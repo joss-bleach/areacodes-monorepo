@@ -12,6 +12,14 @@
         "simulator": true
       }
     },
+    "development:device": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
+      "env": {
+        "EXPO_NO_PAID_ENTITLEMENTS": "1"
+      }
+    },
     "preview": {
       "distribution": "internal",
       "channel": "preview"
@@ -19,19 +27,6 @@
     "production": {
       "autoIncrement": true,
       "channel": "production"
-    }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "",
-        "ascAppId": "",
-        "appleTeamId": ""
-      },
-      "android": {
-        "serviceAccountKeyPath": "",
-        "track": "internal"
-      }
     }
   }
 }

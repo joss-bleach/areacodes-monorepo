@@ -1,11 +1,11 @@
 import { Pressable, Text, View } from "react-native";
 import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 import { formatDistance } from "~/lib/distance";
-import type { MOCK_BUSINESSES } from "~/lib/mock-map-data";
+import type { MapBusiness } from "~/lib/map-types";
 import { useVoucherSheet } from "../../lib/voucher-sheet-context";
 
 interface BusinessDetailContentProps {
-  business: (typeof MOCK_BUSINESSES)[number];
+  business: MapBusiness;
   distanceMetres: number | null;
   onClose: () => void;
 }

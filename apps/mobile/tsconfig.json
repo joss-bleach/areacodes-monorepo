@@ -2,14 +2,22 @@
   "extends": "@repo/typescript-config/react-native.json",
   "compilerOptions": {
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": [
+        "./app/*"
+      ]
     },
-    "typeRoots": ["./node_modules/@types"]
+    "typeRoots": [
+      "./node_modules/@types"
+    ]
   },
   "include": [
     "app/**/*",
     "nativewind-env.d.ts",
-    "env.d.ts"
+    "env.d.ts",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

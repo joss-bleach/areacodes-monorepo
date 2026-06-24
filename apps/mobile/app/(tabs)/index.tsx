@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as Location from "expo-location";
 import BottomSheet from "@gorhom/bottom-sheet";
 import Svg, { Path } from "react-native-svg";
-import { SERVICE_AREA_BOUNDARY } from "~/lib/service-area";
-import { MOCK_BUSINESSES, MOCK_LATEST_VOUCHERS } from "~/lib/mock-map-data";
+import { useQuery } from "convex/react";
+import { api } from "@repo/convex";
+import { SERVICE_AREA_BOUNDARY, isInServiceArea } from "~/lib/service-area";
 import { haversineDistance } from "~/lib/distance";
 import { NearbyVouchersContent } from "~/components/map/nearby-vouchers-content";
 import { BusinessDetailContent } from "~/components/map/business-detail-content";
+import type { MapBusiness, NearbyBusiness, LatestVoucher } from "~/lib/map-types";
 
 const BRIGHTON_HOVE_CENTER = { latitude: 50.8503, longitude: -0.1368 };
 const DEFAULT_DELTA = { latitudeDelta: 0.08, longitudeDelta: 0.08 };
@@ -39,6 +41,9 @@ export default function MapScreen() {
     longitude: number;
   } | null>(null);
 
+  const rawBusinesses = useQuery(api.functions.explore.getBusinessesWithVouchers, {});
+  const businesses = useMemo<MapBusiness[]>(() => rawBusinesses ?? [], [rawBusinesses]);
+
   useEffect(() => {
     void (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -53,24 +58,36 @@ export default function MapScreen() {
     })();
   }, []);
 
-  const nearbyBusinesses = useMemo(() => {
+  const nearbyBusinesses = useMemo<NearbyBusiness[]>(() => {
     if (!userLocation) return [];
-    return MOCK_BUSINESSES.map((b) => ({
-      ...b,
-      distanceMetres: haversineDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        b.latitude,
-        b.longitude,
-      ),
-    }))
+    return businesses
+      .map((b) => ({
+        ...b,
+        distanceMetres: haversineDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          b.latitude,
+          b.longitude,
+        ),
+      }))
       .filter((b) => b.distanceMetres <= NEARBY_RADIUS_METRES)
       .sort((a, b) => a.distanceMetres - b.distanceMetres);
-  }, [userLocation]);
+  }, [userLocation, businesses]);
+
+  const latestVouchers = useMemo<LatestVoucher[]>(() =>
+    businesses.flatMap((b) =>
+      b.vouchers.map((v) => ({
+        _id: v._id,
+        title: v.title,
+        businessName: b.name,
+        industryName: b.industry?.name ?? "",
+      })),
+    ),
+  [businesses]);
 
   const selectedBusiness = useMemo(
-    () => MOCK_BUSINESSES.find((b) => b._id === selectedBusinessId) ?? null,
-    [selectedBusinessId],
+    () => businesses.find((b) => b._id === selectedBusinessId) ?? null,
+    [selectedBusinessId, businesses],
   );
 
   const selectedBusinessDistance = useMemo(() => {
@@ -100,6 +117,16 @@ export default function MapScreen() {
     bottomSheetRef.current?.snapToIndex(0);
   }, []);
 
+  const handleMapPress = useCallback(() => {
+    if (selectedBusinessId !== null) {
+      setSelectedBusinessId(null);
+      bottomSheetRef.current?.snapToIndex(0);
+    }
+  }, [selectedBusinessId]);
+
+  const isOutsideServiceArea =
+    userLocation !== null && !isInServiceArea(userLocation.latitude, userLocation.longitude);
+
   const hasSelection = selectedBusinessId !== null;
 
   return (
@@ -111,6 +138,7 @@ export default function MapScreen() {
         initialRegion={{ ...BRIGHTON_HOVE_CENTER, ...DEFAULT_DELTA }}
         showsPointsOfInterest={false}
         showsBuildings={false}
+        onPress={handleMapPress}
       >
         <Polygon
           coordinates={SERVICE_AREA_COORDS}
@@ -118,7 +146,7 @@ export default function MapScreen() {
           strokeColor="rgba(255, 255, 255, 0.65)"
           strokeWidth={2}
         />
-        {MOCK_BUSINESSES.map((business) => (
+        {businesses.map((business) => (
           <Marker
             key={business._id}
             coordinate={{ latitude: business.latitude, longitude: business.longitude }}
@@ -149,8 +177,9 @@ export default function MapScreen() {
         ) : (
           <NearbyVouchersContent
             nearbyBusinesses={nearbyBusinesses}
-            latestVouchers={MOCK_LATEST_VOUCHERS}
+            latestVouchers={latestVouchers}
             userLocation={userLocation}
+            isOutsideServiceArea={isOutsideServiceArea}
             onBusinessPress={handleBusinessCardPress}
             onClose={handleCloseNearby}
           />

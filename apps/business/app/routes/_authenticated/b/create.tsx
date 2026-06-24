@@ -1,11 +1,20 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useConvexAuth, useQuery } from "convex/react";
 import { useEffect } from "react";
 import { api } from "@repo/convex";
 import { BusinessNavbar } from "~/components/business-navbar";
 import { CreateBusinessForm } from "~/components/create-business-form";
+import { authClient } from "~/lib/auth-client";
+import * as z from "zod";
 
 export const Route = createFileRoute("/_authenticated/b/create")({
+  validateSearch: z.object({ _nb: z.literal(1).optional() }),
+  beforeLoad: async ({ search }) => {
+    if (search._nb) {
+      await authClient.updateUser({ role: "business" });
+      throw redirect({ to: "/b/create", search: {}, replace: true });
+    }
+  },
   component: CreatePage,
 });
 

@@ -58,3 +58,4 @@ temporary-screenshots/
 # Turborepo
 .turbo
 .gstack/
+.vercel

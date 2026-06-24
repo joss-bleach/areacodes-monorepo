@@ -11,6 +11,7 @@ import {
 import { Link, useRouter, useLocalSearchParams } from "expo-router";
 import { authClient } from "../lib/auth-client";
 import { SocialAuthButtons } from "../components/social-auth-buttons";
+import { ScreenHeader } from "../components/screen-header";
 import { captureSignInCompleted } from "../lib/analytics";
 
 export default function SignInScreen() {
@@ -25,7 +26,7 @@ export default function SignInScreen() {
     if (returnTo) {
       router.replace(returnTo as never);
     } else {
-      router.replace("/(tabs)/");
+      router.replace("/(tabs)");
     }
   }
 
@@ -58,9 +59,10 @@ export default function SignInScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       className="flex-1 bg-black"
     >
+      <ScreenHeader title="" />
       <View className="flex-1 items-center justify-center px-6">
         <View className="w-full max-w-sm">
-          <Text className="text-white text-2xl font-bold mb-2">Welcome back</Text>
+          <Text className="text-white text-2xl font-poppins-bold mb-2">Welcome back</Text>
           <Text className="text-gray-400 text-sm mb-8">
             Sign in to your Areacodes account
           </Text>
@@ -68,7 +70,7 @@ export default function SignInScreen() {
           <SocialAuthButtons mode="sign-in" onError={setError} />
 
           <View className="mb-4">
-            <Text className="text-gray-300 text-sm font-medium mb-1.5">
+            <Text className="text-gray-300 text-sm font-poppins-medium mb-1.5">
               Email address
             </Text>
             <TextInput
@@ -79,12 +81,12 @@ export default function SignInScreen() {
               autoCapitalize="none"
               autoComplete="email"
               keyboardType="email-address"
-              className="bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-3 text-sm"
+              className="bg-gray-900 border border-gray-700 text-white px-4 py-3 text-sm"
             />
           </View>
 
           <View className="mb-4">
-            <Text className="text-gray-300 text-sm font-medium mb-1.5">
+            <Text className="text-gray-300 text-sm font-poppins-medium mb-1.5">
               Password
             </Text>
             <TextInput
@@ -94,7 +96,7 @@ export default function SignInScreen() {
               placeholderTextColor="#6b7280"
               secureTextEntry
               autoComplete="current-password"
-              className="bg-gray-900 border border-gray-700 text-white rounded-lg px-4 py-3 text-sm"
+              className="bg-gray-900 border border-gray-700 text-white px-4 py-3 text-sm"
             />
           </View>
 
@@ -105,18 +107,18 @@ export default function SignInScreen() {
           <Pressable
             onPress={handleSignIn}
             disabled={!canSubmit}
-            className="bg-white rounded-lg px-4 py-3 items-center mb-6 disabled:opacity-50"
+            className="bg-white px-4 py-3 items-center mb-6 disabled:opacity-50"
           >
             {loading ? (
               <ActivityIndicator color="#000000" />
             ) : (
-              <Text className="text-black font-semibold text-sm">Sign in</Text>
+              <Text className="text-black font-poppins-semibold text-sm">Sign in</Text>
             )}
           </Pressable>
 
           <View className="flex-row justify-center">
             <Text className="text-gray-400 text-sm">Don&apos;t have an account? </Text>
-            <Link href="/(auth)/sign-up">
+            <Link href="/sign-up">
               <Text className="text-white text-sm underline">Sign up</Text>
             </Link>
           </View>

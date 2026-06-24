@@ -1,17 +1,19 @@
 import {
+  Animated,
   Image,
   Pressable,
   ScrollView,
   Text,
   View,
-  ActivityIndicator,
 } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ScreenHeader } from "../components/screen-header";
 import { useQuery } from "convex/react";
 import { api } from "@repo/convex";
+import { authClient } from "../lib/auth-client";
 import { posthog } from "../lib/analytics";
 import { useVoucherSheet, type RevealEntry } from "../lib/voucher-sheet-context";
+import { useAuthSheet } from "../lib/auth-sheet-context";
 import {
   loadRevealCache,
   filterValidReveals,
@@ -50,6 +52,45 @@ function walletEntryToRevealEntry(entry: WalletEntry): RevealEntry {
     activeCode: entry.activeCode,
     codeExpiresAt: entry.codeExpiresAt,
   };
+}
+
+function SkeletonBox({ className }: { className?: string }) {
+  const opacity = useRef(new Animated.Value(0.3)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.7, duration: 700, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.3, duration: 700, useNativeDriver: true }),
+      ]),
+    ).start();
+  }, [opacity]);
+  return <Animated.View style={{ opacity }} className={`bg-zinc-800 rounded-md ${className ?? ""}`} />;
+}
+
+function WalletCardSkeleton() {
+  return (
+    <View className="bg-zinc-900 rounded-xl p-4 mb-3">
+      <View className="flex-row items-center mb-3">
+        <SkeletonBox className="w-10 h-10 rounded-full mr-3" />
+        <SkeletonBox className="h-4 flex-1" />
+      </View>
+      <View className="border-t border-gray-800 pt-3">
+        <SkeletonBox className="h-5 w-3/4 mb-2" />
+        <SkeletonBox className="h-3 w-1/3" />
+      </View>
+    </View>
+  );
+}
+
+function WalletSkeleton() {
+  return (
+    <View className="px-4 py-6">
+      <SkeletonBox className="h-3 w-24 mb-4" />
+      <WalletCardSkeleton />
+      <WalletCardSkeleton />
+      <WalletCardSkeleton />
+    </View>
+  );
 }
 
 function VoucherCard({ entry, onPress }: { entry: WalletEntry; onPress: () => void }) {
@@ -117,18 +158,46 @@ function CachedRevealCard({ reveal, onPress }: { reveal: CachedReveal; onPress: 
 }
 
 export default function WalletScreen() {
-  const wallet = useQuery(api.functions.claims.getWallet, {});
+  const { data: session, isPending: sessionLoading } = authClient.useSession();
+  const walletResult = useQuery(
+    api.functions.claims.getWallet,
+    session ? {} : "skip",
+  );
   const [cachedReveals, setCachedReveals] = useState<CachedReveal[]>([]);
   const [pastExpanded, setPastExpanded] = useState(false);
   const { openReveal } = useVoucherSheet();
+  const { openAuthSheet } = useAuthSheet();
 
   useEffect(() => {
     void posthog?.screen("Wallet");
     loadRevealCache().then(setCachedReveals);
   }, []);
 
-  // Offline fallback
-  if (wallet === undefined) {
+  useEffect(() => {
+    if (!sessionLoading && !session) openAuthSheet();
+  }, [sessionLoading, session]);
+
+  // Session still resolving
+  if (sessionLoading) {
+    return (
+      <View className="flex-1 bg-black">
+        <ScreenHeader title="My wallet" />
+        <WalletSkeleton />
+      </View>
+    );
+  }
+
+  // Not signed in — auth sheet opened above
+  if (!session) {
+    return (
+      <View className="flex-1 bg-black">
+        <ScreenHeader title="My wallet" />
+      </View>
+    );
+  }
+
+  // Wallet loading — fall back to cached reveals if available
+  if (walletResult === undefined || !walletResult.ok) {
     const validCached = filterValidReveals(cachedReveals, Date.now());
     if (validCached.length > 0) {
       return (
@@ -139,8 +208,7 @@ export default function WalletScreen() {
               <CachedRevealCard
                 key={reveal.claimId}
                 reveal={reveal}
-                onPress={() => {
-                  // Convert cached reveal to RevealEntry for offline display
+                onPress={() =>
                   openReveal({
                     claimId: reveal.claimId,
                     voucherId: "",
@@ -153,8 +221,8 @@ export default function WalletScreen() {
                     voucherValidTo: reveal.expiresAt,
                     activeCode: reveal.voucherCode,
                     codeExpiresAt: reveal.expiresAt,
-                  });
-                }}
+                  })
+                }
               />
             ))}
           </ScrollView>
@@ -164,22 +232,21 @@ export default function WalletScreen() {
     return (
       <View className="flex-1 bg-black">
         <ScreenHeader title="My wallet" />
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#ffffff" />
-        </View>
+        <WalletSkeleton />
       </View>
     );
   }
 
+  const { entries } = walletResult;
   const now = Date.now();
-  const activeEntries = wallet.filter(
+  const activeEntries = entries.filter(
     (e) =>
       e.state !== "expired" &&
       e.state !== "suspended" &&
       e.voucher != null &&
       e.voucher.voucherValidTo > now,
   ) as WalletEntry[];
-  const pastEntries = wallet.filter(
+  const pastEntries = entries.filter(
     (e) =>
       e.state === "expired" ||
       e.state === "suspended" ||
@@ -190,7 +257,7 @@ export default function WalletScreen() {
     <View className="flex-1 bg-black">
       <ScreenHeader title="My wallet" />
       <ScrollView className="flex-1" contentContainerClassName="px-4 py-6">
-        {wallet.length === 0 ? (
+        {entries.length === 0 ? (
           <View className="flex-1 items-center justify-center py-20">
             <Text className="text-gray-400 text-base text-center">
               No vouchers yet.
