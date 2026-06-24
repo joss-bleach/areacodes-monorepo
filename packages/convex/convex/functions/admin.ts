@@ -1,16 +1,14 @@
 import { mutation, query } from "../_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
-import { authComponent } from "../betterAuth/auth";
 
 async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-
-  const user = await authComponent.getAuthUser(ctx);
-  if (!user || (user as { role?: string }).role !== "admin") {
+  // Better Auth's convex() plugin includes all user fields in the JWT payload,
+  // so role is available as a claim on the identity token.
+  if ((identity as { role?: string }).role !== "admin")
     throw new Error("Forbidden: Admin only");
-  }
   return identity.subject;
 }
 
