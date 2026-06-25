@@ -48,19 +48,28 @@ const makeSandbox = () =>
     },
   });
 
-// Each fresh Vercel VM needs gh CLI, Claude Code CLI, bun, and project deps.
-// All chained in one command so PATH changes carry through.
+// Each fresh Vercel VM needs gh CLI, Claude Code CLI, bun, project deps,
+// and git configured for commits + authenticated pushes.
+// All chained in one command so PATH changes and env vars carry through.
 const hooks = {
   sandbox: {
     onSandboxReady: [
       {
         command: [
-          // Add GitHub CLI repo and install gh (not in AL2023 default repos)
+          // gh CLI (not in AL2023 default repos)
           "curl -fsSL https://cli.github.com/packages/rpm/gh-cli.repo | sudo tee /etc/yum.repos.d/gh-cli.repo",
           "sudo dnf install -y gh",
-          // Install Claude Code CLI and bun, then install project deps
+          // Claude Code CLI and bun
           "npm install -g @anthropic-ai/claude-code bun",
+          // Project dependencies
           "bun install",
+          // Git identity for commits
+          'git config --global user.name "Sandcastle"',
+          'git config --global user.email "sandcastle@users.noreply.github.com"',
+          // Allow git to operate in the sandbox workspace
+          "git config --global --add safe.directory /vercel/sandbox/workspace",
+          // Credential helper so git push uses GH_TOKEN (needed by merger agent)
+          "git config --global credential.helper '!f() { echo username=x-access-token; echo password=$GH_TOKEN; }; f'",
         ].join(" && "),
       },
     ],
@@ -254,11 +263,10 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     },
   });
 
-  // Phase 4: Close completed issues
+  // Phase 4: Mark completed issues done (merge-prompt already closed them)
   for (const issue of completedIssues) {
     ghLabel(issue.id, "agent:done", "agent:in-progress");
-    ghClose(issue.id);
-    console.log(`  ✓ #${issue.id} closed`);
+    console.log(`  ✓ #${issue.id} done`);
   }
 
   console.log("\nBranches merged.");
