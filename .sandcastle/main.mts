@@ -12,6 +12,7 @@
 // Triggered by GitHub Actions when the Sandcastle label is added to an issue.
 
 import * as sandcastle from "@ai-hero/sandcastle";
+import { noSandbox } from "@ai-hero/sandcastle/sandboxes/no-sandbox";
 import { vercel } from "@ai-hero/sandcastle/sandboxes/vercel";
 import { execSync } from "child_process";
 import { z } from "zod";
@@ -118,31 +119,20 @@ function ghComment(issueId: string, body: string) {
 for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   console.log(`\n=== Iteration ${iteration}/${MAX_ITERATIONS} ===\n`);
 
-  // Fetch issues on the host runner where gh is authenticated via GH_TOKEN +
-  // the git remote set up by actions/checkout — avoids any gh auth issues
-  // inside the Vercel sandbox.
-  const issuesJson = execSync(
-    `gh issue list --state open --label Sandcastle --limit 100 --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'`,
-    { stdio: ["pipe", "pipe", "pipe"] },
-  )
-    .toString()
-    .trim();
-
   // -------------------------------------------------------------------------
   // Phase 1: Plan
   //
   // Opus reads all Sandcastle-labelled issues, builds a dependency graph, and
-  // selects the unblocked subset to work on. Output.object extracts and
-  // validates the <plan> JSON block — throws if malformed.
+  // selects the unblocked subset to work on. Runs on the host runner (no
+  // sandbox) so gh and git work without any extra setup. Output.object
+  // extracts and validates the <plan> JSON block — throws if malformed.
   // -------------------------------------------------------------------------
   const plan = await sandcastle.run({
-    hooks,
-    sandbox: makeSandbox(),
+    sandbox: noSandbox(),
     name: "planner",
     maxIterations: 1,
     agent: sandcastle.claudeCode("claude-opus-4-8"),
     promptFile: "./.sandcastle/plan-prompt.md",
-    promptArgs: { ISSUES: issuesJson },
     output: sandcastle.Output.object({ tag: "plan", schema: planSchema }),
   });
 
