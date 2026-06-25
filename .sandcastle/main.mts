@@ -176,7 +176,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
             promptFile: "./.sandcastle/review-prompt.md",
             promptArgs: {
               BRANCH: issue.branch,
-              TARGET_BRANCH: BASE_BRANCH,
+              MERGE_INTO: BASE_BRANCH,
             },
           });
 
