@@ -66,6 +66,9 @@ const hooks = {
           "npm install -g @anthropic-ai/claude-code bun",
           // Project dependencies
           "bun install",
+          // Commit any lockfile changes so the worktree is clean before
+          // sandcastle applies patches
+          "git add -A && git diff --staged --quiet || git commit --no-verify -m 'chore: sync lockfile'",
           // Git identity for commits
           'git config --global user.name "Sandcastle"',
           'git config --global user.email "sandcastle@users.noreply.github.com"',
