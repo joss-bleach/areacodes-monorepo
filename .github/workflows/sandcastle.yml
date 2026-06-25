@@ -30,15 +30,14 @@ jobs:
           ref: ${{ vars.BASE_BRANCH || github.event.repository.default_branch }}
           # Full history so sandcastle/issue-* branches can fork correctly.
           fetch-depth: 0
-          # PAT needed so the merger agent can push branches back to the repo.
-          token: ${{ secrets.GH_PAT }}
+          # Built-in token always has repo access; GH_PAT is passed separately
+          # to the Vercel sandbox for pushing branches.
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure git
         run: |
           git config user.name "Sandcastle"
           git config user.email "sandcastle@users.noreply.github.com"
-          # Allow the Vercel sandbox to push branches using the same PAT.
-          git config --global url."https://x-access-token:${{ secrets.GH_PAT }}@github.com/".insteadOf "https://github.com/"
 
       - uses: oven-sh/setup-bun@v2
         with:
