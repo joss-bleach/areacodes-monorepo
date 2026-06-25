@@ -37,6 +37,7 @@ const makeSandbox = () =>
   vercel({
     projectId,
     teamId,
+    token: process.env.VERCEL_TOKEN,
     resources: { vcpus: 2 },
     // Forward credentials into each Vercel microVM so the agent can call
     // GitHub APIs and authenticate with Claude.
