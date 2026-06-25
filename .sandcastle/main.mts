@@ -73,9 +73,9 @@ const hooks = {
           "git config --global credential.helper '!f() { echo username=x-access-token; echo password=$GH_TOKEN; }; f'",
           // Project dependencies
           "bun install",
-          // Commit any lockfile changes so the worktree is clean before
-          // sandcastle tries to sync patches from the sandbox back to the runner
-          "git add -A && git diff --staged --quiet || git commit --no-verify -m 'chore: sync lockfile'",
+          // Discard lockfile changes so the worktree is clean before sandcastle
+          // tries to sync patches from the sandbox back to the runner
+          "(git checkout -- bun.lockb 2>/dev/null || true)",
         ].join(" && "),
       },
     ],
