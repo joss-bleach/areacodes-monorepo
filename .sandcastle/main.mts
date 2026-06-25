@@ -14,7 +14,6 @@
 import * as sandcastle from "@ai-hero/sandcastle";
 import { vercel } from "@ai-hero/sandcastle/sandboxes/vercel";
 import { execSync } from "child_process";
-import { readFileSync } from "fs";
 import { z } from "zod";
 
 const planSchema = z.object({
@@ -31,9 +30,8 @@ const BASE_BRANCH = process.env.BASE_BRANCH ?? "main";
 // Sandbox configuration
 // ---------------------------------------------------------------------------
 
-const { projectId, orgId: teamId } = JSON.parse(
-  readFileSync(".vercel/project.json", "utf-8"),
-);
+const projectId = "prj_0fQweDGYjfNOf7dlzYDQCo8tiNQ5";
+const teamId = "team_vhZr2d0Zo17jniuBIJXifDuK";
 
 const makeSandbox = () =>
   vercel({
