@@ -59,22 +59,16 @@ const hooks = {
     onSandboxReady: [
       {
         command: [
-          // gh CLI (not in AL2023 default repos)
-          "curl -fsSL https://cli.github.com/packages/rpm/gh-cli.repo | sudo tee /etc/yum.repos.d/gh-cli.repo",
-          "sudo dnf install -y gh",
-          // Claude Code CLI and bun
-          "npm install -g @anthropic-ai/claude-code bun",
-          // Git identity and config first — required before any git commit below
+          // Git identity first (fast, and required before any commit)
           'git config --global user.name "Sandcastle"',
           'git config --global user.email "sandcastle@users.noreply.github.com"',
-          // Allow git to operate in the sandbox workspace
           "git config --global --add safe.directory /vercel/sandbox/workspace",
-          // Credential helper so git push uses GH_TOKEN (needed by merger agent)
           "git config --global credential.helper '!f() { echo username=x-access-token; echo password=$GH_TOKEN; }; f'",
-          // Project dependencies
+          // gh and claude+bun installs are independent — run in parallel to halve setup time
+          "(curl -fsSL https://cli.github.com/packages/rpm/gh-cli.repo | sudo tee /etc/yum.repos.d/gh-cli.repo && sudo dnf install -y gh) & (npm install -g @anthropic-ai/claude-code bun) & wait",
+          // Project dependencies (needs bun CLI from above)
           "bun install",
-          // Discard lockfile changes so the worktree is clean before sandcastle
-          // tries to sync patches from the sandbox back to the runner
+          // Discard lockfile changes so the worktree is clean for patch sync
           "(git checkout -- bun.lockb 2>/dev/null || true)",
         ].join(" && "),
       },
