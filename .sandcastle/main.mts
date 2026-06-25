@@ -49,12 +49,14 @@ const makeSandbox = () =>
   });
 
 // Each fresh Vercel VM needs Claude Code CLI, bun, and project deps installed.
+// All chained in one command so bun is in PATH when `bun install` runs.
 const hooks = {
   sandbox: {
     onSandboxReady: [
-      { command: "npm install -g @anthropic-ai/claude-code" },
-      { command: "npm install -g bun" },
-      { command: "bun install" },
+      {
+        command:
+          "npm install -g @anthropic-ai/claude-code bun && bun install",
+      },
     ],
   },
 };
