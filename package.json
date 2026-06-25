@@ -33,7 +33,8 @@
     "packages/*"
   ],
   "dependencies": {
-    "@ai-hero/sandcastle": "^0.8.0",
+    "@ai-hero/sandcastle": "^0.10.0",
+    "@vercel/sandbox": "^2.2.1",
     "better-auth": "^1.6.20",
     "nuqs": "^2.7.2",
     "zod": "^4.1.12"

@@ -166,7 +166,8 @@ function ClaimContent({
               const layout: LayoutRect = { x: pageX, y: pageY, width, height };
               triggerClaimAnimation(layout);
             });
-            setTimeout(() => close(), 1000);
+            // Dismiss immediately so the tab bar reappears behind the animation
+            close();
           }),
         ),
         Effect.tapError((err) => Effect.sync(() => setClaimError(err.message))),

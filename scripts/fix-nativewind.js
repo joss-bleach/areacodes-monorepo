@@ -12,8 +12,11 @@ const link = path.join(linkDir, "tailwindcss");
 
 fs.mkdirSync(linkDir, { recursive: true });
 
-if (fs.existsSync(link)) {
+try {
+  fs.lstatSync(link);
   fs.rmSync(link, { recursive: true, force: true });
+} catch (e) {
+  if (e.code !== "ENOENT") throw e;
 }
 
 fs.symlinkSync(target, link, "dir");

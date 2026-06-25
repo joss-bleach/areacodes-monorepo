@@ -47,20 +47,39 @@ The lifecycle of a single Customer × Voucher interaction:
 `unclaimed → claimed → revealed → redeemed | expired`
 
 ## Pilot
-A free trial period offered to newly registered Businesses. Duration is configurable (not hardcoded). Card details are collected at registration via Stripe; no charge is made until the Pilot ends. The Pilot clock starts at registration, regardless of admin approval status. After the Pilot, a paid Subscription begins automatically.
+The manual beta programme during which the team hand-onboards a small cohort of independent Brighton businesses to validate the platform. No self-service registration or billing during the Pilot. Businesses are set up entirely by staff; the Pilot ends when the team has sufficient data to make product and pricing decisions.
 
-## Subscription
-A Business's paid access to the platform. Flat monthly fee (currently £20/month, configurable). Single tier at launch. Managed via Stripe Billing. Subscription state (status, trial end, current period end, Stripe IDs) is stored in Convex, linked to the Business. Cancellation takes effect at end of the current billing period — access remains live until then. Businesses manage billing (card updates, cancellation, invoices) via the Stripe Customer Portal.
+## Pilot Business
+A Business onboarded during the Pilot by staff via the admin panel. Distinguished from future self-service registrations by having been created without Stripe billing. Pilot Businesses receive free access for the duration of the Pilot.
 
-## Subscription Status
-The current billing state of a Business's Subscription:
-`trialing → active → past_due → canceled`
-A grace period of 7 days applies on payment failure before vouchers are suspended. Manual reinstatement is available via the admin app.
+## Pilot Feature
+A product feature that is only active during the Pilot, gated behind the global Pilot Feature Flag. Examples: the Feedback Widget, the first-login walkthrough. Pilot Features are disabled by toggling the flag — no code deletion required at that point.
+
+## Pilot Feature Flag
+A single Convex configuration document that lists currently active Pilot Features by key (e.g. `"feedback_widget"`, `"onboarding_walkthrough"`). Global — applies to all Pilot Businesses simultaneously. Managed from the admin panel.
+
+## Admin-Created Business
+A Business and its associated Business User account created together by a staff member in the admin panel, rather than through self-service registration. The Business User receives a Magic Link invitation email rather than setting a password.
+
+## Magic Link
+The authentication method used by the Business Portal during the Pilot. A Business User enters their email address; a time-limited sign-in link is sent to that address. No password is set or required. Replaces the email/password flow for the Pilot.
+
+## Core Funnel
+The key sequence of Customer interactions that proves the platform is driving real-world footfall:
+`business_viewed → voucher_claimed → voucher_revealed → voucher_redeemed`
+The Claim → Redemption conversion rate is the primary success metric for the Pilot.
+
+## New Customer (at a Business)
+A Customer whose first-ever Claim at a given Business occurred during the measurement period. Used to assess whether the platform is driving genuine customer acquisition rather than re-engaging existing regulars.
+
+## Return Customer
+A Customer who has Claimed from the same Business more than once. Evidence that the platform supports repeat visits, not just one-off discounted footfall.
+
+## Cross-Business Discovery
+A Customer who has Claimed Vouchers from two or more distinct Businesses. The primary signal that Areacodes is functioning as a discovery platform rather than a single-business discount channel.
+
+## Feedback Widget
+A floating UI element in the Business Portal that allows a Business User to submit freeform feedback with their current location in the app captured automatically. Submissions are processed by an LLM (via OpenRouter) and filed as GitHub Issues with the labels `feedback` and `business`. Gated behind the Pilot Feature Flag.
 
 ## Business Registration Flow
-The sequence a Business Owner completes to join the platform:
-1. Account creation
-2. Business profile submission
-3. Card details captured via Stripe → Pilot begins → voucher publishing immediately unlocked
-
-Card capture is the sole quality filter. No admin approval is required to publish vouchers.
+Post-Pilot only. The self-service sequence a Business Owner will complete to join the platform independently. Not active during the Pilot. Details (including billing and verification) to be defined once Pilot data informs product and pricing decisions.

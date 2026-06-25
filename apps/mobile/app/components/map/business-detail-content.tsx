@@ -24,11 +24,11 @@ export function BusinessDetailContent({
             {business.name}
           </Text>
           <View className="flex-row items-center mt-1">
-            <Text className="text-gray-400 text-xs uppercase tracking-wide">
+            <Text className="text-gray-400 text-sm uppercase tracking-wide">
               {business.industry?.name ?? ""}
             </Text>
             {distanceMetres !== null && (
-              <Text className="text-gray-400 text-xs">
+              <Text className="text-gray-400 text-sm">
                 {" "}· {formatDistance(distanceMetres)}
               </Text>
             )}
@@ -41,14 +41,14 @@ export function BusinessDetailContent({
 
       <View className="border-b border-gray-800 mx-4 mb-4" />
 
-      <Text className="text-gray-500 text-xs uppercase tracking-wide px-4 mb-2">
+      <Text className="text-gray-500 text-sm uppercase tracking-wide px-4 mb-2">
         About
       </Text>
-      <Text className="text-white text-sm px-4 mb-6 leading-relaxed">
+      <Text className="text-white text-base px-4 mb-6 leading-relaxed">
         {business.description}
       </Text>
 
-      <Text className="text-white text-lg font-poppins-semibold px-4 mb-3">
+      <Text className="text-white text-xl font-poppins-semibold px-4 mb-3">
         Active vouchers
       </Text>
       {business.vouchers.map((voucher) => (
@@ -57,13 +57,13 @@ export function BusinessDetailContent({
           onPress={() => openClaim(voucher._id as string, distanceMetres ?? undefined)}
           className="bg-zinc-800 rounded-lg mx-4 mb-3 p-4 active:opacity-70"
         >
-          <Text className="text-white font-poppins-semibold text-sm mb-1">
+          <Text className="text-white font-poppins-semibold text-lg mb-1">
             {voucher.title}
           </Text>
-          <Text className="text-gray-400 text-xs mb-2 leading-relaxed">
+          <Text className="text-gray-400 text-base mb-2 leading-relaxed">
             {voucher.description}
           </Text>
-          <Text className="text-gray-500 text-xs">
+          <Text className="text-gray-500 text-sm">
             Until{" "}
             {new Date(voucher.voucherValidTo).toLocaleDateString("en-GB", {
               day: "numeric",

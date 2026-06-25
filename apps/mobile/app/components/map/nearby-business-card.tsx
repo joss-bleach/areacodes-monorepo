@@ -31,16 +31,16 @@ export function NearbyBusinessCard({
         )}
       </View>
       <Text
-        className="text-white font-poppins-semibold text-sm leading-tight mb-0.5"
+        className="text-white font-poppins-semibold text-lg leading-tight mb-0.5"
         numberOfLines={1}
       >
         {name}
       </Text>
-      <Text className="text-gray-400 text-xs mb-0.5" numberOfLines={1}>
+      <Text className="text-gray-400 text-base mb-0.5" numberOfLines={1}>
         {voucherTitle}
       </Text>
       <Text
-        className="text-gray-500 text-xs uppercase tracking-wide"
+        className="text-gray-500 text-sm uppercase tracking-wide"
         numberOfLines={1}
       >
         {industryName} · {distanceLabel}

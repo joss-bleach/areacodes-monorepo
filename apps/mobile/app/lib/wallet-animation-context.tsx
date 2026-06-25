@@ -59,11 +59,11 @@ export function WalletAnimationProvider({ children }: { children: ReactNode }) {
     setAnimationSource(sourceLayout);
     setAnimating(true);
     animationProgress.value = 0;
-    animationProgress.value = withTiming(1, { duration: 550 }, (finished) => {
+    animationProgress.value = withTiming(1, { duration: 700 }, (finished) => {
       if (finished) {
         bounceProgress.value = withSequence(
-          withSpring(1.4, { damping: 4, stiffness: 300 }),
-          withSpring(1, { damping: 8, stiffness: 200 }),
+          withSpring(1.35, { damping: 18, stiffness: 400 }),
+          withSpring(1, { damping: 18, stiffness: 400 }),
         );
       }
     });
@@ -71,7 +71,7 @@ export function WalletAnimationProvider({ children }: { children: ReactNode }) {
     setTimeout(() => {
       setAnimating(false);
       setAnimationSource(null);
-    }, 650);
+    }, 800);
   }
 
   return (

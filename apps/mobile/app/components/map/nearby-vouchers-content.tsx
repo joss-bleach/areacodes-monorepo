@@ -1,5 +1,6 @@
 import { FlatList, Pressable, Text, View } from "react-native";
-import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
+import { BottomSheetScrollView, useBottomSheet } from "@gorhom/bottom-sheet";
+import Animated, { useAnimatedStyle, interpolate } from "react-native-reanimated";
 import { NearbyBusinessCard } from "./nearby-business-card";
 import { LatestOfferRow } from "./latest-offer-row";
 import { formatDistance } from "~/lib/distance";
@@ -24,17 +25,23 @@ export function NearbyVouchersContent({
   onClose,
 }: NearbyVouchersContentProps) {
   const { openClaim } = useVoucherSheet();
+  const { animatedIndex } = useBottomSheet();
+  const closeButtonStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(animatedIndex.value, [0, 0.5], [0, 1], "clamp"),
+  }));
   return (
     <BottomSheetScrollView>
       <View className="flex-row items-center justify-between px-4 pb-3">
-        <Text className="text-white text-xl font-poppins-bold">Nearby vouchers</Text>
-        <Pressable onPress={onClose} hitSlop={12}>
-          <Text className="text-white text-2xl leading-none">×</Text>
-        </Pressable>
+        <Text className="text-white text-2xl font-poppins-bold">Nearby vouchers</Text>
+        <Animated.View style={closeButtonStyle}>
+          <Pressable onPress={onClose} hitSlop={12}>
+            <Text className="text-white text-2xl leading-none">×</Text>
+          </Pressable>
+        </Animated.View>
       </View>
 
       {isOutsideServiceArea ? (
-        <Text className="text-gray-500 text-xs px-4 pb-4">
+        <Text className="text-gray-500 text-sm px-4 pb-4">
           Areacodes currently only serves Brighton & Hove
         </Text>
       ) : userLocation && nearbyBusinesses.length > 0 ? (
@@ -56,12 +63,12 @@ export function NearbyVouchersContent({
           )}
         />
       ) : !userLocation ? (
-        <Text className="text-gray-500 text-xs px-4 pb-4">
+        <Text className="text-gray-500 text-sm px-4 pb-4">
           Enable location to see nearby vouchers
         </Text>
       ) : null}
 
-      <Text className="text-white text-lg font-poppins-semibold px-4 pb-3">
+      <Text className="text-white text-xl font-poppins-semibold px-4 pb-3">
         Latest offers
       </Text>
       {latestVouchers.map((voucher) => (

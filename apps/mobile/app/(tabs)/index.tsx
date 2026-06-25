@@ -20,6 +20,7 @@ const SERVICE_AREA_COORDS = (SERVICE_AREA_BOUNDARY.geometry.coordinates[0] ?? []
   ([lng, lat]) => ({ latitude: lat as number, longitude: lng as number }),
 );
 
+
 function BusinessMarker({ selected }: { selected: boolean }) {
   return (
     <Svg width={24} height={28} viewBox="0 0 4.02 4.61" opacity={selected ? 1 : 0.4}>
@@ -111,6 +112,7 @@ export default function MapScreen() {
 
   const handleCloseDetail = useCallback(() => {
     setSelectedBusinessId(null);
+    bottomSheetRef.current?.snapToIndex(0);
   }, []);
 
   const handleCloseNearby = useCallback(() => {
@@ -142,9 +144,9 @@ export default function MapScreen() {
       >
         <Polygon
           coordinates={SERVICE_AREA_COORDS}
-          fillColor="rgba(255, 255, 255, 0.06)"
-          strokeColor="rgba(255, 255, 255, 0.65)"
-          strokeWidth={2}
+          fillColor="rgba(0, 0, 0, 0)"
+          strokeColor="rgba(255, 255, 255, 0.5)"
+          strokeWidth={1.5}
         />
         {businesses.map((business) => (
           <Marker
