@@ -64,18 +64,18 @@ const hooks = {
           "sudo dnf install -y gh",
           // Claude Code CLI and bun
           "npm install -g @anthropic-ai/claude-code bun",
-          // Project dependencies
-          "bun install",
-          // Commit any lockfile changes so the worktree is clean before
-          // sandcastle applies patches
-          "git add -A && git diff --staged --quiet || git commit --no-verify -m 'chore: sync lockfile'",
-          // Git identity for commits
+          // Git identity and config first — required before any git commit below
           'git config --global user.name "Sandcastle"',
           'git config --global user.email "sandcastle@users.noreply.github.com"',
           // Allow git to operate in the sandbox workspace
           "git config --global --add safe.directory /vercel/sandbox/workspace",
           // Credential helper so git push uses GH_TOKEN (needed by merger agent)
           "git config --global credential.helper '!f() { echo username=x-access-token; echo password=$GH_TOKEN; }; f'",
+          // Project dependencies
+          "bun install",
+          // Commit any lockfile changes so the worktree is clean before
+          // sandcastle tries to sync patches from the sandbox back to the runner
+          "git add -A && git diff --staged --quiet || git commit --no-verify -m 'chore: sync lockfile'",
         ].join(" && "),
       },
     ],
