@@ -12,8 +12,8 @@
 // Triggered by GitHub Actions when the Sandcastle label is added to an issue.
 
 import * as sandcastle from "@ai-hero/sandcastle";
+import { docker } from "@ai-hero/sandcastle/sandboxes/docker";
 import { noSandbox } from "@ai-hero/sandcastle/sandboxes/no-sandbox";
-import { vercel } from "@ai-hero/sandcastle/sandboxes/vercel";
 import { execSync } from "child_process";
 import { z } from "zod";
 
@@ -31,44 +31,32 @@ const BASE_BRANCH = process.env.BASE_BRANCH ?? "main";
 // Sandbox configuration
 // ---------------------------------------------------------------------------
 
-const projectId = "prj_0fQweDGYjfNOf7dlzYDQCo8tiNQ5";
-const teamId = "team_vhZr2d0Zo17jniuBIJXifDuK";
-
+// Docker sandbox: runs containers on the GitHub Actions runner using the
+// pre-built image from .sandcastle/Dockerfile (gh + bun + claude are already
+// baked in — no slow installs on every run). The worktree is bind-mounted so
+// patches sync instantly via the filesystem instead of over the network.
 const makeSandbox = () =>
-  vercel({
-    projectId,
-    teamId,
-    token: process.env.VERCEL_TOKEN,
-    resources: { vcpus: 2 },
-    // Forward credentials into each Vercel microVM so the agent can call
-    // GitHub APIs and authenticate with Claude.
+  docker({
     env: {
       GH_TOKEN: process.env.GH_TOKEN ?? "",
       GITHUB_TOKEN: process.env.GH_TOKEN ?? "",
       CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN ?? "",
-      // gh CLI uses GH_REPO to resolve the repo without needing a git remote
       GH_REPO: process.env.GITHUB_REPOSITORY ?? "",
     },
   });
 
-// Each fresh Vercel VM needs gh CLI, Claude Code CLI, bun, project deps,
-// and git configured for commits + authenticated pushes.
-// All chained in one command so PATH changes and env vars carry through.
+// The Dockerfile pre-bakes gh/bun/claude — onSandboxReady only needs to
+// install project deps and configure git identity for commits/pushes.
 const hooks = {
   sandbox: {
     onSandboxReady: [
       {
         command: [
-          // Git identity first (fast, and required before any commit)
           'git config --global user.name "Sandcastle"',
           'git config --global user.email "sandcastle@users.noreply.github.com"',
-          "git config --global --add safe.directory /vercel/sandbox/workspace",
+          "git config --global --add safe.directory /home/agent/workspace",
           "git config --global credential.helper '!f() { echo username=x-access-token; echo password=$GH_TOKEN; }; f'",
-          // gh and claude+bun installs are independent — run in parallel to halve setup time
-          "(curl -fsSL https://cli.github.com/packages/rpm/gh-cli.repo | sudo tee /etc/yum.repos.d/gh-cli.repo && sudo dnf install -y gh) & (npm install -g @anthropic-ai/claude-code bun) & wait",
-          // Project dependencies (needs bun CLI from above)
           "bun install",
-          // Discard lockfile changes so the worktree is clean for patch sync
           "(git checkout -- bun.lockb 2>/dev/null || true)",
         ].join(" && "),
       },
