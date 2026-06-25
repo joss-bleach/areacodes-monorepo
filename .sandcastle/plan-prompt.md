@@ -3,9 +3,7 @@
 Here are the open issues in the repo:
 
 <issues-json>
-
-!`gh issue list --state open --label Sandcastle --limit 100 --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'`
-
+{ISSUES}
 </issues-json>
 
 The list above has already been filtered to issues ready for work.
