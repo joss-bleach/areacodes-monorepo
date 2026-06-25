@@ -45,6 +45,8 @@ const makeSandbox = () =>
       GH_TOKEN: process.env.GH_TOKEN ?? "",
       GITHUB_TOKEN: process.env.GH_TOKEN ?? "",
       CLAUDE_CODE_OAUTH_TOKEN: process.env.CLAUDE_CODE_OAUTH_TOKEN ?? "",
+      // gh CLI uses GH_REPO to resolve the repo without needing a git remote
+      GH_REPO: process.env.GITHUB_REPOSITORY ?? "",
     },
   });
 
