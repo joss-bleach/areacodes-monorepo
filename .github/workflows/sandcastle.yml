@@ -51,6 +51,13 @@ jobs:
           npm install -g @anthropic-ai/claude-code
           echo "$(npm config get prefix)/bin" >> $GITHUB_PATH
 
+      - name: Debug claude PATH
+        run: |
+          echo "PATH=$PATH"
+          echo "npm prefix=$(npm config get prefix)"
+          which claude || echo "claude not found in PATH"
+          ls "$(npm config get prefix)/bin/" | grep claude || echo "no claude in npm bin"
+
       - name: Run Sandcastle planner
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
