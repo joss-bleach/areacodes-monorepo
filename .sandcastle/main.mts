@@ -48,14 +48,20 @@ const makeSandbox = () =>
     },
   });
 
-// Each fresh Vercel VM needs Claude Code CLI, bun, and project deps installed.
-// All chained in one command so bun is in PATH when `bun install` runs.
+// Each fresh Vercel VM needs gh CLI, Claude Code CLI, bun, and project deps.
+// All chained in one command so PATH changes carry through.
 const hooks = {
   sandbox: {
     onSandboxReady: [
       {
-        command:
-          "npm install -g @anthropic-ai/claude-code bun && bun install",
+        command: [
+          // Add GitHub CLI repo and install gh (not in AL2023 default repos)
+          "curl -fsSL https://cli.github.com/packages/rpm/gh-cli.repo | sudo tee /etc/yum.repos.d/gh-cli.repo",
+          "sudo dnf install -y gh",
+          // Install Claude Code CLI and bun, then install project deps
+          "npm install -g @anthropic-ai/claude-code bun",
+          "bun install",
+        ].join(" && "),
       },
     ],
   },
