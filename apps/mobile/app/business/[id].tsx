@@ -14,6 +14,7 @@ import { authClient } from "../lib/auth-client";
 import { isVoucherClaimable, formatValidityWindow } from "../lib/voucher-utils";
 import { requestPushPermissionAndRegister } from "../lib/use-push-notifications";
 import {
+  captureBusinessViewed,
   captureVoucherClaimed,
   captureBusinessFollowed,
   posthog,
@@ -202,7 +203,8 @@ export default function BusinessScreen() {
 
   useEffect(() => {
     void posthog?.screen("Business");
-  }, []);
+    if (id) captureBusinessViewed(id);
+  }, [id]);
 
   if (business === undefined) {
     return (

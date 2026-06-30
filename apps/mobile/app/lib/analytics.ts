@@ -13,6 +13,7 @@ export const ANALYTICS_EVENTS = {
   APP_OPENED: "app_opened",
   SIGN_UP_COMPLETED: "sign_up_completed",
   SIGN_IN_COMPLETED: "sign_in_completed",
+  BUSINESS_VIEWED: "business_viewed",
   VOUCHER_VIEWED: "voucher_viewed",
   VOUCHER_CLAIMED: "voucher_claimed",
   VOUCHER_REVEALED: "voucher_revealed",
@@ -35,6 +36,10 @@ export function captureSignUpCompleted(method: "email" | "google" | "apple") {
 
 export function captureSignInCompleted(method: "email" | "google" | "apple") {
   capture(ANALYTICS_EVENTS.SIGN_IN_COMPLETED, { method });
+}
+
+export function captureBusinessViewed(businessId: string) {
+  capture(ANALYTICS_EVENTS.BUSINESS_VIEWED, { business_id: businessId });
 }
 
 export function captureVoucherViewed(voucherId: string, businessId: string) {

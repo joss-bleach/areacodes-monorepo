@@ -8,6 +8,7 @@ import {
   captureVoucherClaimed,
   captureVoucherRevealed,
   captureVoucherRedeemed,
+  captureBusinessViewed,
   captureBusinessFollowed,
   capturePushNotificationTapped,
 } from "../lib/analytics";
@@ -39,6 +40,10 @@ describe("ANALYTICS_EVENTS", () => {
 
   it("has the correct event name for voucher_redeemed", () => {
     expect(ANALYTICS_EVENTS.VOUCHER_REDEEMED).toBe("voucher_redeemed");
+  });
+
+  it("has the correct event name for business_viewed", () => {
+    expect(ANALYTICS_EVENTS.BUSINESS_VIEWED).toBe("business_viewed");
   });
 
   it("has the correct event name for business_followed", () => {
@@ -91,6 +96,10 @@ describe("capture helpers", () => {
     expect(() =>
       captureVoucherRedeemed("voucher-1", "business-1"),
     ).not.toThrow();
+  });
+
+  it("captureBusinessViewed does not throw", () => {
+    expect(() => captureBusinessViewed("business-1")).not.toThrow();
   });
 
   it("captureBusinessFollowed does not throw", () => {
