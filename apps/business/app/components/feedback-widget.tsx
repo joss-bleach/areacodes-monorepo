@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { useAction } from "convex/react";
+import { MessageSquare, CheckCircle2, Loader2 } from "lucide-react";
 import { api } from "@repo/convex";
 import {
   Button,
@@ -12,12 +13,11 @@ import {
   Textarea,
   Label,
 } from "@repo/ui";
-import { MessageSquare, CheckCircle2, Loader2 } from "lucide-react";
 import { usePilotFeature } from "~/hooks/use-pilot-feature";
 
 type WidgetState = "idle" | "open" | "submitting" | "success" | "error";
 
-export function FeedbackWidget() {
+export const FeedbackWidget = () => {
   const isEnabled = usePilotFeature("feedback_widget");
   const [state, setState] = useState<WidgetState>("idle");
   const [feedbackText, setFeedbackText] = useState("");
@@ -29,19 +29,19 @@ export function FeedbackWidget() {
 
   const routePath = routerState.location.pathname;
 
-  function openWidget() {
+  const openWidget = () => {
     setFeedbackText("");
     setErrorMessage("");
     setState("open");
-  }
+  };
 
-  function closeWidget() {
+  const closeWidget = () => {
     setState("idle");
     setFeedbackText("");
     setErrorMessage("");
-  }
+  };
 
-  async function handleSubmit() {
+  const handleSubmit = async () => {
     if (!feedbackText.trim()) return;
     setState("submitting");
     try {
@@ -51,9 +51,9 @@ export function FeedbackWidget() {
       setErrorMessage("Something went wrong. Please try again.");
       setState("error");
     }
-  }
+  };
 
-  const isOpen = state === "open" || state === "submitting" || state === "success" || state === "error";
+  const isOpen = state !== "idle";
 
   return (
     <>
@@ -137,4 +137,4 @@ export function FeedbackWidget() {
       </Dialog>
     </>
   );
-}
+};
