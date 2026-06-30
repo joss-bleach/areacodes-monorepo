@@ -402,7 +402,7 @@ export const sendBusinessInvitation = internalAction({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Areacodes <atom@acbrighton.com>",
+        from: "Areacodes <noreply@bleach.digital>",
         to: email,
         subject: "Your Areacodes business account is live",
         html,

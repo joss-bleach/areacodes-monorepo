@@ -151,7 +151,7 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              from: "Areacodes <atom@acbrighton.com>",
+              from: "Areacodes <noreply@bleach.digital>",
               to: email,
               subject: "Your Areacodes sign-in code",
               html,
