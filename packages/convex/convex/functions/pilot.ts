@@ -37,6 +37,14 @@ function makeConvexRepo(ctx: MutationCtx): IPilotConfigRepo {
   };
 }
 
+function runPilotEffect(
+  ctx: MutationCtx,
+  effect: Effect.Effect<void, never, PilotConfigRepo>,
+): Promise<void> {
+  const layer = Layer.succeed(PilotConfigRepo, makeConvexRepo(ctx));
+  return Effect.runPromise(Effect.provide(effect, layer));
+}
+
 export const getActivePilotFeatures = query({
   args: {},
   handler: async (ctx) => {
@@ -49,8 +57,7 @@ export const addPilotFeature = mutation({
   args: { key: v.string() },
   handler: async (ctx, { key }) => {
     await requireAdmin(ctx);
-    const layer = Layer.succeed(PilotConfigRepo, makeConvexRepo(ctx));
-    await Effect.runPromise(Effect.provide(PilotService.addFeature(key), layer));
+    await runPilotEffect(ctx, PilotService.addFeature(key));
   },
 });
 
@@ -58,9 +65,6 @@ export const removePilotFeature = mutation({
   args: { key: v.string() },
   handler: async (ctx, { key }) => {
     await requireAdmin(ctx);
-    const layer = Layer.succeed(PilotConfigRepo, makeConvexRepo(ctx));
-    await Effect.runPromise(
-      Effect.provide(PilotService.removeFeature(key), layer),
-    );
+    await runPilotEffect(ctx, PilotService.removeFeature(key));
   },
 });
