@@ -9,25 +9,25 @@ import { usePilotFeature } from "~/hooks/use-pilot-feature";
 
 const storageKey = (businessId: string) => `hasSeenWalkthrough_${businessId}`;
 
-function ChecklistItem({
+const ChecklistItem = ({
   label,
   done,
+  slug,
   linkTo,
   linkLabel,
-  slug,
 }: {
   label: string;
   done: boolean;
+  slug: string;
   linkTo?: string;
   linkLabel?: string;
-  slug: string;
-}) {
+}) => {
   return (
     <div className="flex items-start gap-3">
       {done ? (
-        <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+        <CheckCircle2 className="h-5 w-5 shrink-0 mt-0.5 text-green-500" />
       ) : (
-        <Circle className="h-5 w-5 text-muted-foreground mt-0.5 shrink-0" />
+        <Circle className="h-5 w-5 shrink-0 mt-0.5 text-muted-foreground" />
       )}
       <div className="flex flex-col gap-0.5">
         <span className={done ? "line-through text-muted-foreground" : "text-foreground"}>
@@ -45,11 +45,15 @@ function ChecklistItem({
       </div>
     </div>
   );
-}
+};
 
-function WalkthroughContent({ businessId }: { businessId: Id<"businesses"> }) {
-  const { slug } = useParams({ strict: false }) as { slug: string };
-
+const WalkthroughContent = ({
+  businessId,
+  slug,
+}: {
+  businessId: Id<"businesses">;
+  slug: string;
+}) => {
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return true;
     return Boolean(localStorage.getItem(storageKey(businessId)));
@@ -96,7 +100,7 @@ function WalkthroughContent({ businessId }: { businessId: Id<"businesses"> }) {
         <h2 className="text-lg font-semibold text-foreground">
           {allDone ? "You're all set!" : "Get started with AreaCodes"}
         </h2>
-        <p className="text-sm text-muted-foreground mt-0.5">
+        <p className="mt-0.5 text-sm text-muted-foreground">
           {allDone
             ? "You've completed the key setup steps. Your vouchers are live."
             : "Two things to do first — then you're ready to go."}
@@ -131,7 +135,7 @@ function WalkthroughContent({ businessId }: { businessId: Id<"businesses"> }) {
       </div>
     </div>
   );
-}
+};
 
 export const OnboardingWalkthrough = () => {
   const isEnabled = usePilotFeature("onboarding_walkthrough");
@@ -143,5 +147,5 @@ export const OnboardingWalkthrough = () => {
 
   if (!isEnabled || !business) return null;
 
-  return <WalkthroughContent businessId={business._id} />;
+  return <WalkthroughContent businessId={business._id} slug={slug} />;
 };
