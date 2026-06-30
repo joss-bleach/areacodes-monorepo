@@ -10,6 +10,7 @@ import { StatsSection } from "~/sections/stats-section";
 import { VoucherTable } from "~/sections/voucher-table";
 import { NewVoucherModal } from "~/components/new-voucher-modal";
 import { AnalyticsSection } from "~/sections/analytics-section";
+import { OnboardingWalkthrough } from "~/components/onboarding-walkthrough";
 
 export const Route = createFileRoute("/_authenticated/b/$slug/")({
   component: DashboardPage,
@@ -70,6 +71,7 @@ function DashboardPage() {
       <main className="w-screen py-6">
         <div className="container-app">
           <DashboardTop />
+          <OnboardingWalkthrough />
           <StatsSection />
           <AnalyticsSection />
           <PosStatusCard />
