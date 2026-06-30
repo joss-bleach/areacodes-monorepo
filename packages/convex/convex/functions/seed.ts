@@ -111,6 +111,20 @@ export const seedMockData = mutation({
   },
 });
 
+export const clearUsersExceptAdmin = mutation({
+  args: { keepEmail: v.string() },
+  handler: async (ctx, { keepEmail }) => {
+    await ctx.runMutation(components.betterAuth.adapter.deleteMany, {
+      input: {
+        model: "user",
+        where: [{ field: "email", operator: "ne", value: keepEmail }],
+      },
+      paginationOpts: { cursor: null, numItems: 1000 },
+    });
+    return { done: true };
+  },
+});
+
 export const clearBusinessesAndVouchers = mutation({
   args: {},
   handler: async (ctx) => {
