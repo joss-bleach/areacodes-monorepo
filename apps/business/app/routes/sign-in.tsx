@@ -87,7 +87,7 @@ function SignInPage() {
         setError(verifyError.message ?? "Invalid code. Please try again.");
         setOtp("");
       } else {
-        await router.navigate({ to: "/" });
+        window.location.href = "/";
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -173,15 +173,14 @@ function SignInPage() {
                     }}
                     disabled={loading}
                     autoFocus
+                    containerClassName="gap-3"
                   >
-                    <InputOTPGroup>
-                      <InputOTPSlot index={0} className="h-12 w-10 text-base" />
-                      <InputOTPSlot index={1} className="h-12 w-10 text-base" />
-                      <InputOTPSlot index={2} className="h-12 w-10 text-base" />
-                      <InputOTPSlot index={3} className="h-12 w-10 text-base" />
-                      <InputOTPSlot index={4} className="h-12 w-10 text-base" />
-                      <InputOTPSlot index={5} className="h-12 w-10 text-base" />
-                    </InputOTPGroup>
+                    <InputOTPGroup><InputOTPSlot index={0} className="h-12 w-12 text-base" /></InputOTPGroup>
+                    <InputOTPGroup><InputOTPSlot index={1} className="h-12 w-12 text-base" /></InputOTPGroup>
+                    <InputOTPGroup><InputOTPSlot index={2} className="h-12 w-12 text-base" /></InputOTPGroup>
+                    <InputOTPGroup><InputOTPSlot index={3} className="h-12 w-12 text-base" /></InputOTPGroup>
+                    <InputOTPGroup><InputOTPSlot index={4} className="h-12 w-12 text-base" /></InputOTPGroup>
+                    <InputOTPGroup><InputOTPSlot index={5} className="h-12 w-12 text-base" /></InputOTPGroup>
                   </InputOTP>
                   {loading && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
