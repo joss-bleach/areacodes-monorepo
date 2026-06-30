@@ -115,4 +115,10 @@ export default defineSchema({
   config: defineTable({
     activePilotFeatures: v.array(v.string()),
   }),
+
+  posthogWeeklyViews: defineTable({
+    weekStart: v.number(),
+    viewCount: v.number(),
+    syncedAt: v.number(),
+  }).index("by_week_start", ["weekStart"]),
 });

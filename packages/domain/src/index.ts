@@ -56,8 +56,13 @@ export {
 export * as PilotAnalyticsService from "./pilot-analytics-service.js";
 export {
   PilotAnalyticsRepo,
+  AdminAnalyticsRepo,
   type IPilotAnalyticsRepo,
+  type IAdminAnalyticsRepo,
   type VoucherStat,
+  type WeeklyFunnelRow,
+  type BusinessLeaderboardEntry,
+  type FormatBreakdownRow,
 } from "./pilot-analytics-service.js";
 export * as AdminBusinessService from "./admin-business-service.js";
 export {

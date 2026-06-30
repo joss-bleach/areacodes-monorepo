@@ -17,6 +17,7 @@ import { Route as DashboardVouchersRouteImport } from './routes/dashboard/vouche
 import { Route as DashboardBusinessesRouteImport } from './routes/dashboard/businesses'
 import { Route as DashboardAuditLogRouteImport } from './routes/dashboard/audit-log'
 import { Route as DashboardPilotFeaturesRouteImport } from './routes/dashboard/pilot-features'
+import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard/analytics'
 
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
@@ -58,12 +59,18 @@ const DashboardPilotFeaturesRoute = DashboardPilotFeaturesRouteImport.update({
   path: '/pilot-features',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
+  '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/dashboard/audit-log'
+    | '/dashboard/analytics'
     | '/dashboard/businesses'
     | '/dashboard/vouchers'
     | '/dashboard/pilot-features'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/dashboard/audit-log'
+    | '/dashboard/analytics'
     | '/dashboard/businesses'
     | '/dashboard/vouchers'
     | '/dashboard/pilot-features'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/sign-in'
     | '/dashboard/audit-log'
+    | '/dashboard/analytics'
     | '/dashboard/businesses'
     | '/dashboard/vouchers'
     | '/dashboard/pilot-features'
@@ -187,11 +199,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardPilotFeaturesRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/analytics': {
+      id: '/dashboard/analytics'
+      path: '/analytics'
+      fullPath: '/dashboard/analytics'
+      preLoaderRoute: typeof DashboardAnalyticsRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
 interface DashboardRouteChildren {
   DashboardAuditLogRoute: typeof DashboardAuditLogRoute
+  DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardBusinessesRoute: typeof DashboardBusinessesRoute
   DashboardVouchersRoute: typeof DashboardVouchersRoute
   DashboardPilotFeaturesRoute: typeof DashboardPilotFeaturesRoute
@@ -199,6 +219,7 @@ interface DashboardRouteChildren {
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAuditLogRoute: DashboardAuditLogRoute,
+  DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardBusinessesRoute: DashboardBusinessesRoute,
   DashboardVouchersRoute: DashboardVouchersRoute,
   DashboardPilotFeaturesRoute: DashboardPilotFeaturesRoute,

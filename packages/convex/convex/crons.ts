@@ -10,4 +10,11 @@ crons.daily(
   {},
 );
 
+crons.daily(
+  "sync PostHog weekly views",
+  { hourUTC: 3, minuteUTC: 0 },
+  internal.functions.adminAnalytics.syncPosthogWeeklyViews,
+  {},
+);
+
 export default crons;

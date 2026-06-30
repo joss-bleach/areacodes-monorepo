@@ -10,6 +10,7 @@
 
 import type * as crons from "../crons.js";
 import type * as functions_admin from "../functions/admin.js";
+import type * as functions_adminAnalytics from "../functions/adminAnalytics.js";
 import type * as functions_businesses from "../functions/businesses.js";
 import type * as functions_pilot from "../functions/pilot.js";
 import type * as functions_pilotAnalytics from "../functions/pilotAnalytics.js";
@@ -38,6 +39,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "functions/admin": typeof functions_admin;
+  "functions/adminAnalytics": typeof functions_adminAnalytics;
   "functions/businesses": typeof functions_businesses;
   "functions/pilot": typeof functions_pilot;
   "functions/pilotAnalytics": typeof functions_pilotAnalytics;

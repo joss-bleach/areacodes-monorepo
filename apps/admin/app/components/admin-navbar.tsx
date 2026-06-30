@@ -67,6 +67,13 @@ export const AdminNavbar = () => {
             >
               Pilot Features
             </Link>
+            <Link
+              to="/dashboard/analytics"
+              className="hover:text-foreground transition-colors"
+              activeProps={{ className: "text-foreground font-medium" }}
+            >
+              Analytics
+            </Link>
           </div>
         </div>
         {isMounted ? (
