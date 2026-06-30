@@ -69,6 +69,8 @@ export const CreateBusinessForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [currentStep, setCurrentStep] = useState<StepValue>(STEP_VALUES[0]);
+  const [showWelcome, setShowWelcome] = useState(true);
+  const [geoStatus, setGeoStatus] = useState<null | "verifying" | "verified" | "failed">(null);
   const shouldReduceMotion = useReducedMotion();
 
   const { upload } = useConvexUpload();
@@ -111,13 +113,39 @@ export const CreateBusinessForm = () => {
     if (direction === "next") {
       const fields = fieldsToValidate[stepIndex];
       const result = await form.trigger(fields as any);
+      if (!result) return false;
+
+      // Geocode on location step transition if autocomplete wasn't used
+      if (value === "business-location") {
+        const data = form.getValues();
+        if (data.latitude == null || data.longitude == null) {
+          const address = [data.addressLine1, data.addressLine2, data.townOrCity, data.county, data.postcode]
+            .filter(Boolean).join(", ");
+          setGeoStatus("verifying");
+          try {
+            const coords = await Effect.runPromise(geocodeAddressEffect(address));
+            form.setValue("latitude", coords.latitude);
+            form.setValue("longitude", coords.longitude);
+            setGeoStatus("verified");
+          } catch {
+            setGeoStatus("failed");
+            return false;
+          }
+        } else {
+          setGeoStatus("verified");
+        }
+      }
 
       if (value === "business-image" && !logoFileRef.current) {
         toast.error("Please select a logo image");
         return false;
       }
 
-      return result;
+      return true;
+    }
+
+    if (direction === "prev" && value === "business-location") {
+      setGeoStatus(null);
     }
 
     return true;
@@ -219,6 +247,39 @@ export const CreateBusinessForm = () => {
 
   const isPending = isSubmitting || isUploadingLogo;
 
+  if (showWelcome) {
+    return (
+      <div className="py-6 max-w-lg">
+        <div className="border border-border p-8 flex flex-col gap-6">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight mb-2">Welcome to Areacodes</h2>
+            <p className="text-sm text-muted-foreground">
+              You're joining a network of independent local businesses connecting with customers in your area through exclusive vouchers.
+            </p>
+          </div>
+          <ul className="flex flex-col gap-3 text-sm">
+            <li className="flex items-start gap-3">
+              <span className="font-bold text-foreground shrink-0">1</span>
+              <span className="text-muted-foreground">Set up your business profile — name, location, and logo</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="font-bold text-foreground shrink-0">2</span>
+              <span className="text-muted-foreground">Create vouchers that customers discover on the Areacodes map</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="font-bold text-foreground shrink-0">3</span>
+              <span className="text-muted-foreground">Track redemptions and see how customers are finding you</span>
+            </li>
+          </ul>
+          <p className="text-xs text-muted-foreground">Takes about 2 minutes. You can update everything later.</p>
+          <Button onClick={() => setShowWelcome(false)} className="self-start">
+            Get started
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="py-6">
       <Stepper
@@ -287,6 +348,27 @@ export const CreateBusinessForm = () => {
               </motion.div>
             </AnimatePresence>
           </form>
+          {currentStep === "business-location" && geoStatus && (
+            <div className="mt-3">
+              {geoStatus === "verifying" && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Verifying address…
+                </p>
+              )}
+              {geoStatus === "verified" && (
+                <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1.5">
+                  <Check className="h-3 w-3" />
+                  Address verified — location set
+                </p>
+              )}
+              {geoStatus === "failed" && (
+                <p className="text-xs text-destructive">
+                  Could not verify this address. Check the details and try again, or use the address search above to select from suggestions.
+                </p>
+              )}
+            </div>
+          )}
           <div className="flex flex-row justify-end items-center gap-4 mt-4 w-full md:w-auto">
             <Button
               type="button"

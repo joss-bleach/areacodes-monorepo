@@ -23,6 +23,7 @@ export default defineSchema({
     longitude: v.number(),
     deletedAt: v.optional(v.number()),
     flaggedAt: v.optional(v.number()),
+    invitationSentAt: v.optional(v.number()),
   })
     .index("by_user", ["userId"])
     .index("by_slug", ["slug"])

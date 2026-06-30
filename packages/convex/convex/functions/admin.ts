@@ -39,7 +39,8 @@ export const getAllBusinesses = query({
           : null;
         const authUser = await authComponent.getAnyUserById(ctx, business.userId).catch(() => null);
         const hasLoggedIn = authUser?.emailVerified ?? false;
-        return { ...business, logoUrl, industry, hasLoggedIn };
+        const ownerEmail = (authUser as { email?: string } | null)?.email ?? null;
+        return { ...business, logoUrl, industry, hasLoggedIn, ownerEmail };
       })
     );
   },
@@ -195,6 +196,7 @@ function makeConvexRepo(ctx: MutationCtx): IBusinessRepo {
           latitude: data.latitude,
           longitude: data.longitude,
           logoStorageId: data.logoStorageId as Id<"_storage"> | undefined,
+          invitationSentAt: Date.now(),
         });
         return id as unknown as string;
       }),
@@ -311,6 +313,23 @@ export const addBusinessByAdmin = mutation({
         layer,
       ),
     );
+  },
+});
+
+export const resendBusinessInvitation = mutation({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, { businessId }) => {
+    await requireAdmin(ctx);
+    const business = await ctx.db.get(businessId);
+    if (!business) throw new Error("Business not found");
+    const authUser = await authComponent.getAnyUserById(ctx, business.userId).catch(() => null);
+    const email = (authUser as { email?: string } | null)?.email;
+    if (!email) throw new Error("Could not find owner email");
+    await ctx.scheduler.runAfter(0, internal.functions.admin.sendBusinessInvitation, {
+      email,
+      businessName: business.name,
+    });
+    await ctx.db.patch(businessId, { invitationSentAt: Date.now() });
   },
 });
 

@@ -49,7 +49,15 @@ export const BusinessImageStep = ({
       control={form.control}
       render={({ fieldState }) => (
         <Field data-invalid={fieldState.invalid} className="w-full">
-          <div className="flex flex-col w-full items-center gap-4 py-8">
+          <div className="mb-4">
+            <p className="text-sm font-medium">
+              Business logo <span className="text-destructive">*</span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Required — your logo appears on vouchers and in the customer map view.
+            </p>
+          </div>
+          <div className="flex flex-col w-full items-center gap-4 py-4">
             <div className="relative inline-flex">
               <button
                 type="button"

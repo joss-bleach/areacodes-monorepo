@@ -37,8 +37,9 @@ function CreatePage() {
   // Still waiting for Convex auth or query result, or redirecting
   if (business === undefined || business !== null) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-8 w-8 bg-foreground animate-pulse" />
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <span className="text-xl font-bold tracking-tight">AREACODES</span>
+        <p className="text-sm text-muted-foreground animate-pulse">Setting up your workspace…</p>
       </div>
     );
   }
