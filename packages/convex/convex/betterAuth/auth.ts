@@ -34,8 +34,8 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     emailAndPassword: { enabled: true },
     socialProviders: {
       google: {
-        clientId: process.env.GOOGLE_CLIENT_ID || undefined,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || undefined,
+        clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
       },
       apple: {
         clientId: process.env.APPLE_CLIENT_ID ?? "com.acbrighton.consumer",
