@@ -67,7 +67,7 @@ function WalkthroughContent({ businessId }: { businessId: Id<"businesses"> }) {
     !dismissed ? { businessId } : "skip",
   );
   const vouchers = useQuery(
-    api.functions.vouchers.getVouchersByBusiness,
+    api.functions.vouchers.getActiveVouchersByBusiness,
     !dismissed ? { businessId } : "skip",
   );
 
