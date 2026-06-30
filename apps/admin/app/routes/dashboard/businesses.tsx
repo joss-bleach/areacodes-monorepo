@@ -91,6 +91,7 @@ function AddBusinessDialog({
     isAuthenticated ? {} : "skip",
   );
   const addBusiness = useMutation(api.functions.admin.addBusinessByAdmin);
+  const generateUploadUrl = useMutation(api.functions.businesses.generateUploadUrl);
 
   const [values, setValues] = useState<AddBusinessFormValues>({
     name: "",
@@ -102,6 +103,7 @@ function AddBusinessDialog({
     latitude: "",
     longitude: "",
   });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const set = (field: keyof AddBusinessFormValues) => (
@@ -123,6 +125,19 @@ function AddBusinessDialog({
 
     setIsSubmitting(true);
     try {
+      let logoStorageId: Id<"_storage"> | undefined;
+      if (logoFile) {
+        const uploadUrl = await generateUploadUrl();
+        const response = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": logoFile.type },
+          body: logoFile,
+        });
+        if (!response.ok) throw new Error("Logo upload failed");
+        const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
+        logoStorageId = storageId;
+      }
+
       await addBusiness({
         name: values.name,
         ownerEmail: values.ownerEmail,
@@ -132,6 +147,7 @@ function AddBusinessDialog({
         address: values.address,
         latitude: lat,
         longitude: lng,
+        logoStorageId,
       });
       toast.success(`Business "${values.name}" created and invitation email sent`);
       onOpenChange(false);
@@ -145,6 +161,7 @@ function AddBusinessDialog({
         latitude: "",
         longitude: "",
       });
+      setLogoFile(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create business");
     } finally {
@@ -194,6 +211,16 @@ function AddBusinessDialog({
               onChange={set("description")}
               placeholder="A short description of the business"
               rows={2}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="add-logo">Logo</Label>
+            <Input
+              id="add-logo"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
             />
           </div>
 
