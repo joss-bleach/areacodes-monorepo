@@ -96,7 +96,7 @@ export const AnalyticsSection = () => {
       title: "New Customers",
       icon: UserPlus,
       value: newCustomerCount,
-      description: "First-time claimers at your business",
+      description: "Customers acquired during the pilot",
     },
     {
       title: "Returned",

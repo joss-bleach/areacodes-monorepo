@@ -47,23 +47,26 @@ export const getTotalRedemptions = (
     return total;
   });
 
+// A New Customer is a genuinely acquired customer: one whose first-ever claim
+// at this business falls within the measurement period. With no pre-pilot claim
+// data, every distinct customer who has claimed here was acquired during the
+// pilot, so the count is the number of distinct claiming customers. Customers
+// who returned (claimed more than once) are still acquired customers and are
+// counted here as well as under getReturnCustomerCount.
 export const getNewCustomerCount = (
   businessId: string,
 ): Effect.Effect<number, never, PilotAnalyticsRepo> =>
   Effect.gen(function* () {
     const repo = yield* PilotAnalyticsRepo;
     const vouchers = yield* repo.getVouchersForBusiness(businessId);
-    const claimCounts = new Map<string, number>();
+    const customers = new Set<string>();
     for (const voucher of vouchers) {
       const claims = yield* repo.getClaimsForVoucher(voucher.id);
       for (const claim of claims) {
-        claimCounts.set(
-          claim.customerId,
-          (claimCounts.get(claim.customerId) ?? 0) + 1,
-        );
+        customers.add(claim.customerId);
       }
     }
-    return [...claimCounts.values()].filter((count) => count === 1).length;
+    return customers.size;
   });
 
 export const getReturnCustomerCount = (

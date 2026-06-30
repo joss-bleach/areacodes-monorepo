@@ -159,7 +159,7 @@ describe("PilotAnalyticsService.getNewCustomerCount", () => {
     expect(result).toBe(2);
   });
 
-  test("does not count customers who have claimed more than once", async () => {
+  test("counts a returning customer as acquired (deduplicated across claims)", async () => {
     const layer = makeTestRepo({
       vouchers: new Map([
         [
@@ -186,10 +186,12 @@ describe("PilotAnalyticsService.getNewCustomerCount", () => {
       Effect.provide(PilotAnalyticsService.getNewCustomerCount("biz-1"), layer),
     );
 
-    expect(result).toBe(1);
+    // Two distinct customers were acquired: cust-return and cust-new. The
+    // returning customer is counted once despite claiming twice.
+    expect(result).toBe(2);
   });
 
-  test("returns 0 when all customers have multiple claims", async () => {
+  test("counts each distinct customer once even when all of them return", async () => {
     const layer = makeTestRepo({
       vouchers: new Map([
         [
@@ -210,7 +212,7 @@ describe("PilotAnalyticsService.getNewCustomerCount", () => {
       Effect.provide(PilotAnalyticsService.getNewCustomerCount("biz-1"), layer),
     );
 
-    expect(result).toBe(0);
+    expect(result).toBe(1);
   });
 });
 

@@ -181,7 +181,7 @@ describe("getNewCustomerCount", () => {
     expect(count).toBe(0);
   });
 
-  test("counts customers with exactly one claim across all vouchers", async () => {
+  test("counts each distinct acquired customer across all vouchers", async () => {
     const t = convexTest(schema, modules);
     const businessT = t.withIdentity({ subject: "owner-1" });
     const businessId = await seedBusiness(t);
@@ -206,9 +206,9 @@ describe("getNewCustomerCount", () => {
         voucherValidTo: 9_999_999_999_999,
       });
 
-      // cust-new: claimed v1 only → new customer
+      // cust-new: claimed v1 only → acquired customer
       await ctx.db.insert("claims", { customerId: "cust-new", voucherId: v1, claimedAt: 1000 });
-      // cust-return: claimed both v1 and v2 → return customer, not new
+      // cust-return: claimed both v1 and v2 → still an acquired customer, counted once
       await ctx.db.insert("claims", { customerId: "cust-return", voucherId: v1, claimedAt: 1000 });
       await ctx.db.insert("claims", { customerId: "cust-return", voucherId: v2, claimedAt: 2000 });
     });
@@ -218,7 +218,7 @@ describe("getNewCustomerCount", () => {
       { businessId },
     );
 
-    expect(count).toBe(1);
+    expect(count).toBe(2);
   });
 });
 
