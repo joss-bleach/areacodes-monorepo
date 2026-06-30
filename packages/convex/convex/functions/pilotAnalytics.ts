@@ -20,7 +20,10 @@ function makeConvexRepo(ctx: QueryCtx): IPilotAnalyticsRepo {
           )
           .filter((q) => q.eq(q.field("deletedAt"), undefined))
           .collect();
-        return vouchers.map((v) => ({ id: v._id as unknown as string, title: v.title }));
+        return vouchers.map((voucher) => ({
+          id: voucher._id as unknown as string,
+          title: voucher.title,
+        }));
       }),
 
     getClaimsForVoucher: (voucherId) =>
