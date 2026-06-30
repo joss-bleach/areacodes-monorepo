@@ -4,6 +4,7 @@ import type { GenericCtx } from "@convex-dev/better-auth/utils";
 import type { BetterAuthOptions } from "better-auth";
 import { betterAuth } from "better-auth";
 import { expo } from "@better-auth/expo";
+import { magicLink } from "better-auth/plugins";
 import * as z from "zod";
 import { components } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
@@ -45,6 +46,29 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     plugins: [
       expo(),
       convex({ authConfig }),
+      magicLink({
+        expiresIn: 60 * 10, // 10 minutes
+        sendMagicLink: async ({ email, url }) => {
+          const resendApiKey = process.env.RESEND_API_KEY;
+          if (!resendApiKey) {
+            console.warn("RESEND_API_KEY not set — magic link not sent");
+            return;
+          }
+          await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${resendApiKey}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: "Areacodes <noreply@acbrighton.com>",
+              to: email,
+              subject: "Your Areacodes sign-in link",
+              html: `<p>Click the link below to sign in to your Areacodes Business Dashboard. This link expires in 10 minutes.</p><p><a href="${url}">Sign in to Areacodes</a></p><p>If you didn't request this, you can safely ignore this email.</p>`,
+            }),
+          });
+        },
+      }),
     ],
     user: {
       additionalFields: {
