@@ -83,9 +83,17 @@ function CoreFunnelTable() {
     isAuthenticated ? {} : "skip",
   );
 
+  const isLoading = funnelRows === undefined || posthogRows === undefined;
+
+  // Merge weeks from both sources so a week with PostHog views but no Convex
+  // activity (or vice versa) still gets its own row.
+  const funnelByWeek = new Map((funnelRows ?? []).map((r) => [r.weekStart, r]));
   const posthogByWeek = new Map(
     (posthogRows ?? []).map((r) => [r.weekStart, r.viewCount]),
   );
+  const weekStarts = [
+    ...new Set([...funnelByWeek.keys(), ...posthogByWeek.keys()]),
+  ].sort((a, b) => a - b);
 
   return (
     <Card>
@@ -96,13 +104,13 @@ function CoreFunnelTable() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {funnelRows === undefined ? (
+        {isLoading ? (
           <div className="space-y-2">
             {[...Array(3)].map((_, i) => (
               <Skeleton key={i} className="h-8 w-full" />
             ))}
           </div>
-        ) : funnelRows.length === 0 ? (
+        ) : weekStarts.length === 0 ? (
           <p className="text-muted-foreground text-sm">No activity recorded yet.</p>
         ) : (
           <Table>
@@ -116,19 +124,22 @@ function CoreFunnelTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {funnelRows.map((row) => (
-                <TableRow key={row.weekStart}>
-                  <TableCell className="font-medium">
-                    {formatWeekStart(row.weekStart)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {posthogByWeek.get(row.weekStart) ?? "—"}
-                  </TableCell>
-                  <TableCell className="text-right">{row.claimCount}</TableCell>
-                  <TableCell className="text-right">{row.revealCount}</TableCell>
-                  <TableCell className="text-right">{row.redemptionCount}</TableCell>
-                </TableRow>
-              ))}
+              {weekStarts.map((weekStart) => {
+                const row = funnelByWeek.get(weekStart);
+                return (
+                  <TableRow key={weekStart}>
+                    <TableCell className="font-medium">
+                      {formatWeekStart(weekStart)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {posthogByWeek.get(weekStart) ?? "—"}
+                    </TableCell>
+                    <TableCell className="text-right">{row?.claimCount ?? 0}</TableCell>
+                    <TableCell className="text-right">{row?.revealCount ?? 0}</TableCell>
+                    <TableCell className="text-right">{row?.redemptionCount ?? 0}</TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
