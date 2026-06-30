@@ -5,13 +5,11 @@ import { internal } from "../_generated/api";
 import { Effect, Layer } from "effect";
 import {
   BusinessRepo,
-  BusinessService,
   type IBusinessRepo,
   AdminBusinessService,
   AuthAdminPort,
   EmailPort,
   AuthAdminError,
-  EmailError,
   type IAuthAdminPort,
   type IEmailPort,
 } from "@areacodes/domain";
@@ -379,7 +377,7 @@ export const sendBusinessInvitation = internalAction({
       body: JSON.stringify({
         from: "Joss at AreaCodes <joss@acbrighton.com>",
         to: email,
-        subject: `Your AreaCodes business account is live`,
+        subject: "Your AreaCodes business account is live",
         html,
       }),
     });

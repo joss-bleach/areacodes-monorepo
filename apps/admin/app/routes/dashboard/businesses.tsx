@@ -78,6 +78,17 @@ interface AddBusinessFormValues {
   longitude: string;
 }
 
+const EMPTY_BUSINESS_FORM: AddBusinessFormValues = {
+  name: "",
+  ownerEmail: "",
+  description: "",
+  websiteUrl: "",
+  industryId: "",
+  address: "",
+  latitude: "",
+  longitude: "",
+};
+
 function AddBusinessDialog({
   open,
   onOpenChange,
@@ -93,16 +104,7 @@ function AddBusinessDialog({
   const addBusiness = useMutation(api.functions.admin.addBusinessByAdmin);
   const generateUploadUrl = useMutation(api.functions.businesses.generateUploadUrl);
 
-  const [values, setValues] = useState<AddBusinessFormValues>({
-    name: "",
-    ownerEmail: "",
-    description: "",
-    websiteUrl: "",
-    industryId: "",
-    address: "",
-    latitude: "",
-    longitude: "",
-  });
+  const [values, setValues] = useState<AddBusinessFormValues>(EMPTY_BUSINESS_FORM);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -151,16 +153,7 @@ function AddBusinessDialog({
       });
       toast.success(`Business "${values.name}" created and invitation email sent`);
       onOpenChange(false);
-      setValues({
-        name: "",
-        ownerEmail: "",
-        description: "",
-        websiteUrl: "",
-        industryId: "",
-        address: "",
-        latitude: "",
-        longitude: "",
-      });
+      setValues(EMPTY_BUSINESS_FORM);
       setLogoFile(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create business");
