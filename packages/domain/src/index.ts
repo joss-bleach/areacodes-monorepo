@@ -74,6 +74,16 @@ export {
   type IEmailPort,
   type AdminAddBusinessArgs,
 } from "./admin-business-service.js";
+export * as FeedbackService from "./feedback-service.js";
+export {
+  LLMPort,
+  GitHubPort,
+  LLMError,
+  GitHubError,
+  type ILLMPort,
+  type IGitHubPort,
+  type FeedbackIssue,
+} from "./feedback-service.js";
 export * as PosGateway from "./pos-gateway.js";
 export {
   PosConnectionRepo,
