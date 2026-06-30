@@ -61,8 +61,8 @@ function SignInPage() {
           </span>
         </div>
 
-        {sent ? (
-          <Card className="w-full rounded-none border-border/50">
+        <Card className="w-full rounded-none border-border/50">
+          {sent ? (
             <CardHeader>
               <div className="flex flex-col items-center gap-4 py-4">
                 <MailCheck className="size-10 text-foreground" />
@@ -73,9 +73,7 @@ function SignInPage() {
                 </CardDescription>
               </div>
             </CardHeader>
-          </Card>
-        ) : (
-          <Card className="w-full rounded-none border-border/50">
+          ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <CardHeader>
                 <CardTitle className="text-lg">Sign in</CardTitle>
@@ -111,8 +109,8 @@ function SignInPage() {
                 </Button>
               </CardContent>
             </form>
-          </Card>
-        )}
+          )}
+        </Card>
       </div>
     </div>
   );
