@@ -1,4 +1,6 @@
-import { mutation } from "../_generated/server";
+import { internalMutation, mutation } from "../_generated/server";
+import { components } from "../_generated/api";
+import { v } from "convex/values";
 
 export const seedMockData = mutation({
   args: {},
@@ -106,5 +108,45 @@ export const seedMockData = mutation({
     });
 
     return { seeded: true, businesses: 6, vouchers: 6, industries: 6 };
+  },
+});
+
+export const clearBusinessesAndVouchers = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const vouchers = await ctx.db.query("vouchers").collect();
+    await Promise.all(vouchers.map((v) => ctx.db.delete(v._id)));
+
+    const businesses = await ctx.db.query("businesses").collect();
+    await Promise.all(businesses.map((b) => ctx.db.delete(b._id)));
+
+    return { deleted: { vouchers: vouchers.length, businesses: businesses.length } };
+  },
+});
+
+export const seedAdminUser = internalMutation({
+  args: { email: v.string(), name: v.string() },
+  handler: async (ctx, { email, name }) => {
+    const existing = await ctx.runQuery(components.betterAuth.adapter.findOne, {
+      model: "user",
+      where: [{ field: "email", value: email }],
+    });
+    if (existing) return { skipped: true, reason: "user already exists" };
+
+    const now = Date.now();
+    await ctx.runMutation(components.betterAuth.adapter.create, {
+      input: {
+        model: "user",
+        data: {
+          name,
+          email,
+          emailVerified: true,
+          role: "admin",
+          createdAt: now,
+          updatedAt: now,
+        },
+      },
+    });
+    return { created: true, email };
   },
 });

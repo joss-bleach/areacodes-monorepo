@@ -347,45 +347,53 @@ export const sendBusinessInvitation = internalAction({
 
     const businessPortalUrl = process.env.BUSINESS_PORTAL_URL ?? "https://business.acbrighton.com";
 
-    const html = `
-<!DOCTYPE html>
+    const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Your AreaCodes account is live</title>
+  <title>Your Areacodes business account is live</title>
 </head>
-<body style="margin:0;padding:0;background:#fff;font-family:Arial,sans-serif;color:#000;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:40px 24px;">
+<body style="margin:0;padding:0;background:#000000;font-family:Poppins,Arial,sans-serif;color:#f9f9f9;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;padding:0;">
     <tr>
-      <td>
-        <p style="font-size:24px;font-weight:700;margin:0 0 32px 0;font-family:Poppins,Arial,sans-serif;">AREACODES</p>
-        <p style="font-size:16px;line-height:1.6;margin:0 0 16px 0;">Hi,</p>
-        <p style="font-size:16px;line-height:1.6;margin:0 0 16px 0;">
-          <strong>${businessName}</strong> is now live on AreaCodes. Your account is set up and ready to go.
+      <td style="padding:40px 40px 32px 40px;border-bottom:1px solid #1f1f1f;">
+        <img src="${businessPortalUrl}/areacodes-white.svg" alt="Areacodes" width="140" height="19" style="display:block;border:0;" />
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:40px 40px 0 40px;">
+        <p style="font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 20px 0;color:#a3a3a3;">Business account</p>
+        <p style="display:inline-block;background:#f9f9f9;color:#000000;font-size:20px;font-weight:700;letter-spacing:-0.01em;text-transform:uppercase;padding:8px 16px;margin:0 0 32px 0;font-family:Poppins,Arial,sans-serif;">You're live on Areacodes</p>
+        <p style="font-size:15px;line-height:1.7;margin:0 0 20px 0;color:#f9f9f9;">
+          <strong style="font-weight:700;">${businessName}</strong> is now set up and ready to go.
         </p>
-        <p style="font-size:16px;line-height:1.6;margin:0 0 16px 0;">
-          To sign in, head to the Business Portal and enter your email address. We'll send you a link — no password needed.
+        <p style="font-size:15px;line-height:1.7;margin:0 0 8px 0;color:#a3a3a3;">
+          Sign in with this email address:
         </p>
-        <p style="margin:32px 0;">
-          <a href="${businessPortalUrl}/sign-in" style="background:#000;color:#fff;text-decoration:none;padding:14px 28px;font-size:16px;font-weight:700;font-family:Poppins,Arial,sans-serif;display:inline-block;">
-            Go to Business Portal
+        <p style="font-size:15px;font-weight:700;letter-spacing:0.02em;margin:0 0 32px 0;color:#f9f9f9;">${email}</p>
+        <p style="font-size:15px;line-height:1.7;margin:0 0 32px 0;color:#a3a3a3;">
+          No password needed - we'll send a one-time code to your inbox each time you sign in.
+        </p>
+        <p style="margin:0 0 36px 0;">
+          <a href="${businessPortalUrl}/sign-in" style="background:#f9f9f9;color:#000000;text-decoration:none;padding:14px 28px;font-size:14px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;font-family:Poppins,Arial,sans-serif;display:inline-block;">
+            Go to Business Portal &rarr;
           </a>
         </p>
-        <p style="font-size:16px;line-height:1.6;margin:0 0 16px 0;">
-          Once you're in, you can add vouchers, connect your POS, and see how customers are finding you.
+        <p style="font-size:15px;line-height:1.7;margin:0 0 16px 0;color:#a3a3a3;">
+          Once you're in, add your vouchers and see how customers are discovering you.
         </p>
-        <p style="font-size:16px;line-height:1.6;margin:0 0 8px 0;">Any questions, just reply to this email.</p>
-        <p style="font-size:16px;line-height:1.6;margin:0 0 40px 0;">— Joss, AreaCodes</p>
-        <p style="font-size:12px;color:#666;border-top:1px solid #eee;padding-top:16px;margin:0;">
-          You're receiving this because a member of the AreaCodes team set up your business account.
-        </p>
+        <p style="font-size:15px;line-height:1.7;margin:0 0 48px 0;color:#a3a3a3;">Any questions? Just reply to this email.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:20px 40px 40px 40px;border-top:1px solid #1f1f1f;">
+        <p style="font-size:12px;color:#555555;margin:0;">You're receiving this because the Areacodes team set up your business account.</p>
       </td>
     </tr>
   </table>
 </body>
-</html>
-    `.trim();
+</html>`.trim();
 
     await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -394,9 +402,9 @@ export const sendBusinessInvitation = internalAction({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Joss at AreaCodes <joss@acbrighton.com>",
+        from: "Areacodes <atom@acbrighton.com>",
         to: email,
-        subject: "Your AreaCodes business account is live",
+        subject: "Your Areacodes business account is live",
         html,
       }),
     });
