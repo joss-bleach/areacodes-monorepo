@@ -16,6 +16,7 @@ import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as DashboardVouchersRouteImport } from './routes/dashboard/vouchers'
 import { Route as DashboardBusinessesRouteImport } from './routes/dashboard/businesses'
 import { Route as DashboardAuditLogRouteImport } from './routes/dashboard/audit-log'
+import { Route as DashboardPilotFeaturesRouteImport } from './routes/dashboard/pilot-features'
 
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
@@ -52,6 +53,11 @@ const DashboardAuditLogRoute = DashboardAuditLogRouteImport.update({
   path: '/audit-log',
   getParentRoute: () => DashboardRoute,
 } as any)
+const DashboardPilotFeaturesRoute = DashboardPilotFeaturesRouteImport.update({
+  id: '/pilot-features',
+  path: '/pilot-features',
+  getParentRoute: () => DashboardRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
+  '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
   '/sign-in/$': typeof SignInSplatRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
+  '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
   '/sign-in/$': typeof SignInSplatRoute
 }
 export interface FileRoutesById {
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
+  '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
   '/sign-in/$': typeof SignInSplatRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/dashboard/audit-log'
     | '/dashboard/businesses'
     | '/dashboard/vouchers'
+    | '/dashboard/pilot-features'
     | '/sign-in/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/dashboard/audit-log'
     | '/dashboard/businesses'
     | '/dashboard/vouchers'
+    | '/dashboard/pilot-features'
     | '/sign-in/$'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/dashboard/audit-log'
     | '/dashboard/businesses'
     | '/dashboard/vouchers'
+    | '/dashboard/pilot-features'
     | '/sign-in/$'
   fileRoutesById: FileRoutesById
 }
@@ -168,6 +180,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAuditLogRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/dashboard/pilot-features': {
+      id: '/dashboard/pilot-features'
+      path: '/pilot-features'
+      fullPath: '/dashboard/pilot-features'
+      preLoaderRoute: typeof DashboardPilotFeaturesRouteImport
+      parentRoute: typeof DashboardRoute
+    }
   }
 }
 
@@ -175,12 +194,14 @@ interface DashboardRouteChildren {
   DashboardAuditLogRoute: typeof DashboardAuditLogRoute
   DashboardBusinessesRoute: typeof DashboardBusinessesRoute
   DashboardVouchersRoute: typeof DashboardVouchersRoute
+  DashboardPilotFeaturesRoute: typeof DashboardPilotFeaturesRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAuditLogRoute: DashboardAuditLogRoute,
   DashboardBusinessesRoute: DashboardBusinessesRoute,
   DashboardVouchersRoute: DashboardVouchersRoute,
+  DashboardPilotFeaturesRoute: DashboardPilotFeaturesRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(

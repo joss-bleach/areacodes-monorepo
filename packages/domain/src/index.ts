@@ -48,6 +48,11 @@ export {
   type StripeWebhookEvent,
   type ISubscriptionRepo,
 } from "./subscription-service.js";
+export * as PilotService from "./pilot-service.js";
+export {
+  PilotConfigRepo,
+  type IPilotConfigRepo,
+} from "./pilot-service.js";
 export * as PosGateway from "./pos-gateway.js";
 export {
   PosConnectionRepo,

@@ -11,6 +11,7 @@
 import type * as crons from "../crons.js";
 import type * as functions_admin from "../functions/admin.js";
 import type * as functions_businesses from "../functions/businesses.js";
+import type * as functions_pilot from "../functions/pilot.js";
 import type * as functions_claims from "../functions/claims.js";
 import type * as functions_explore from "../functions/explore.js";
 import type * as functions_follows from "../functions/follows.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "functions/admin": typeof functions_admin;
   "functions/businesses": typeof functions_businesses;
+  "functions/pilot": typeof functions_pilot;
   "functions/claims": typeof functions_claims;
   "functions/explore": typeof functions_explore;
   "functions/follows": typeof functions_follows;

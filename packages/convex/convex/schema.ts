@@ -111,4 +111,8 @@ export default defineSchema({
     token: v.string(),
     registeredAt: v.number(),
   }).index("by_customer", ["customerId"]),
+
+  config: defineTable({
+    activePilotFeatures: v.array(v.string()),
+  }),
 });
