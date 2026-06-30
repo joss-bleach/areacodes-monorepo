@@ -256,14 +256,12 @@ export const addBusinessByAdmin = mutation({
 
     const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
 
-    // Type the admin API — the admin plugin adds .api.admin.createUser when configured
+    // admin plugin endpoints land directly on auth.api (not nested under auth.api.admin)
     type BetterAuthAdminApi = {
-      admin: {
-        createUser: (opts: {
-          body: { email: string; name: string; role?: string; password?: string };
-          headers?: Headers;
-        }) => Promise<{ user: { id: string; email: string } }>;
-      };
+      createUser: (opts: {
+        body: { email: string; name: string; role?: string; password?: string };
+        headers?: Headers;
+      }) => Promise<{ user: { id: string; email: string } }>;
     };
     const adminApi = auth.api as unknown as BetterAuthAdminApi;
 
@@ -271,7 +269,7 @@ export const addBusinessByAdmin = mutation({
       createUser: (email, name) =>
         Effect.tryPromise({
           try: async () => {
-            const response = await adminApi.admin.createUser({
+            const response = await adminApi.createUser({
               body: { email, name, role: "business" },
               headers,
             });
