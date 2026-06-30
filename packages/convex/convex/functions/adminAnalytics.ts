@@ -8,11 +8,12 @@ import {
   type IAdminAnalyticsRepo,
 } from "@areacodes/domain";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
 
 async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<void> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
+  // Better Auth's convex() plugin includes all user fields in the JWT payload,
+  // so role is available as a claim on the identity token.
   if ((identity as { role?: string }).role !== "admin")
     throw new Error("Forbidden: Admin only");
 }

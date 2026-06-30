@@ -95,6 +95,44 @@ function CoreFunnelTable() {
     ...new Set([...funnelByWeek.keys(), ...posthogByWeek.keys()]),
   ].sort((a, b) => a - b);
 
+  function renderBody() {
+    if (isLoading) return <SkeletonRows rows={3} />;
+    if (weekStarts.length === 0) {
+      return <p className="text-muted-foreground text-sm">No activity recorded yet.</p>;
+    }
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Week of</TableHead>
+            <TableHead className="text-right">Business Views</TableHead>
+            <TableHead className="text-right">Claims</TableHead>
+            <TableHead className="text-right">Reveals</TableHead>
+            <TableHead className="text-right">Redemptions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {weekStarts.map((weekStart) => {
+            const row = funnelByWeek.get(weekStart);
+            return (
+              <TableRow key={weekStart}>
+                <TableCell className="font-medium">
+                  {formatWeekStart(weekStart)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {posthogByWeek.get(weekStart) ?? "—"}
+                </TableCell>
+                <TableCell className="text-right">{row?.claimCount ?? 0}</TableCell>
+                <TableCell className="text-right">{row?.revealCount ?? 0}</TableCell>
+                <TableCell className="text-right">{row?.redemptionCount ?? 0}</TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -103,47 +141,7 @@ function CoreFunnelTable() {
           Aggregate weekly totals across all Pilot Businesses. Business views sourced from PostHog cache.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-8 w-full" />
-            ))}
-          </div>
-        ) : weekStarts.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No activity recorded yet.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Week of</TableHead>
-                <TableHead className="text-right">Business Views</TableHead>
-                <TableHead className="text-right">Claims</TableHead>
-                <TableHead className="text-right">Reveals</TableHead>
-                <TableHead className="text-right">Redemptions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {weekStarts.map((weekStart) => {
-                const row = funnelByWeek.get(weekStart);
-                return (
-                  <TableRow key={weekStart}>
-                    <TableCell className="font-medium">
-                      {formatWeekStart(weekStart)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {posthogByWeek.get(weekStart) ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right">{row?.claimCount ?? 0}</TableCell>
-                    <TableCell className="text-right">{row?.revealCount ?? 0}</TableCell>
-                    <TableCell className="text-right">{row?.redemptionCount ?? 0}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
+      <CardContent>{renderBody()}</CardContent>
     </Card>
   );
 }
@@ -155,6 +153,53 @@ function BusinessLeaderboard() {
     isAuthenticated ? {} : "skip",
   );
 
+  function renderBody() {
+    if (entries === undefined) return <SkeletonRows rows={4} />;
+    if (entries.length === 0) {
+      return <p className="text-muted-foreground text-sm">No businesses found.</p>;
+    }
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Business</TableHead>
+            <TableHead className="text-right">Claims</TableHead>
+            <TableHead className="text-right">Reveals</TableHead>
+            <TableHead className="text-right">Redemptions</TableHead>
+            <TableHead className="text-right">Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((entry) => (
+            <TableRow
+              key={entry.businessId}
+              className={entry.hasZeroActivity ? "bg-destructive/5" : undefined}
+            >
+              <TableCell className="font-medium">
+                <span className="flex items-center gap-2">
+                  {entry.hasZeroActivity && (
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
+                  )}
+                  {entry.businessName}
+                </span>
+              </TableCell>
+              <TableCell className="text-right">{entry.claimCount}</TableCell>
+              <TableCell className="text-right">{entry.revealCount}</TableCell>
+              <TableCell className="text-right">{entry.redemptionCount}</TableCell>
+              <TableCell className="text-right">
+                {entry.hasZeroActivity ? (
+                  <Badge variant="destructive">Zero activity</Badge>
+                ) : (
+                  <Badge variant="secondary">Active</Badge>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -164,56 +209,7 @@ function BusinessLeaderboard() {
           Businesses with zero claims or no active vouchers are flagged.
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {entries === undefined ? (
-          <div className="space-y-2">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-8 w-full" />
-            ))}
-          </div>
-        ) : entries.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No businesses found.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Business</TableHead>
-                <TableHead className="text-right">Claims</TableHead>
-                <TableHead className="text-right">Reveals</TableHead>
-                <TableHead className="text-right">Redemptions</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {entries.map((entry) => (
-                <TableRow
-                  key={entry.businessId}
-                  className={entry.hasZeroActivity ? "bg-destructive/5" : undefined}
-                >
-                  <TableCell className="font-medium">
-                    <span className="flex items-center gap-2">
-                      {entry.hasZeroActivity && (
-                        <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />
-                      )}
-                      {entry.businessName}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">{entry.claimCount}</TableCell>
-                  <TableCell className="text-right">{entry.revealCount}</TableCell>
-                  <TableCell className="text-right">{entry.redemptionCount}</TableCell>
-                  <TableCell className="text-right">
-                    {entry.hasZeroActivity ? (
-                      <Badge variant="destructive">Zero activity</Badge>
-                    ) : (
-                      <Badge variant="secondary">Active</Badge>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
+      <CardContent>{renderBody()}</CardContent>
     </Card>
   );
 }
@@ -225,6 +221,35 @@ function VoucherFormatBreakdown() {
     isAuthenticated ? {} : "skip",
   );
 
+  function renderBody() {
+    if (rows === undefined) return <SkeletonRows rows={3} />;
+    if (rows.length === 0) {
+      return <p className="text-muted-foreground text-sm">No activity recorded yet.</p>;
+    }
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Format</TableHead>
+            <TableHead className="text-right">Claims</TableHead>
+            <TableHead className="text-right">Redemptions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((row) => (
+            <TableRow key={row.format}>
+              <TableCell className="font-medium capitalize">
+                {formatVoucherFormat(row.format)}
+              </TableCell>
+              <TableCell className="text-right">{row.claimCount}</TableCell>
+              <TableCell className="text-right">{row.redemptionCount}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -233,39 +258,18 @@ function VoucherFormatBreakdown() {
           Claims and redemptions split by voucher format across all Pilot Businesses
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        {rows === undefined ? (
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-8 w-full" />
-            ))}
-          </div>
-        ) : rows.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No activity recorded yet.</p>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Format</TableHead>
-                <TableHead className="text-right">Claims</TableHead>
-                <TableHead className="text-right">Redemptions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map((row) => (
-                <TableRow key={row.format}>
-                  <TableCell className="font-medium capitalize">
-                    {formatVoucherFormat(row.format)}
-                  </TableCell>
-                  <TableCell className="text-right">{row.claimCount}</TableCell>
-                  <TableCell className="text-right">{row.redemptionCount}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
+      <CardContent>{renderBody()}</CardContent>
     </Card>
+  );
+}
+
+function SkeletonRows({ rows }: { rows: number }) {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className="h-8 w-full" />
+      ))}
+    </div>
   );
 }
 
