@@ -1,6 +1,22 @@
-import { mutation, query } from "../_generated/server";
+import { mutation, query, internalAction } from "../_generated/server";
 import { v } from "convex/values";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
+import { Effect, Layer } from "effect";
+import {
+  BusinessRepo,
+  BusinessService,
+  type IBusinessRepo,
+  AdminBusinessService,
+  AuthAdminPort,
+  EmailPort,
+  AuthAdminError,
+  EmailError,
+  type IAuthAdminPort,
+  type IEmailPort,
+} from "@areacodes/domain";
+import { authComponent, createAuth } from "../betterAuth/auth";
+import type { Id } from "../_generated/dataModel";
 
 async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();
@@ -23,7 +39,9 @@ export const getAllBusinesses = query({
         const logoUrl = business.logoStorageId
           ? await ctx.storage.getUrl(business.logoStorageId)
           : null;
-        return { ...business, logoUrl, industry };
+        const authUser = await authComponent.getAnyUserById(ctx, business.userId).catch(() => null);
+        const hasLoggedIn = authUser?.emailVerified ?? false;
+        return { ...business, logoUrl, industry, hasLoggedIn };
       })
     );
   },
@@ -152,5 +170,218 @@ export const removeVoucher = mutation({
     });
 
     return { success: true };
+  },
+});
+
+function makeConvexRepo(ctx: MutationCtx): IBusinessRepo {
+  return {
+    findBySlug: (slug) =>
+      Effect.promise(() =>
+        ctx.db
+          .query("businesses")
+          .withIndex("by_slug", (q) => q.eq("slug", slug))
+          .first(),
+      ),
+    findById: (id) =>
+      Effect.promise(() => ctx.db.get(id as Id<"businesses">)),
+    insert: (data) =>
+      Effect.promise(async () => {
+        const id = await ctx.db.insert("businesses", {
+          userId: data.userId,
+          name: data.name,
+          slug: data.slug,
+          description: data.description,
+          websiteUrl: data.websiteUrl,
+          industryId: data.industryId as Id<"industries">,
+          address: data.address,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          logoStorageId: data.logoStorageId as Id<"_storage"> | undefined,
+        });
+        return id as unknown as string;
+      }),
+    patch: (id, data) =>
+      Effect.promise(async () => {
+        await ctx.db.patch(id as Id<"businesses">, {
+          ...(data.name !== undefined ? { name: data.name } : {}),
+          ...(data.slug !== undefined ? { slug: data.slug } : {}),
+          ...(data.description !== undefined ? { description: data.description } : {}),
+          ...(data.websiteUrl !== undefined ? { websiteUrl: data.websiteUrl } : {}),
+          ...(data.industryId !== undefined
+            ? { industryId: data.industryId as Id<"industries"> }
+            : {}),
+          ...(data.address !== undefined ? { address: data.address } : {}),
+          ...(data.latitude !== undefined ? { latitude: data.latitude } : {}),
+          ...(data.longitude !== undefined ? { longitude: data.longitude } : {}),
+          ...(Object.prototype.hasOwnProperty.call(data, "logoStorageId")
+            ? { logoStorageId: data.logoStorageId as Id<"_storage"> | undefined }
+            : {}),
+          ...(data.deletedAt !== undefined ? { deletedAt: data.deletedAt } : {}),
+        });
+      }),
+    findVouchersByBusiness: (businessId) =>
+      Effect.promise(() =>
+        ctx.db
+          .query("vouchers")
+          .withIndex("by_business", (q) =>
+            q.eq("businessId", businessId as Id<"businesses">),
+          )
+          .collect(),
+      ),
+    patchVoucher: (id, data) =>
+      Effect.promise(async () => {
+        await ctx.db.patch(id as Id<"vouchers">, { deletedAt: data.deletedAt });
+      }),
+    deleteStorage: (storageId) =>
+      Effect.promise(async () => {
+        await ctx.storage.delete(storageId as Id<"_storage">);
+      }),
+  };
+}
+
+export const addBusinessByAdmin = mutation({
+  args: {
+    name: v.string(),
+    ownerEmail: v.string(),
+    description: v.string(),
+    websiteUrl: v.string(),
+    industryId: v.id("industries"),
+    address: v.string(),
+    latitude: v.number(),
+    longitude: v.number(),
+    logoStorageId: v.optional(v.id("_storage")),
+  },
+  handler: async (ctx, args) => {
+    await requireAdmin(ctx);
+
+    const { auth, headers } = await authComponent.getAuth(createAuth, ctx);
+
+    // Type the admin API — the admin plugin adds .api.admin.createUser when configured
+    type BetterAuthAdminApi = {
+      admin: {
+        createUser: (opts: {
+          body: { email: string; name: string; role?: string; password?: string };
+          headers?: Headers;
+        }) => Promise<{ user: { id: string; email: string } }>;
+      };
+    };
+    const adminApi = auth.api as unknown as BetterAuthAdminApi;
+
+    const authAdminImpl: IAuthAdminPort = {
+      createUser: (email, name) =>
+        Effect.tryPromise({
+          try: async () => {
+            const response = await adminApi.admin.createUser({
+              body: { email, name, role: "business" },
+              headers,
+            });
+            return response.user.id;
+          },
+          catch: (e) => new AuthAdminError({ message: String(e) }),
+        }),
+    };
+
+    const emailImpl: IEmailPort = {
+      sendInvitation: (to, businessName) =>
+        Effect.promise(() =>
+          ctx.scheduler.runAfter(0, internal.functions.admin.sendBusinessInvitation, {
+            email: to,
+            businessName,
+          }),
+        ),
+    };
+
+    const layer = Layer.mergeAll(
+      Layer.succeed(AuthAdminPort, authAdminImpl),
+      Layer.succeed(EmailPort, emailImpl),
+      Layer.succeed(BusinessRepo, makeConvexRepo(ctx)),
+    );
+
+    return await Effect.runPromise(
+      Effect.provide(
+        AdminBusinessService.addBusiness({
+          name: args.name,
+          ownerEmail: args.ownerEmail,
+          description: args.description,
+          websiteUrl: args.websiteUrl,
+          industryId: args.industryId,
+          address: args.address,
+          latitude: args.latitude,
+          longitude: args.longitude,
+          logoStorageId: args.logoStorageId,
+        }),
+        layer,
+      ),
+    );
+  },
+});
+
+export const sendBusinessInvitation = internalAction({
+  args: {
+    email: v.string(),
+    businessName: v.string(),
+  },
+  handler: async (_ctx, { email, businessName }) => {
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      console.warn("RESEND_API_KEY not set — business invitation email not sent");
+      return;
+    }
+
+    const businessPortalUrl = process.env.BUSINESS_PORTAL_URL ?? "https://business.acbrighton.com";
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your AreaCodes account is live</title>
+</head>
+<body style="margin:0;padding:0;background:#fff;font-family:Arial,sans-serif;color:#000;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;padding:40px 24px;">
+    <tr>
+      <td>
+        <p style="font-size:24px;font-weight:700;margin:0 0 32px 0;font-family:Poppins,Arial,sans-serif;">AREACODES</p>
+        <p style="font-size:16px;line-height:1.6;margin:0 0 16px 0;">Hi,</p>
+        <p style="font-size:16px;line-height:1.6;margin:0 0 16px 0;">
+          <strong>${businessName}</strong> is now live on AreaCodes. Your account is set up and ready to go.
+        </p>
+        <p style="font-size:16px;line-height:1.6;margin:0 0 16px 0;">
+          To sign in, head to the Business Portal and enter your email address. We'll send you a link — no password needed.
+        </p>
+        <p style="margin:32px 0;">
+          <a href="${businessPortalUrl}/sign-in" style="background:#000;color:#fff;text-decoration:none;padding:14px 28px;font-size:16px;font-weight:700;font-family:Poppins,Arial,sans-serif;display:inline-block;">
+            Go to Business Portal
+          </a>
+        </p>
+        <p style="font-size:16px;line-height:1.6;margin:0 0 16px 0;">
+          Once you're in, you can add vouchers, connect your POS, and see how customers are finding you.
+        </p>
+        <p style="font-size:16px;line-height:1.6;margin:0 0 8px 0;">Any questions, just reply to this email.</p>
+        <p style="font-size:16px;line-height:1.6;margin:0 0 40px 0;">— Joss, AreaCodes</p>
+        <p style="font-size:12px;color:#666;border-top:1px solid #eee;padding-top:16px;margin:0;">
+          You're receiving this because a member of the AreaCodes team set up your business account.
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `.trim();
+
+    await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendApiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: "Joss at AreaCodes <joss@acbrighton.com>",
+        to: email,
+        subject: `Your AreaCodes business account is live`,
+        html,
+      }),
+    });
   },
 });

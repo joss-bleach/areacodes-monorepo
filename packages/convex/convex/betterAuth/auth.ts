@@ -4,7 +4,7 @@ import type { GenericCtx } from "@convex-dev/better-auth/utils";
 import type { BetterAuthOptions } from "better-auth";
 import { betterAuth } from "better-auth";
 import { expo } from "@better-auth/expo";
-import { magicLink } from "better-auth/plugins";
+import { admin, magicLink } from "better-auth/plugins";
 import * as z from "zod";
 import { components } from "../_generated/api";
 import type { DataModel } from "../_generated/dataModel";
@@ -46,6 +46,10 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
     plugins: [
       expo(),
       convex({ authConfig }),
+      admin({
+        defaultRole: "customer",
+        adminRoles: ["admin"],
+      }),
       magicLink({
         expiresIn: 60 * 10, // 10 minutes
         // Pilot Business Users are provisioned by staff — never self-registered.
