@@ -16,10 +16,18 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Textarea,
 } from "@repo/ui";
 import { AdminNavbar } from "~/components/admin-navbar";
 import { RequireAdmin } from "~/components/require-admin";
-import { Flag, RotateCcw } from "lucide-react";
+import { Flag, RotateCcw, Plus, CheckCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/dashboard/businesses")({
@@ -31,15 +39,264 @@ function BusinessesPage() {
     <RequireAdmin>
       <AdminNavbar />
       <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Businesses</h1>
-          <p className="text-muted-foreground mt-1">
-            View and manage all registered businesses
-          </p>
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold">Businesses</h1>
+            <p className="text-muted-foreground mt-1">
+              View and manage all registered businesses
+            </p>
+          </div>
+          <AddBusinessButton />
         </div>
         <BusinessesList />
       </main>
     </RequireAdmin>
+  );
+}
+
+function AddBusinessButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button onClick={() => setOpen(true)} className="flex items-center gap-2">
+        <Plus className="h-4 w-4" />
+        Add Business
+      </Button>
+      <AddBusinessDialog open={open} onOpenChange={setOpen} />
+    </>
+  );
+}
+
+interface AddBusinessFormValues {
+  name: string;
+  ownerEmail: string;
+  description: string;
+  websiteUrl: string;
+  industryId: string;
+  address: string;
+  latitude: string;
+  longitude: string;
+}
+
+const EMPTY_BUSINESS_FORM: AddBusinessFormValues = {
+  name: "",
+  ownerEmail: "",
+  description: "",
+  websiteUrl: "",
+  industryId: "",
+  address: "",
+  latitude: "",
+  longitude: "",
+};
+
+function AddBusinessDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const { isAuthenticated } = useConvexAuth();
+  const industries = useQuery(
+    api.functions.industries.getAllIndustries,
+    isAuthenticated ? {} : "skip",
+  );
+  const addBusiness = useMutation(api.functions.admin.addBusinessByAdmin);
+  const generateUploadUrl = useMutation(api.functions.businesses.generateUploadUrl);
+
+  const [values, setValues] = useState<AddBusinessFormValues>(EMPTY_BUSINESS_FORM);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const set = (field: keyof AddBusinessFormValues) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => setValues((v) => ({ ...v, [field]: e.target.value }));
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const lat = parseFloat(values.latitude);
+    const lng = parseFloat(values.longitude);
+    if (!values.name || !values.ownerEmail || !values.industryId || !values.address) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    if (isNaN(lat) || isNaN(lng)) {
+      toast.error("Latitude and longitude must be valid numbers");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let logoStorageId: Id<"_storage"> | undefined;
+      if (logoFile) {
+        const uploadUrl = await generateUploadUrl();
+        const response = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": logoFile.type },
+          body: logoFile,
+        });
+        if (!response.ok) throw new Error("Logo upload failed");
+        const { storageId } = (await response.json()) as { storageId: Id<"_storage"> };
+        logoStorageId = storageId;
+      }
+
+      await addBusiness({
+        name: values.name,
+        ownerEmail: values.ownerEmail,
+        description: values.description,
+        websiteUrl: values.websiteUrl,
+        industryId: values.industryId as Id<"industries">,
+        address: values.address,
+        latitude: lat,
+        longitude: lng,
+        logoStorageId,
+      });
+      toast.success(`Business "${values.name}" created and invitation email sent`);
+      onOpenChange(false);
+      setValues(EMPTY_BUSINESS_FORM);
+      setLogoFile(null);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create business");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="rounded-none border-none sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Add Business</DialogTitle>
+          <DialogDescription>
+            Create a Pilot Business account. The owner will receive a sign-in invitation by email.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 py-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="add-name">Business name *</Label>
+              <Input
+                id="add-name"
+                value={values.name}
+                onChange={set("name")}
+                placeholder="The Anchor"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-email">Owner email *</Label>
+              <Input
+                id="add-email"
+                type="email"
+                value={values.ownerEmail}
+                onChange={set("ownerEmail")}
+                placeholder="owner@business.com"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="add-description">Description</Label>
+            <Textarea
+              id="add-description"
+              value={values.description}
+              onChange={set("description")}
+              placeholder="A short description of the business"
+              rows={2}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="add-logo">Logo</Label>
+            <Input
+              id="add-logo"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="add-website">Website URL</Label>
+              <Input
+                id="add-website"
+                value={values.websiteUrl}
+                onChange={set("websiteUrl")}
+                placeholder="https://thebusiness.com"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-industry">Industry *</Label>
+              <Select
+                value={values.industryId}
+                onValueChange={(v) => setValues((prev) => ({ ...prev, industryId: v }))}
+              >
+                <SelectTrigger id="add-industry" className="rounded-none">
+                  <SelectValue placeholder="Select industry" />
+                </SelectTrigger>
+                <SelectContent className="rounded-none">
+                  {(industries ?? []).map((ind) => (
+                    <SelectItem key={ind._id} value={ind._id}>
+                      {ind.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="add-address">Address *</Label>
+            <Input
+              id="add-address"
+              value={values.address}
+              onChange={set("address")}
+              placeholder="1 Church St, Brighton, BN1 1UJ"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="add-lat">Latitude *</Label>
+              <Input
+                id="add-lat"
+                value={values.latitude}
+                onChange={set("latitude")}
+                placeholder="50.8225"
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="add-lng">Longitude *</Label>
+              <Input
+                id="add-lng"
+                value={values.longitude}
+                onChange={set("longitude")}
+                placeholder="-0.1372"
+                required
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Business"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -117,6 +374,9 @@ function BusinessesList() {
                     Address
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
+                    First Login
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                     Status
                   </th>
                   <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">
@@ -128,7 +388,7 @@ function BusinessesList() {
                 {businesses.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="py-8 px-4 text-center text-sm text-muted-foreground"
                     >
                       No businesses found.
@@ -164,6 +424,19 @@ function BusinessesList() {
                       </td>
                       <td className="py-4 px-4 text-sm text-muted-foreground max-w-[200px] truncate">
                         {business.address}
+                      </td>
+                      <td className="py-4 px-4">
+                        {business.hasLoggedIn ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Logged in
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Clock className="h-3.5 w-3.5" />
+                            Awaiting login
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-4">
                         <span

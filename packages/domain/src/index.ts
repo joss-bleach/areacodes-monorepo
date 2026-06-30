@@ -59,6 +59,16 @@ export {
   type IPilotAnalyticsRepo,
   type VoucherStat,
 } from "./pilot-analytics-service.js";
+export * as AdminBusinessService from "./admin-business-service.js";
+export {
+  AuthAdminPort,
+  EmailPort,
+  AuthAdminError,
+  EmailError,
+  type IAuthAdminPort,
+  type IEmailPort,
+  type AdminAddBusinessArgs,
+} from "./admin-business-service.js";
 export * as PosGateway from "./pos-gateway.js";
 export {
   PosConnectionRepo,
