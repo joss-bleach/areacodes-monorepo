@@ -53,6 +53,12 @@ export {
   PilotConfigRepo,
   type IPilotConfigRepo,
 } from "./pilot-service.js";
+export * as PilotAnalyticsService from "./pilot-analytics-service.js";
+export {
+  PilotAnalyticsRepo,
+  type IPilotAnalyticsRepo,
+  type VoucherStat,
+} from "./pilot-analytics-service.js";
 export * as PosGateway from "./pos-gateway.js";
 export {
   PosConnectionRepo,

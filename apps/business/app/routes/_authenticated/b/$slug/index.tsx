@@ -9,6 +9,7 @@ import { DashboardTop } from "~/sections/dashboard-top";
 import { StatsSection } from "~/sections/stats-section";
 import { VoucherTable } from "~/sections/voucher-table";
 import { NewVoucherModal } from "~/components/new-voucher-modal";
+import { AnalyticsSection } from "~/sections/analytics-section";
 
 export const Route = createFileRoute("/_authenticated/b/$slug/")({
   component: DashboardPage,
@@ -70,6 +71,7 @@ function DashboardPage() {
         <div className="container-app">
           <DashboardTop />
           <StatsSection />
+          <AnalyticsSection />
           <PosStatusCard />
           <VoucherTable />
           <NewVoucherModal />
