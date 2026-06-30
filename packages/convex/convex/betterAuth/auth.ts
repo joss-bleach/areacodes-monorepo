@@ -48,6 +48,10 @@ export const createAuthOptions = (ctx: GenericCtx<DataModel>) => {
       convex({ authConfig }),
       magicLink({
         expiresIn: 60 * 10, // 10 minutes
+        // Pilot Business Users are provisioned by staff — never self-registered.
+        // Without this, requesting a link for any unknown email would silently
+        // create a new account on verify, re-opening the self-signup the brief removed.
+        disableSignUp: true,
         sendMagicLink: async ({ email, url }) => {
           const resendApiKey = process.env.RESEND_API_KEY;
           if (!resendApiKey) {
