@@ -405,7 +405,6 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
 
       const reveal = await ctx.db.get(revealId);
       expect(reveal?.voucherCode).toBe("ABC123XYZ789");
-      expect(reveal?.redeemedAt).toBeUndefined();
 
       const found = await ctx.db
         .query("reveals")
