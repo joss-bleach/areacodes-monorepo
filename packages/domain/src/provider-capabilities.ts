@@ -37,7 +37,7 @@ export function getCapabilities(provider: Provider): ProviderCapabilityRow {
 }
 
 export function supportsKind(provider: Provider, kind: DiscountKind): boolean {
-  return (PROVIDER_CAPABILITIES[provider].provisionableKinds as DiscountKind[]).includes(kind);
+  return PROVIDER_CAPABILITIES[provider].provisionableKinds.includes(kind);
 }
 
 // ── Idempotency-key helpers ───────────────────────────────────────────────────
