@@ -389,11 +389,24 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
               </Text>
             </Pressable>
           </View>
+        ) : entry.isRedeemed ? (
+          <TicketStub
+            voucherCode=""
+            voucherValidFrom={entry.voucherValidFrom}
+            voucherValidTo={entry.voucherValidTo}
+            provider={entry.provider as "manual" | "square" | undefined}
+            claimId={entry.claimId}
+            voucherId={entry.voucherId}
+            isRedeemed
+          />
         ) : voucherCode ? (
           <TicketStub
             voucherCode={voucherCode}
             voucherValidFrom={entry.voucherValidFrom}
             voucherValidTo={entry.voucherValidTo}
+            provider={entry.provider as "manual" | "square" | undefined}
+            claimId={entry.claimId}
+            voucherId={entry.voucherId}
           />
         ) : null}
       </View>

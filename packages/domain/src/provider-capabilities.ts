@@ -46,6 +46,16 @@ export function deriveManualIdempotencyKey(claimId: string): string {
   return `manual:${claimId}`;
 }
 
+// Constructs the redemption URL that the customer's wallet QR encodes.
+// Staff scan this to open the staff redemption page directly.
+export function deriveRedemptionUrl(
+  businessBaseUrl: string,
+  voucherId: string,
+  claimId: string,
+): string {
+  return `${businessBaseUrl}/redeem?v=${encodeURIComponent(voucherId)}&c=${encodeURIComponent(claimId)}`;
+}
+
 export function deriveSquareIdempotencyKey(
   orderId: string,
   catalogDiscountId: string,

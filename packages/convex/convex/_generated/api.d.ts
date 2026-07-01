@@ -23,6 +23,7 @@ import type * as functions_pilotAnalytics from "../functions/pilotAnalytics.js";
 import type * as functions_posConnections from "../functions/posConnections.js";
 import type * as functions_pushTokens from "../functions/pushTokens.js";
 import type * as functions_redemptionAuth from "../functions/redemptionAuth.js";
+import type * as functions_redemptionEvents from "../functions/redemptionEvents.js";
 import type * as functions_seed from "../functions/seed.js";
 import type * as functions_subscriptions from "../functions/subscriptions.js";
 import type * as functions_visibility from "../functions/visibility.js";
@@ -54,6 +55,7 @@ declare const fullApi: ApiFromModules<{
   "functions/posConnections": typeof functions_posConnections;
   "functions/pushTokens": typeof functions_pushTokens;
   "functions/redemptionAuth": typeof functions_redemptionAuth;
+  "functions/redemptionEvents": typeof functions_redemptionEvents;
   "functions/seed": typeof functions_seed;
   "functions/subscriptions": typeof functions_subscriptions;
   "functions/visibility": typeof functions_visibility;

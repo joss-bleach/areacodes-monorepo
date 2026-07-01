@@ -47,6 +47,7 @@ export {
   supportsKind,
   deriveManualIdempotencyKey,
   deriveSquareIdempotencyKey,
+  deriveRedemptionUrl,
   validateManualBurn,
   type ProviderCapabilityRow,
   type PresentationStyle,

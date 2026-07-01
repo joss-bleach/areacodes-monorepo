@@ -19,6 +19,8 @@ export type RevealEntry = {
   voucherValidTo: number;
   activeCode: string | null;
   codeExpiresAt: number | null;
+  provider: string | null;
+  isRedeemed: boolean;
 };
 
 type VoucherSheetMode =

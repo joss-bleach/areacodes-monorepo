@@ -180,12 +180,20 @@ export const getWallet = query({
           business?.logoStorageId
             ? await ctx.storage.getUrl(business.logoStorageId)
             : null;
+        const redemptionEvent = await ctx.db
+          .query("redemptionEvents")
+          .withIndex("by_idempotency", (q) =>
+            q.eq("idempotencyKey", `manual:${entry.claimId}`),
+          )
+          .first();
         return {
           ...entry,
           businessId: business?._id ?? null,
           businessName: business?.name ?? null,
           businessLogoUrl,
           voucherValidFrom: voucher?.voucherValidFrom ?? null,
+          provider: voucher?.provider ?? null,
+          isRedeemed: redemptionEvent !== null,
         };
       }),
     );

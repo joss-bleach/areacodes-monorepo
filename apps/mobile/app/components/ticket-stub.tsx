@@ -4,20 +4,37 @@ import QRCode from "react-native-qrcode-svg";
 import { useState } from "react";
 import { formatValidityWindow } from "../lib/voucher-utils";
 import { COLORS } from "../constants/colors";
+import { deriveRedemptionUrl } from "@areacodes/domain";
+
+const BUSINESS_URL =
+  process.env.EXPO_PUBLIC_BUSINESS_URL ?? "https://business.acbrighton.com";
 
 interface TicketStubProps {
   voucherCode: string;
   voucherValidFrom: number;
   voucherValidTo: number;
+  provider?: "manual" | "square";
+  claimId?: string;
+  voucherId?: string;
+  isRedeemed?: boolean;
 }
 
 export function TicketStub({
   voucherCode,
   voucherValidFrom,
   voucherValidTo,
+  provider,
+  claimId,
+  voucherId,
+  isRedeemed = false,
 }: TicketStubProps) {
   const [copied, setCopied] = useState(false);
   const notchColor = COLORS.raisedSurface;
+
+  const qrValue =
+    provider === "manual" && claimId && voucherId
+      ? deriveRedemptionUrl(BUSINESS_URL, voucherId, claimId)
+      : voucherCode;
 
   async function handleCopy() {
     await Clipboard.setStringAsync(voucherCode);
@@ -26,19 +43,45 @@ export function TicketStub({
   }
 
   return (
-    <View style={{ backgroundColor: COLORS.white, marginHorizontal: 16 }}>
+    <View
+      style={{
+        backgroundColor: COLORS.white,
+        marginHorizontal: 16,
+        opacity: isRedeemed ? 0.5 : 1,
+      }}
+    >
       {/* Top half: QR */}
       <View style={{ alignItems: "center", paddingHorizontal: 24, paddingTop: 24, paddingBottom: 20 }}>
         <View style={{ padding: 12, backgroundColor: COLORS.white }}>
-          <QRCode
-            value={voucherCode}
-            size={180}
-            backgroundColor={COLORS.white}
-            color={COLORS.black}
-          />
+          {isRedeemed ? (
+            <View
+              style={{
+                width: 180,
+                height: 180,
+                alignItems: "center",
+                justifyContent: "center",
+                backgroundColor: "#F3F4F6",
+              }}
+            >
+              <Text style={{ fontSize: 48 }} accessibilityLabel="Redeemed">
+                ✓
+              </Text>
+            </View>
+          ) : (
+            <QRCode
+              value={qrValue}
+              size={180}
+              backgroundColor={COLORS.white}
+              color={COLORS.black}
+            />
+          )}
         </View>
         <Text style={{ color: "#6B7280", fontSize: 12, textAlign: "center", marginTop: 16, lineHeight: 18 }}>
-          Show the QR to the merchant staff to use your voucher
+          {isRedeemed
+            ? "This voucher has been redeemed"
+            : provider === "manual"
+              ? "Show the QR to staff to redeem your voucher"
+              : "Show the QR to the merchant staff to use your voucher"}
         </Text>
       </View>
 
@@ -82,22 +125,38 @@ export function TicketStub({
         />
       </View>
 
-      {/* Bottom half: code + dates */}
+      {/* Bottom half: redeemed label or code + dates */}
       <View style={{ alignItems: "center", paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}>
-        <Pressable
-          onPress={handleCopy}
-          style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F3F4F6", paddingHorizontal: 20, paddingVertical: 12, marginBottom: 12 }}
-          accessibilityLabel={copied ? "Code copied" : `Copy voucher code ${voucherCode}`}
-          accessibilityRole="button"
-          accessibilityHint="Double tap to copy code to clipboard"
-        >
-          <Text style={{ color: COLORS.black, fontFamily: "Poppins_600SemiBold", fontSize: 16, letterSpacing: 4, marginRight: 8 }}>
-            {voucherCode}
-          </Text>
-          <Text style={{ color: "#6B7280", fontSize: 16 }}>
-            {copied ? "✓" : "⎘"}
-          </Text>
-        </Pressable>
+        {isRedeemed ? (
+          <View style={{ alignItems: "center", marginBottom: 12 }}>
+            <Text
+              style={{
+                color: COLORS.black,
+                fontFamily: "Poppins_600SemiBold",
+                fontSize: 16,
+                letterSpacing: 4,
+                textTransform: "uppercase",
+              }}
+            >
+              Redeemed
+            </Text>
+          </View>
+        ) : (
+          <Pressable
+            onPress={handleCopy}
+            style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F3F4F6", paddingHorizontal: 20, paddingVertical: 12, marginBottom: 12 }}
+            accessibilityLabel={copied ? "Code copied" : `Copy voucher code ${voucherCode}`}
+            accessibilityRole="button"
+            accessibilityHint="Double tap to copy code to clipboard"
+          >
+            <Text style={{ color: COLORS.black, fontFamily: "Poppins_600SemiBold", fontSize: 16, letterSpacing: 4, marginRight: 8 }}>
+              {voucherCode}
+            </Text>
+            <Text style={{ color: "#6B7280", fontSize: 16 }}>
+              {copied ? "✓" : "⎘"}
+            </Text>
+          </Pressable>
+        )}
         <Text style={{ color: "#6B7280", fontSize: 12, textAlign: "center" }}>
           Valid through:{" "}
           {formatValidityWindow(voucherValidFrom, voucherValidTo)}

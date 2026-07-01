@@ -4,6 +4,7 @@ import {
   supportsKind,
   deriveManualIdempotencyKey,
   deriveSquareIdempotencyKey,
+  deriveRedemptionUrl,
   validateManualBurn,
   type DiscountKind,
 } from "../provider-capabilities.js";
@@ -141,6 +142,38 @@ function makeVoucher(overrides: Partial<Parameters<typeof validateManualBurn>[0]
     ...overrides,
   };
 }
+
+describe("deriveRedemptionUrl", () => {
+  test("encodes voucherId and claimId into the URL", () => {
+    const url = deriveRedemptionUrl(
+      "https://business.example.com",
+      "voucher-abc",
+      "claim-xyz",
+    );
+    expect(url).toBe(
+      "https://business.example.com/redeem?v=voucher-abc&c=claim-xyz",
+    );
+  });
+
+  test("URL-encodes IDs with special characters", () => {
+    const url = deriveRedemptionUrl(
+      "https://business.example.com",
+      "voucher/abc",
+      "claim&xyz",
+    );
+    expect(url).toContain("voucher%2Fabc");
+    expect(url).toContain("claim%26xyz");
+  });
+
+  test("uses the base URL as provided", () => {
+    const url = deriveRedemptionUrl(
+      "http://localhost:3000",
+      "v-1",
+      "c-1",
+    );
+    expect(url.startsWith("http://localhost:3000/redeem")).toBe(true);
+  });
+});
 
 describe("validateManualBurn", () => {
   test("accepts a valid burn", () => {
