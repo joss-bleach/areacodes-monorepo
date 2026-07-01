@@ -36,6 +36,15 @@ export function TicketStub({
       ? deriveRedemptionUrl(BUSINESS_URL, voucherId, claimId)
       : voucherCode;
 
+  let qrCaption: string;
+  if (isRedeemed) {
+    qrCaption = "This voucher has been redeemed";
+  } else if (provider === "manual") {
+    qrCaption = "Show the QR to staff to redeem your voucher";
+  } else {
+    qrCaption = "Show the QR to the merchant staff to use your voucher";
+  }
+
   async function handleCopy() {
     await Clipboard.setStringAsync(voucherCode);
     setCopied(true);
@@ -77,11 +86,7 @@ export function TicketStub({
           )}
         </View>
         <Text style={{ color: "#6B7280", fontSize: 12, textAlign: "center", marginTop: 16, lineHeight: 18 }}>
-          {isRedeemed
-            ? "This voucher has been redeemed"
-            : provider === "manual"
-              ? "Show the QR to staff to redeem your voucher"
-              : "Show the QR to the merchant staff to use your voucher"}
+          {qrCaption}
         </Text>
       </View>
 

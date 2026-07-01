@@ -223,6 +223,8 @@ export default function WalletScreen() {
                     voucherValidTo: reveal.expiresAt,
                     activeCode: reveal.voucherCode,
                     codeExpiresAt: reveal.expiresAt,
+                    provider: null,
+                    isRedeemed: false,
                   })
                 }
               />

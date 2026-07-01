@@ -19,13 +19,15 @@ const PIN_STORAGE_KEY = (businessId: string) =>
 
 type PageState = "loading" | "unlock" | "confirm" | "redeemed" | "error";
 
-function deriveOfferText(discount: {
+type Discount = {
   kind: string;
   value?: number;
   currency?: string;
   itemName?: string;
   customText?: string;
-}): string {
+};
+
+function deriveOfferText(discount: Discount): string {
   const copy = deriveVoucherCopy(discount as Parameters<typeof deriveVoucherCopy>[0]);
   return `Apply: ${copy.title}`;
 }
@@ -167,13 +169,7 @@ function ConfirmView({
   businessName: string;
   voucherTitle: string;
   voucherDescription: string;
-  discount: {
-    kind: string;
-    value?: number;
-    currency?: string;
-    itemName?: string;
-    customText?: string;
-  };
+  discount: Discount;
   voucherTerms?: string;
   onRedeem: () => Promise<void>;
 }) {
@@ -264,13 +260,7 @@ function RedeemedView({
 }: {
   businessName: string;
   voucherTitle: string;
-  discount: {
-    kind: string;
-    value?: number;
-    currency?: string;
-    itemName?: string;
-    customText?: string;
-  };
+  discount: Discount;
 }) {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
@@ -317,7 +307,6 @@ function RedeemPage() {
   );
 
   const [pageState, setPageState] = useState<PageState>("loading");
-  const [isUnlocked, setIsUnlocked] = useState(false);
 
   useEffect(() => {
     if (pageData === undefined) return;
@@ -339,13 +328,7 @@ function RedeemPage() {
     const unlocked =
       pageData.pinSetAt !== null && stored === String(pageData.pinSetAt);
 
-    if (unlocked) {
-      setIsUnlocked(true);
-      setPageState("confirm");
-    } else {
-      setIsUnlocked(false);
-      setPageState("unlock");
-    }
+    setPageState(unlocked ? "confirm" : "unlock");
   }, [pageData]);
 
   if (!voucherId || !claimId) {
@@ -397,10 +380,7 @@ function RedeemPage() {
         businessName={businessName}
         businessId={businessId as Id<"businesses">}
         pinSetAt={pinSetAt}
-        onUnlocked={() => {
-          setIsUnlocked(true);
-          setPageState("confirm");
-        }}
+        onUnlocked={() => setPageState("confirm")}
       />
     );
   }
