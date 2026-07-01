@@ -29,9 +29,14 @@ interface VoucherReviewStepProps {
   form: UseFormReturn<VoucherFormValues>;
 }
 
+const PROVIDER_LABELS: Record<VoucherFormValues["provider"], string> = {
+  square: "Square",
+  manual: "Manual",
+};
+
 export const VoucherReviewStep = ({ form }: VoucherReviewStepProps) => {
   const values = form.getValues();
-  const { discount, title, description, voucherValidFrom, voucherValidTo, voucherTerms } = values;
+  const { provider, discount, title, description, voucherValidFrom, voucherValidTo, voucherTerms } = values;
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,7 +48,7 @@ export const VoucherReviewStep = ({ form }: VoucherReviewStepProps) => {
       </div>
 
       <div className="border border-border">
-        <ReviewRow label="Provider" value="Manual" />
+        <ReviewRow label="Provider" value={PROVIDER_LABELS[provider]} />
         <Separator />
         <ReviewRow label="Discount type" value={KIND_LABELS[discount.kind]} />
         <Separator />
@@ -71,7 +76,9 @@ export const VoucherReviewStep = ({ form }: VoucherReviewStepProps) => {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Manual vouchers are immediately visible to customers once created.
+        {provider === "square"
+          ? "Square vouchers are visible to customers once published to your Square catalog."
+          : "Manual vouchers are immediately visible to customers once created."}
       </p>
     </div>
   );

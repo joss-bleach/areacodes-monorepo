@@ -35,14 +35,22 @@ import { VoucherDateRange } from "~/components/voucher/voucher-date-range";
 import { VoucherDiscountKindStep } from "~/components/form-steps/voucher-discount-kind-step";
 import { VoucherDetailsStep } from "~/components/form-steps/voucher-details-step";
 import { VoucherReviewStep } from "~/components/form-steps/voucher-review-step";
+import { VoucherProviderStep } from "~/components/form-steps/voucher-provider-step";
 import { toMinorUnits, toMajorUnits } from "~/lib/discount-units";
 
-// ── Wizard steps (Provider is skipped: Manual auto-selected as only option) ───
+// ── Wizard steps ──────────────────────────────────────────────────────────────
+// Provider step is shown only when Square is connected (capability-gated).
+// When only Manual is available, provider is auto-selected and step is skipped.
 
-const WIZARD_STEPS = ["discount", "details", "review"] as const;
-type WizardStep = (typeof WIZARD_STEPS)[number];
+const WIZARD_STEPS_WITH_PROVIDER = ["provider", "discount", "details", "review"] as const;
+const WIZARD_STEPS_MANUAL_ONLY = ["discount", "details", "review"] as const;
+
+type WizardStep =
+  | (typeof WIZARD_STEPS_WITH_PROVIDER)[number]
+  | (typeof WIZARD_STEPS_MANUAL_ONLY)[number];
 
 const STEP_LABELS: Record<WizardStep, string> = {
+  provider: "Provider",
   discount: "Discount",
   details: "Details",
   review: "Review",
@@ -52,10 +60,15 @@ const STEP_LABELS: Record<WizardStep, string> = {
 
 interface CreateWizardProps {
   businessId: Id<"businesses">;
+  hasSquareConnection: boolean;
   onSuccess: () => void;
 }
 
-const CreateWizard = ({ businessId, onSuccess }: CreateWizardProps) => {
+const CreateWizard = ({ businessId, hasSquareConnection, onSuccess }: CreateWizardProps) => {
+  const WIZARD_STEPS = hasSquareConnection
+    ? WIZARD_STEPS_WITH_PROVIDER
+    : WIZARD_STEPS_MANUAL_ONLY;
+
   const [currentStep, setCurrentStep] = useState<WizardStep>(WIZARD_STEPS[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createVoucher = useMutation(api.functions.vouchers.createVoucher);
@@ -74,11 +87,14 @@ const CreateWizard = ({ businessId, onSuccess }: CreateWizardProps) => {
     mode: "onBlur",
   });
 
-  const currentIndex = WIZARD_STEPS.indexOf(currentStep);
+  const currentIndex = WIZARD_STEPS.indexOf(currentStep as any);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === WIZARD_STEPS.length - 1;
 
   const validateStep = (step: WizardStep): Promise<boolean> => {
+    if (step === "provider") {
+      return form.trigger("provider");
+    }
     if (step === "discount") {
       return form.trigger("discount");
     }
@@ -124,7 +140,11 @@ const CreateWizard = ({ businessId, onSuccess }: CreateWizardProps) => {
         voucherValidFrom: data.voucherValidFrom!.getTime(),
         voucherValidTo: data.voucherValidTo!.getTime(),
       });
-      toast.success("Voucher created");
+      toast.success(
+        data.provider === "square"
+          ? "Voucher created — publishing to Square…"
+          : "Voucher created",
+      );
       onSuccess();
     } catch {
       toast.error("Failed to create voucher");
@@ -134,6 +154,8 @@ const CreateWizard = ({ businessId, onSuccess }: CreateWizardProps) => {
 
   const renderStep = () => {
     switch (currentStep) {
+      case "provider":
+        return <VoucherProviderStep form={form} />;
       case "discount":
         return <VoucherDiscountKindStep form={form} />;
       case "details":
@@ -326,6 +348,15 @@ export const NewVoucherModal = () => {
     slug ? { slug } : "skip"
   );
 
+  const posConnections = useQuery(
+    api.functions.posConnections.getPosConnections,
+    business?._id ? { businessId: business._id as Id<"businesses"> } : "skip"
+  );
+
+  const hasSquareConnection = (posConnections ?? []).some(
+    (c) => c.provider === "square" && c.status === "connected"
+  );
+
   const handleSuccess = () => {
     setIsOpen(false);
     setEditVoucherId(null);
@@ -356,6 +387,7 @@ export const NewVoucherModal = () => {
           <CreateWizard
             key={isOpen ? "open" : "closed"}
             businessId={business._id as Id<"businesses">}
+            hasSquareConnection={hasSquareConnection}
             onSuccess={handleSuccess}
           />
         ) : null}

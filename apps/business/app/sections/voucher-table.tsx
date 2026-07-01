@@ -36,6 +36,8 @@ import { useEditVoucher } from "~/hooks/use-edit-voucher";
 import { useAddVoucher } from "~/hooks/use-add-voucher";
 import { toast } from "sonner";
 
+type ProvisioningStatus = "not_required" | "pending" | "provisioned" | "failed";
+
 type ConvexVoucher = {
   _id: Id<"vouchers">;
   _creationTime: number;
@@ -43,10 +45,41 @@ type ConvexVoucher = {
   businessId: Id<"businesses">;
   title: string;
   description: string;
+  provider: "square" | "manual";
+  provisioning: { status: ProvisioningStatus };
   voucherTerms?: string;
   voucherValidFrom: number;
   voucherValidTo: number;
   deletedAt?: number;
+};
+
+const ProvisioningBadge = ({ voucher }: { voucher: ConvexVoucher }) => {
+  if (voucher.provider !== "square") return null;
+
+  const { status } = voucher.provisioning;
+
+  if (status === "provisioned") {
+    return (
+      <Badge variant="outline" className="text-xs border-black text-black">
+        Live
+      </Badge>
+    );
+  }
+  if (status === "pending") {
+    return (
+      <Badge variant="secondary" className="text-xs">
+        Publishing
+      </Badge>
+    );
+  }
+  if (status === "failed") {
+    return (
+      <Badge variant="destructive" className="text-xs">
+        Needs attention
+      </Badge>
+    );
+  }
+  return null;
 };
 
 
@@ -192,15 +225,18 @@ export const VoucherTable = () => {
                       {new Date(voucher.voucherValidTo).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          status === "active" || status === "expiring"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {statusLabel[status]}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            status === "active" || status === "expiring"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {statusLabel[status]}
+                        </Badge>
+                        <ProvisioningBadge voucher={voucher as ConvexVoucher} />
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <VoucherActionsDropdown

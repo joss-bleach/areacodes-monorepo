@@ -10,4 +10,11 @@ crons.daily(
   {},
 );
 
+crons.interval(
+  "retry pending and failed Square provisioning",
+  { minutes: 15 },
+  internal.functions.squareProvisioner.retryPendingAndFailed,
+  {},
+);
+
 export default crons;

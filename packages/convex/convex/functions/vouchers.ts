@@ -179,6 +179,14 @@ export const createVoucher = mutation({
           voucherTitle: voucher.title,
         },
       );
+
+      if (voucher.provider === "square") {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.functions.squareProvisioner.provisionVoucher,
+          { voucherId: voucher._id },
+        );
+      }
     }
 
     return voucher;

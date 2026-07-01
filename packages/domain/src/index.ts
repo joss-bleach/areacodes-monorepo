@@ -103,3 +103,14 @@ export {
   type IGitHubPort,
   type FeedbackIssue,
 } from "./feedback-service.js";
+export {
+  mapDiscountToCatalogObject,
+  SquareProvisioner,
+  ProvisionError,
+  AuthError,
+  RateLimited,
+  type ISquareProvisioner,
+  type SquareCatalogDiscountRequest,
+  type SquareCatalogDiscountData,
+  type SquareCatalogObject,
+} from "./square-provisioner.js";
