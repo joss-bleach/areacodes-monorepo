@@ -22,7 +22,7 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: BUSINESS_URL,
       },
-      testMatch: ["**/auth.spec.ts", "**/business-crud.spec.ts", "**/magic-link.spec.ts", "**/voucher-create.spec.ts"],
+      testMatch: ["**/auth.spec.ts", "**/business-crud.spec.ts", "**/magic-link.spec.ts", "**/voucher-create.spec.ts", "**/staff-redemption.spec.ts"],
     },
     {
       name: "map-chromium",

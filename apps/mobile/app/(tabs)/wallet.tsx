@@ -30,6 +30,8 @@ type WalletEntry = {
   businessName: string | null;
   businessLogoUrl: string | null;
   voucherValidFrom: number | null;
+  provider: string | null;
+  isRedeemed: boolean;
   voucher: {
     _id: string;
     title: string;
@@ -51,6 +53,8 @@ function walletEntryToRevealEntry(entry: WalletEntry): RevealEntry {
     voucherValidTo: entry.voucher?.voucherValidTo ?? 0,
     activeCode: entry.activeCode,
     codeExpiresAt: entry.codeExpiresAt,
+    provider: entry.provider,
+    isRedeemed: entry.isRedeemed,
   };
 }
 
@@ -98,7 +102,8 @@ function VoucherCard({ entry, onPress }: { entry: WalletEntry; onPress: () => vo
     <Pressable
       onPress={onPress}
       className="bg-zinc-900 p-4 mb-3 active:opacity-70"
-      accessibilityLabel={`${entry.voucher?.title ?? "Voucher"} from ${entry.businessName ?? "business"}${expiryLabel ? `, ${expiryLabel}` : ""}`}
+      style={{ opacity: entry.isRedeemed ? 0.6 : 1 }}
+      accessibilityLabel={`${entry.voucher?.title ?? "Voucher"} from ${entry.businessName ?? "business"}${entry.isRedeemed ? ", Redeemed" : expiryLabel ? `, ${expiryLabel}` : ""}`}
       accessibilityRole="button"
       accessibilityHint="Double tap to view voucher"
     >
@@ -122,7 +127,9 @@ function VoucherCard({ entry, onPress }: { entry: WalletEntry; onPress: () => vo
         <Text className="text-white font-poppins-bold text-base mb-0.5">
           {entry.voucher?.title ?? "Voucher"}
         </Text>
-        {expiryLabel ? (
+        {entry.isRedeemed ? (
+          <Text className="text-gray-400 text-xs">Redeemed</Text>
+        ) : expiryLabel ? (
           <Text className="text-gray-400 text-xs">{expiryLabel}</Text>
         ) : null}
       </View>
@@ -216,6 +223,8 @@ export default function WalletScreen() {
                     voucherValidTo: reveal.expiresAt,
                     activeCode: reveal.voucherCode,
                     codeExpiresAt: reveal.expiresAt,
+                    provider: null,
+                    isRedeemed: false,
                   })
                 }
               />
