@@ -9,13 +9,7 @@ import { internal } from "../_generated/api";
 import type { QueryCtx, MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { encryptData, decryptData } from "../lib/aes";
-
-const SQUARE_SCOPES = [
-  "ITEMS_READ",
-  "ITEMS_WRITE",
-  "ORDERS_READ",
-  "MERCHANT_PROFILE_READ",
-];
+import { SQUARE_SCOPES } from "../lib/square";
 
 async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   const identity = await ctx.auth.getUserIdentity();

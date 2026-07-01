@@ -2,13 +2,8 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { authComponent, createAuth } from "./betterAuth/auth";
-
-const SQUARE_SCOPES = [
-  "ITEMS_READ",
-  "ITEMS_WRITE",
-  "ORDERS_READ",
-  "MERCHANT_PROFILE_READ",
-].join(" ");
+import { SQUARE_SCOPES } from "./lib/square";
+import type { Id } from "./_generated/dataModel";
 
 const http = httpRouter();
 
@@ -124,7 +119,7 @@ http.route({
 
     const authorizeUrl = new URL(`${squareBaseUrl}/oauth2/authorize`);
     authorizeUrl.searchParams.set("client_id", appId);
-    authorizeUrl.searchParams.set("scope", SQUARE_SCOPES);
+    authorizeUrl.searchParams.set("scope", SQUARE_SCOPES.join(" "));
     authorizeUrl.searchParams.set("redirect_uri", redirectUri);
     authorizeUrl.searchParams.set("state", state);
     authorizeUrl.searchParams.set("session", "false");
@@ -168,7 +163,7 @@ http.route({
     try {
       await ctx.runAction(
         internal.functions.posConnections.completeSquareConnect,
-        { businessId: businessId as never, code },
+        { businessId: businessId as Id<"businesses">, code },
       );
     } catch {
       return Response.redirect(

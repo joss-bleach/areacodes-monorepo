@@ -22,6 +22,41 @@ export const Route = createFileRoute("/_authenticated/b/$slug/pos")({
 
 const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL as string;
 
+type SquareStatus = "connected" | "expired" | "revoked";
+
+function SquareStatusBadge({ status }: { status: SquareStatus | undefined }) {
+  if (status === "connected") {
+    return (
+      <Badge
+        variant="default"
+        className="bg-green-100 text-green-800 border-green-200"
+      >
+        <CheckCircle className="h-3 w-3 mr-1" />
+        Connected
+      </Badge>
+    );
+  }
+
+  if (status === "expired" || status === "revoked") {
+    return (
+      <Badge
+        variant="default"
+        className="bg-amber-100 text-amber-800 border-amber-200"
+      >
+        <AlertCircle className="h-3 w-3 mr-1" />
+        {status === "expired" ? "Expired" : "Disconnected"}
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge variant="secondary">
+      <XCircle className="h-3 w-3 mr-1" />
+      Not connected
+    </Badge>
+  );
+}
+
 function PosSettingsPage() {
   const { slug } = useParams({ strict: false }) as { slug: string };
   const routerState = useRouterState();
@@ -115,30 +150,7 @@ function PosSettingsPage() {
                     <div>
                       <CardTitle className="text-base font-semibold flex items-center gap-2">
                         Square
-                        {isConnected ? (
-                          <Badge
-                            variant="default"
-                            className="bg-green-100 text-green-800 border-green-200"
-                          >
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Connected
-                          </Badge>
-                        ) : needsReauth ? (
-                          <Badge
-                            variant="default"
-                            className="bg-amber-100 text-amber-800 border-amber-200"
-                          >
-                            <AlertCircle className="h-3 w-3 mr-1" />
-                            {squareConnection?.status === "expired"
-                              ? "Expired"
-                              : "Disconnected"}
-                          </Badge>
-                        ) : (
-                          <Badge variant="secondary">
-                            <XCircle className="h-3 w-3 mr-1" />
-                            Not connected
-                          </Badge>
-                        )}
+                        <SquareStatusBadge status={squareConnection?.status} />
                       </CardTitle>
                       <CardDescription className="mt-1">
                         Connect your Square account to sync redemptions via
