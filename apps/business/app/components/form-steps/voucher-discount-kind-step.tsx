@@ -51,6 +51,7 @@ export const VoucherDiscountKindStep = ({ form }: VoucherDiscountKindStepProps) 
                 key={option.value}
                 type="button"
                 onClick={() => {
+                  if (field.value === option.value) return;
                   field.onChange(option.value);
                   // Clear kind-specific fields when switching
                   form.setValue("discount.value", undefined);
