@@ -5,12 +5,40 @@ import {
 } from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
+import type { QueryCtx, MutationCtx } from "../_generated/server";
 import type { Id } from "../_generated/dataModel";
 import { mapSquareOrderToRedemptions } from "@areacodes/domain";
 import { decryptConnectionTokens } from "./posConnections";
 
 const SQUARE_BASE_URL =
   process.env.SQUARE_BASE_URL ?? "https://connect.squareupsandbox.com";
+
+const SQUARE_VERSION = "2024-01-17";
+
+function squareAuthHeaders(accessToken: string): Record<string, string> {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+    "Square-Version": SQUARE_VERSION,
+  };
+}
+
+// The live, provisioned Square vouchers for a business — the set whose catalog
+// discount IDs we reconcile Square orders against.
+function querySquareVouchers(
+  ctx: QueryCtx | MutationCtx,
+  businessId: Id<"businesses">,
+) {
+  return ctx.db
+    .query("vouchers")
+    .withIndex("by_business", (q) => q.eq("businessId", businessId))
+    .filter((q) =>
+      q.and(
+        q.eq(q.field("provider"), "square"),
+        q.eq(q.field("deletedAt"), undefined),
+      ),
+    )
+    .collect();
+}
 
 // ── Internal queries ───────────────────────────────────────────────────────────
 
@@ -45,16 +73,7 @@ export const getConnectedSquareConnections = internalQuery({
 export const getOurCatalogIds = internalQuery({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, { businessId }) => {
-    const vouchers = await ctx.db
-      .query("vouchers")
-      .withIndex("by_business", (q) => q.eq("businessId", businessId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("provider"), "square"),
-          q.eq(q.field("deletedAt"), undefined),
-        ),
-      )
-      .collect();
+    const vouchers = await querySquareVouchers(ctx, businessId);
     return vouchers
       .map((v) => v.provisioning.externalId)
       .filter((id): id is string => id !== undefined);
@@ -79,16 +98,7 @@ export const upsertSquareRedemptionEvents = internalMutation({
   },
   handler: async (ctx, { businessId, events, recordedAt }) => {
     // Build a catalog ID → voucherId map for this business once (not per-event)
-    const vouchers = await ctx.db
-      .query("vouchers")
-      .withIndex("by_business", (q) => q.eq("businessId", businessId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("provider"), "square"),
-          q.eq(q.field("deletedAt"), undefined),
-        ),
-      )
-      .collect();
+    const vouchers = await querySquareVouchers(ctx, businessId);
 
     const catalogIdToVoucherId = new Map<string, Id<"vouchers">>(
       vouchers
@@ -161,10 +171,7 @@ export const handleSquareWebhookOrder = internalAction({
     let order: unknown;
     try {
       const res = await fetch(`${SQUARE_BASE_URL}/v2/orders/${orderId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Square-Version": "2024-01-17",
-        },
+        headers: squareAuthHeaders(accessToken),
       });
 
       if (res.status === 401) {
@@ -231,10 +238,7 @@ export const pollSquareOrders = internalAction({
       let locationIds: string[];
       try {
         const locRes = await fetch(`${SQUARE_BASE_URL}/v2/locations`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Square-Version": "2024-01-17",
-          },
+          headers: squareAuthHeaders(accessToken),
         });
 
         if (locRes.status === 401) {
@@ -264,9 +268,8 @@ export const pollSquareOrders = internalAction({
         const res = await fetch(`${SQUARE_BASE_URL}/v2/orders/search`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            ...squareAuthHeaders(accessToken),
             "Content-Type": "application/json",
-            "Square-Version": "2024-01-17",
           },
           body: JSON.stringify({
             location_ids: locationIds,
