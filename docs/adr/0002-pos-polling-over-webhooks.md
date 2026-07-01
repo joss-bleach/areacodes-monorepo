@@ -1,7 +1,13 @@
 # ADR 0002: POS redemption verification via polling, not webhooks
 
 ## Status
-Accepted
+Superseded by ADR 0009 / ADR 0010.
+
+Two premises changed. (1) Zettle is no longer a launch provider — Zettle and no-POS merchants route to
+the Manual first-party path (ADR 0011), so we no longer need a lowest-common-denominator polling model
+to accommodate Zettle. (2) Launch is Square + Manual only, and for Square we use **webhook + poll
+backstop** (both), not poll-only: webhooks are the fast path, polling reconciles missed/out-of-order/
+duplicate deliveries, converging via a deterministic idempotency key. See ADR 0009 and ADR 0010.
 
 ## Context
 To verify Redemptions we need to know when a Voucher Code was used at a business's POS. The two standard patterns are: webhooks (POS calls us in real-time on each transaction) or polling (we query the POS transaction history on a schedule).

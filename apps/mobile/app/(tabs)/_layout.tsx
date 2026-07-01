@@ -1,4 +1,5 @@
 import { Tabs } from "expo-router";
+import { COLORS } from "~/constants/colors";
 import { MapTabIcon } from "~/components/icons/MapTabIcon";
 import { WalletTabIcon } from "~/components/icons/WalletTabIcon";
 import { AccountTabIcon } from "~/components/icons/AccountTabIcon";
@@ -8,9 +9,9 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: { backgroundColor: "#000000", borderTopWidth: 0 },
-        tabBarActiveTintColor: "#ffffff",
-        tabBarInactiveTintColor: "#666666",
+        tabBarStyle: { backgroundColor: COLORS.black, borderTopWidth: 0 },
+        tabBarActiveTintColor: COLORS.white,
+        tabBarInactiveTintColor: COLORS.dimInk,
       }}
     >
       <Tabs.Screen

@@ -18,16 +18,23 @@ export function NearbyBusinessCard({
   onPress,
 }: NearbyBusinessCardProps) {
   return (
-    <Pressable onPress={onPress} className="mr-3 w-44">
-      <View className="w-full aspect-square bg-gray-800 rounded-lg overflow-hidden mb-2">
+    <Pressable
+      onPress={onPress}
+      className="mr-3 w-44"
+      accessibilityLabel={`${name} - ${voucherTitle} - ${industryName}, ${distanceLabel} away`}
+      accessibilityRole="button"
+      accessibilityHint="Double tap to view business details"
+    >
+      <View className="w-full aspect-square bg-gray-800 overflow-hidden mb-2">
         {logoUrl ? (
           <Image
             source={{ uri: logoUrl }}
             className="w-full h-full"
             resizeMode="cover"
+            accessibilityElementsHidden
           />
         ) : (
-          <View className="w-full h-full bg-gray-700" />
+          <View className="w-full h-full bg-gray-700" accessibilityElementsHidden />
         )}
       </View>
       <Text
@@ -40,7 +47,7 @@ export function NearbyBusinessCard({
         {voucherTitle}
       </Text>
       <Text
-        className="text-gray-500 text-sm uppercase tracking-wide"
+        className="text-gray-400 text-sm uppercase tracking-wide"
         numberOfLines={1}
       >
         {industryName} · {distanceLabel}

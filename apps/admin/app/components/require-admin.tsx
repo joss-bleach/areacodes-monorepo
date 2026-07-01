@@ -1,17 +1,27 @@
+import { useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { authClient } from "~/lib/auth-client";
 
 export const RequireAdmin = ({ children }: { children: React.ReactNode }) => {
   const { data: session, isPending } = authClient.useSession();
+  const navigate = useNavigate();
 
-  if (isPending) {
+  const isAuthenticated = !!session;
+  const isAdmin = (session?.user as { role?: string })?.role === "admin";
+
+  useEffect(() => {
+    if (!isPending && !isAuthenticated) {
+      navigate({ to: "/sign-in" });
+    }
+  }, [isPending, isAuthenticated, navigate]);
+
+  if (isPending || !isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
       </div>
     );
   }
-
-  const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   if (!isAdmin) {
     return (

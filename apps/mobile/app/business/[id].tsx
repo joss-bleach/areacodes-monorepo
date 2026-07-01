@@ -10,6 +10,7 @@ import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
+import { COLORS } from "../constants/colors";
 import { authClient } from "../lib/auth-client";
 import { isVoucherClaimable, formatValidityWindow } from "../lib/voucher-utils";
 import { requestPushPermissionAndRegister } from "../lib/use-push-notifications";
@@ -23,8 +24,8 @@ import { useAuthSheet } from "../lib/auth-sheet-context";
 
 const BASE_HEADER_OPTIONS = {
   headerShown: true,
-  headerStyle: { backgroundColor: "#000" },
-  headerTintColor: "#fff",
+  headerStyle: { backgroundColor: COLORS.black },
+  headerTintColor: COLORS.white,
 } as const;
 
 type Voucher = {
@@ -76,16 +77,21 @@ function VoucherCard({
   }
 
   return (
-    <View className="bg-gray-900 border border-gray-700 rounded-xl p-4 mb-4">
+    <View className="bg-gray-900 border border-gray-700 p-4 mb-4">
       <Text className="text-white font-poppins-semibold text-base mb-1">
         {voucher.title}
       </Text>
-      <Text className="text-gray-500 text-xs mb-4">
+      <Text className="text-gray-400 text-xs mb-4">
         Valid: {formatValidityWindow(voucher.voucherValidFrom, voucher.voucherValidTo)}
       </Text>
 
       {claimError ? (
-        <Text className="text-red-400 text-xs mb-2">{claimError}</Text>
+        <Text
+          className="text-red-400 text-xs mb-2"
+          accessibilityLiveRegion="polite"
+        >
+          {claimError}
+        </Text>
       ) : null}
 
       {claimable && !alreadyClaimed && (
@@ -93,9 +99,12 @@ function VoucherCard({
           onPress={handleClaim}
           disabled={claiming}
           className="bg-white px-4 py-3 items-center disabled:opacity-50"
+          accessibilityLabel={`Claim ${voucher.title}`}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: claiming }}
         >
           {claiming ? (
-            <ActivityIndicator color="#000000" />
+            <ActivityIndicator color={COLORS.black} />
           ) : (
             <Text className="text-black font-poppins-semibold text-sm">Claim</Text>
           )}
@@ -104,7 +113,7 @@ function VoucherCard({
 
       {claimable && alreadyClaimed && (
         <View className="bg-gray-800 px-4 py-3 items-center">
-          <Text className="text-green-400 font-poppins-semibold text-sm">
+          <Text className="text-white font-poppins-semibold text-sm">
             Claimed ✓
           </Text>
         </View>
@@ -112,7 +121,7 @@ function VoucherCard({
 
       {!claimable && (
         <View className="bg-gray-800 px-4 py-3 items-center">
-          <Text className="text-gray-500 text-sm">Expired</Text>
+          <Text className="text-gray-400 text-sm">Expired</Text>
         </View>
       )}
     </View>
@@ -161,18 +170,26 @@ function FollowButton({ businessId }: { businessId: Id<"businesses"> }) {
   return (
     <View className="mb-8">
       {error ? (
-        <Text className="text-red-400 text-xs mb-2">{error}</Text>
+        <Text
+          className="text-red-400 text-xs mb-2"
+          accessibilityLiveRegion="polite"
+        >
+          {error}
+        </Text>
       ) : null}
       {isFollowing ? (
         <Pressable
           onPress={handleUnfollow}
           disabled={loading}
           className="border border-gray-600 px-4 py-3 items-center disabled:opacity-50"
+          accessibilityLabel="Unfollow this business"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: loading }}
         >
           {loading ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={COLORS.white} />
           ) : (
-            <Text className="text-gray-300 font-poppins-semibold text-sm">Following ✓</Text>
+            <Text className="text-white font-poppins-semibold text-sm">Following ✓</Text>
           )}
         </Pressable>
       ) : (
@@ -180,9 +197,12 @@ function FollowButton({ businessId }: { businessId: Id<"businesses"> }) {
           onPress={handleFollow}
           disabled={loading}
           className="bg-white px-4 py-3 items-center disabled:opacity-50"
+          accessibilityLabel="Follow this business for voucher updates"
+          accessibilityRole="button"
+          accessibilityState={{ disabled: loading }}
         >
           {loading ? (
-            <ActivityIndicator color="#000000" />
+            <ActivityIndicator color={COLORS.black} />
           ) : (
             <Text className="text-black font-poppins-semibold text-sm">Follow</Text>
           )}
@@ -209,7 +229,7 @@ export default function BusinessScreen() {
   if (business === undefined) {
     return (
       <View className="flex-1 bg-black items-center justify-center">
-        <ActivityIndicator color="#ffffff" />
+        <ActivityIndicator color={COLORS.white} />
       </View>
     );
   }
@@ -222,7 +242,12 @@ export default function BusinessScreen() {
           <Text className="text-white text-lg font-poppins-semibold">
             Business not found
           </Text>
-          <Pressable onPress={() => router.back()} className="mt-4">
+          <Pressable
+            onPress={() => router.back()}
+            className="mt-4"
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
             <Text className="text-gray-400 text-sm underline">Go back</Text>
           </Pressable>
         </View>
@@ -253,7 +278,7 @@ export default function BusinessScreen() {
           </Text>
         )}
 
-        <Text className="text-gray-300 text-sm leading-relaxed mb-6">
+        <Text className="text-gray-400 text-sm leading-relaxed mb-6">
           {business.description}
         </Text>
 
@@ -264,7 +289,7 @@ export default function BusinessScreen() {
         </Text>
 
         {business.vouchers.length === 0 ? (
-          <Text className="text-gray-500 text-sm">
+          <Text className="text-gray-400 text-sm">
             No active vouchers right now.
           </Text>
         ) : (

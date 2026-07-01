@@ -15,7 +15,10 @@
     "mobile:dev": "bash scripts/dev-mobile.sh",
     "dev:business": "bash scripts/dev-web.sh business 3000",
     "dev:admin": "bash scripts/dev-web.sh admin 3002",
-    "dev:map": "bash scripts/dev-web.sh map 3001"
+    "dev:map": "bash scripts/dev-web.sh map 3001",
+    "setup-env": "bash scripts/setup-env.sh",
+    "add-admin": "bun scripts/add-admin.ts",
+    "sandcastle:build": "npx sandcastle docker build-image"
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",

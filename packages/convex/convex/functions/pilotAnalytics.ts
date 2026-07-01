@@ -96,3 +96,56 @@ export const getVoucherStats = query({
     );
   },
 });
+
+export const getRedemptionsByDay = query({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, { businessId }) => {
+    const now = Date.now();
+    const thirtyDaysAgo = now - 30 * 24 * 60 * 60 * 1000;
+
+    const vouchers = await ctx.db
+      .query("vouchers")
+      .withIndex("by_business", (q) => q.eq("businessId", businessId))
+      .filter((q) => q.eq(q.field("deletedAt"), undefined))
+      .collect();
+
+    const countsByDay = new Map<string, number>();
+
+    for (const voucher of vouchers) {
+      const claims = await ctx.db
+        .query("claims")
+        .filter((q) => q.eq(q.field("voucherId"), voucher._id))
+        .collect();
+
+      for (const claim of claims) {
+        const reveals = await ctx.db
+          .query("reveals")
+          .withIndex("by_claim", (q) => q.eq("claimId", claim._id))
+          .collect();
+
+        for (const reveal of reveals) {
+          const ts = reveal.revealedAt;
+          if (ts < thirtyDaysAgo || ts > now) continue;
+          const date = new Date(ts);
+          const label = date.toLocaleDateString("en-GB", {
+            month: "short",
+            day: "numeric",
+          });
+          countsByDay.set(label, (countsByDay.get(label) ?? 0) + 1);
+        }
+      }
+    }
+
+    const result: { date: string; count: number }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date(now - i * 24 * 60 * 60 * 1000);
+      const label = date.toLocaleDateString("en-GB", {
+        month: "short",
+        day: "numeric",
+      });
+      result.push({ date: label, count: countsByDay.get(label) ?? 0 });
+    }
+
+    return result;
+  },
+});

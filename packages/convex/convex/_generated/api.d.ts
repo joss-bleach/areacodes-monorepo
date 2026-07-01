@@ -12,14 +12,14 @@ import type * as crons from "../crons.js";
 import type * as functions_admin from "../functions/admin.js";
 import type * as functions_adminAnalytics from "../functions/adminAnalytics.js";
 import type * as functions_businesses from "../functions/businesses.js";
-import type * as functions_feedback from "../functions/feedback.js";
-import type * as functions_pilot from "../functions/pilot.js";
-import type * as functions_pilotAnalytics from "../functions/pilotAnalytics.js";
 import type * as functions_claims from "../functions/claims.js";
 import type * as functions_explore from "../functions/explore.js";
+import type * as functions_feedback from "../functions/feedback.js";
 import type * as functions_follows from "../functions/follows.js";
 import type * as functions_industries from "../functions/industries.js";
 import type * as functions_migrations from "../functions/migrations.js";
+import type * as functions_pilot from "../functions/pilot.js";
+import type * as functions_pilotAnalytics from "../functions/pilotAnalytics.js";
 import type * as functions_posConnections from "../functions/posConnections.js";
 import type * as functions_pushTokens from "../functions/pushTokens.js";
 import type * as functions_seed from "../functions/seed.js";
@@ -42,14 +42,14 @@ declare const fullApi: ApiFromModules<{
   "functions/admin": typeof functions_admin;
   "functions/adminAnalytics": typeof functions_adminAnalytics;
   "functions/businesses": typeof functions_businesses;
-  "functions/feedback": typeof functions_feedback;
-  "functions/pilot": typeof functions_pilot;
-  "functions/pilotAnalytics": typeof functions_pilotAnalytics;
   "functions/claims": typeof functions_claims;
   "functions/explore": typeof functions_explore;
+  "functions/feedback": typeof functions_feedback;
   "functions/follows": typeof functions_follows;
   "functions/industries": typeof functions_industries;
   "functions/migrations": typeof functions_migrations;
+  "functions/pilot": typeof functions_pilot;
+  "functions/pilotAnalytics": typeof functions_pilotAnalytics;
   "functions/posConnections": typeof functions_posConnections;
   "functions/pushTokens": typeof functions_pushTokens;
   "functions/seed": typeof functions_seed;
@@ -98,6 +98,9 @@ export declare const components: {
           input:
             | {
                 data: {
+                  banExpires?: null | number;
+                  banReason?: null | string;
+                  banned?: null | boolean;
                   createdAt: number;
                   email: string;
                   emailVerified: boolean;
@@ -113,6 +116,7 @@ export declare const components: {
                 data: {
                   createdAt: number;
                   expiresAt: number;
+                  impersonatedBy?: null | string;
                   ipAddress?: null | string;
                   token: string;
                   updatedAt: number;
@@ -180,6 +184,9 @@ export declare const components: {
                     | "updatedAt"
                     | "userId"
                     | "role"
+                    | "banned"
+                    | "banReason"
+                    | "banExpires"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -215,6 +222,7 @@ export declare const components: {
                     | "ipAddress"
                     | "userAgent"
                     | "userId"
+                    | "impersonatedBy"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -373,6 +381,9 @@ export declare const components: {
                     | "updatedAt"
                     | "userId"
                     | "role"
+                    | "banned"
+                    | "banReason"
+                    | "banExpires"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -408,6 +419,7 @@ export declare const components: {
                     | "ipAddress"
                     | "userAgent"
                     | "userId"
+                    | "impersonatedBy"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -627,6 +639,9 @@ export declare const components: {
             | {
                 model: "user";
                 update: {
+                  banExpires?: null | number;
+                  banReason?: null | string;
+                  banned?: null | boolean;
                   createdAt?: number;
                   email?: string;
                   emailVerified?: boolean;
@@ -647,6 +662,9 @@ export declare const components: {
                     | "updatedAt"
                     | "userId"
                     | "role"
+                    | "banned"
+                    | "banReason"
+                    | "banExpires"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -675,6 +693,7 @@ export declare const components: {
                 update: {
                   createdAt?: number;
                   expiresAt?: number;
+                  impersonatedBy?: null | string;
                   ipAddress?: null | string;
                   token?: string;
                   updatedAt?: number;
@@ -691,6 +710,7 @@ export declare const components: {
                     | "ipAddress"
                     | "userAgent"
                     | "userId"
+                    | "impersonatedBy"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -866,6 +886,9 @@ export declare const components: {
             | {
                 model: "user";
                 update: {
+                  banExpires?: null | number;
+                  banReason?: null | string;
+                  banned?: null | boolean;
                   createdAt?: number;
                   email?: string;
                   emailVerified?: boolean;
@@ -886,6 +909,9 @@ export declare const components: {
                     | "updatedAt"
                     | "userId"
                     | "role"
+                    | "banned"
+                    | "banReason"
+                    | "banExpires"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:
@@ -914,6 +940,7 @@ export declare const components: {
                 update: {
                   createdAt?: number;
                   expiresAt?: number;
+                  impersonatedBy?: null | string;
                   ipAddress?: null | string;
                   token?: string;
                   updatedAt?: number;
@@ -930,6 +957,7 @@ export declare const components: {
                     | "ipAddress"
                     | "userAgent"
                     | "userId"
+                    | "impersonatedBy"
                     | "_id";
                   mode?: "sensitive" | "insensitive";
                   operator?:

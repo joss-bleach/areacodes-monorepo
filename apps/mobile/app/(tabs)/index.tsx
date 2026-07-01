@@ -6,6 +6,7 @@ import BottomSheet from "@gorhom/bottom-sheet";
 import Svg, { Path } from "react-native-svg";
 import { useQuery } from "convex/react";
 import { api } from "@repo/convex";
+import { COLORS } from "~/constants/colors";
 import { SERVICE_AREA_BOUNDARY, isInServiceArea } from "~/lib/service-area";
 import { haversineDistance } from "~/lib/distance";
 import { NearbyVouchersContent } from "~/components/map/nearby-vouchers-content";
@@ -26,7 +27,7 @@ function BusinessMarker({ selected }: { selected: boolean }) {
     <Svg width={24} height={28} viewBox="0 0 4.02 4.61" opacity={selected ? 1 : 0.4}>
       <Path
         d="M3.43.6h-.01c-.78-.8-2.05-.8-2.83-.01-.39.39-.59.9-.59,1.42s.2,1.03.59,1.42l1.43,1.19,1.42-1.18c.78-.78.78-2.05,0-2.83ZM2.76,2.89c-.19.21-.44.31-.75.31s-.57-.1-.76-.31c-.19-.21-.28-.48-.28-.83s.09-.63.28-.83c.19-.21.44-.31.76-.31s.56.1.75.31c.19.21.28.48.28.83s-.09.62-.28.83Z"
-        fill="#ffffff"
+        fill={COLORS.white}
       />
     </Svg>
   );
@@ -194,6 +195,6 @@ export default function MapScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { ...StyleSheet.absoluteFillObject },
-  sheetBackground: { backgroundColor: "#111111" },
-  handleIndicator: { backgroundColor: "#444444" },
+  sheetBackground: { backgroundColor: COLORS.raisedSurface },
+  handleIndicator: { backgroundColor: COLORS.handleIndicator },
 });

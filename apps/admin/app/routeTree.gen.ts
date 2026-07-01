@@ -12,12 +12,14 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardIndexRouteImport } from './routes/dashboard/index'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as DashboardVouchersRouteImport } from './routes/dashboard/vouchers'
+import { Route as DashboardPilotFeaturesRouteImport } from './routes/dashboard/pilot-features'
 import { Route as DashboardBusinessesRouteImport } from './routes/dashboard/businesses'
 import { Route as DashboardAuditLogRouteImport } from './routes/dashboard/audit-log'
-import { Route as DashboardPilotFeaturesRouteImport } from './routes/dashboard/pilot-features'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard/analytics'
+import { Route as ApiLocationRouteImport } from './routes/api/location'
 
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
@@ -34,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardIndexRoute = DashboardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoute,
+} as any)
 const SignInSplatRoute = SignInSplatRouteImport.update({
   id: '/$',
   path: '/$',
@@ -42,6 +49,11 @@ const SignInSplatRoute = SignInSplatRouteImport.update({
 const DashboardVouchersRoute = DashboardVouchersRouteImport.update({
   id: '/vouchers',
   path: '/vouchers',
+  getParentRoute: () => DashboardRoute,
+} as any)
+const DashboardPilotFeaturesRoute = DashboardPilotFeaturesRouteImport.update({
+  id: '/pilot-features',
+  path: '/pilot-features',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardBusinessesRoute = DashboardBusinessesRouteImport.update({
@@ -54,50 +66,55 @@ const DashboardAuditLogRoute = DashboardAuditLogRouteImport.update({
   path: '/audit-log',
   getParentRoute: () => DashboardRoute,
 } as any)
-const DashboardPilotFeaturesRoute = DashboardPilotFeaturesRouteImport.update({
-  id: '/pilot-features',
-  path: '/pilot-features',
-  getParentRoute: () => DashboardRoute,
-} as any)
 const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
   getParentRoute: () => DashboardRoute,
+} as any)
+const ApiLocationRoute = ApiLocationRouteImport.update({
+  id: '/api/location',
+  path: '/api/location',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
-  '/dashboard/audit-log': typeof DashboardAuditLogRoute
+  '/api/location': typeof ApiLocationRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/audit-log': typeof DashboardAuditLogRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
-  '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
+  '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
-  '/dashboard/audit-log': typeof DashboardAuditLogRoute
+  '/api/location': typeof ApiLocationRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/audit-log': typeof DashboardAuditLogRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
-  '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
+  '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/sign-in': typeof SignInRouteWithChildren
-  '/dashboard/audit-log': typeof DashboardAuditLogRoute
+  '/api/location': typeof ApiLocationRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
+  '/dashboard/audit-log': typeof DashboardAuditLogRoute
   '/dashboard/businesses': typeof DashboardBusinessesRoute
-  '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
+  '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
+  '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -105,40 +122,46 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/sign-in'
-    | '/dashboard/audit-log'
+    | '/api/location'
     | '/dashboard/analytics'
+    | '/dashboard/audit-log'
     | '/dashboard/businesses'
-    | '/dashboard/vouchers'
     | '/dashboard/pilot-features'
+    | '/dashboard/vouchers'
     | '/sign-in/$'
+    | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
     | '/sign-in'
-    | '/dashboard/audit-log'
+    | '/api/location'
     | '/dashboard/analytics'
+    | '/dashboard/audit-log'
     | '/dashboard/businesses'
-    | '/dashboard/vouchers'
     | '/dashboard/pilot-features'
+    | '/dashboard/vouchers'
     | '/sign-in/$'
+    | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/dashboard'
     | '/sign-in'
-    | '/dashboard/audit-log'
+    | '/api/location'
     | '/dashboard/analytics'
+    | '/dashboard/audit-log'
     | '/dashboard/businesses'
-    | '/dashboard/vouchers'
     | '/dashboard/pilot-features'
+    | '/dashboard/vouchers'
     | '/sign-in/$'
+    | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   SignInRoute: typeof SignInRouteWithChildren
+  ApiLocationRoute: typeof ApiLocationRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -164,6 +187,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/': {
+      id: '/dashboard/'
+      path: '/'
+      fullPath: '/dashboard/'
+      preLoaderRoute: typeof DashboardIndexRouteImport
+      parentRoute: typeof DashboardRoute
+    }
     '/sign-in/$': {
       id: '/sign-in/$'
       path: '/$'
@@ -176,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/vouchers'
       fullPath: '/dashboard/vouchers'
       preLoaderRoute: typeof DashboardVouchersRouteImport
+      parentRoute: typeof DashboardRoute
+    }
+    '/dashboard/pilot-features': {
+      id: '/dashboard/pilot-features'
+      path: '/pilot-features'
+      fullPath: '/dashboard/pilot-features'
+      preLoaderRoute: typeof DashboardPilotFeaturesRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/businesses': {
@@ -192,13 +229,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAuditLogRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/dashboard/pilot-features': {
-      id: '/dashboard/pilot-features'
-      path: '/pilot-features'
-      fullPath: '/dashboard/pilot-features'
-      preLoaderRoute: typeof DashboardPilotFeaturesRouteImport
-      parentRoute: typeof DashboardRoute
-    }
     '/dashboard/analytics': {
       id: '/dashboard/analytics'
       path: '/analytics'
@@ -206,23 +236,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAnalyticsRouteImport
       parentRoute: typeof DashboardRoute
     }
+    '/api/location': {
+      id: '/api/location'
+      path: '/api/location'
+      fullPath: '/api/location'
+      preLoaderRoute: typeof ApiLocationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface DashboardRouteChildren {
-  DashboardAuditLogRoute: typeof DashboardAuditLogRoute
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
+  DashboardAuditLogRoute: typeof DashboardAuditLogRoute
   DashboardBusinessesRoute: typeof DashboardBusinessesRoute
-  DashboardVouchersRoute: typeof DashboardVouchersRoute
   DashboardPilotFeaturesRoute: typeof DashboardPilotFeaturesRoute
+  DashboardVouchersRoute: typeof DashboardVouchersRoute
+  DashboardIndexRoute: typeof DashboardIndexRoute
 }
 
 const DashboardRouteChildren: DashboardRouteChildren = {
-  DashboardAuditLogRoute: DashboardAuditLogRoute,
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
+  DashboardAuditLogRoute: DashboardAuditLogRoute,
   DashboardBusinessesRoute: DashboardBusinessesRoute,
-  DashboardVouchersRoute: DashboardVouchersRoute,
   DashboardPilotFeaturesRoute: DashboardPilotFeaturesRoute,
+  DashboardVouchersRoute: DashboardVouchersRoute,
+  DashboardIndexRoute: DashboardIndexRoute,
 }
 
 const DashboardRouteWithChildren = DashboardRoute._addFileChildren(
@@ -244,6 +283,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRouteWithChildren,
   SignInRoute: SignInRouteWithChildren,
+  ApiLocationRoute: ApiLocationRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

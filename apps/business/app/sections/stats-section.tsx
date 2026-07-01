@@ -66,7 +66,7 @@ export const StatsSection = () => {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold font-mono text-foreground">
+                <div className="text-4xl font-bold text-foreground">
                   {card.value}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">

@@ -3,6 +3,7 @@ import * as Clipboard from "expo-clipboard";
 import QRCode from "react-native-qrcode-svg";
 import { useState } from "react";
 import { formatValidityWindow } from "../lib/voucher-utils";
+import { COLORS } from "../constants/colors";
 
 interface TicketStubProps {
   voucherCode: string;
@@ -16,7 +17,7 @@ export function TicketStub({
   voucherValidTo,
 }: TicketStubProps) {
   const [copied, setCopied] = useState(false);
-  const notchColor = "#111111"; // matches sheet background
+  const notchColor = COLORS.raisedSurface;
 
   async function handleCopy() {
     await Clipboard.setStringAsync(voucherCode);
@@ -25,19 +26,19 @@ export function TicketStub({
   }
 
   return (
-    <View className="bg-white rounded-xl mx-4 overflow-visible">
+    <View style={{ backgroundColor: COLORS.white, marginHorizontal: 16 }}>
       {/* Top half: QR */}
-      <View className="items-center px-6 pt-6 pb-5">
-        <View className="p-3 bg-white rounded-lg">
+      <View style={{ alignItems: "center", paddingHorizontal: 24, paddingTop: 24, paddingBottom: 20 }}>
+        <View style={{ padding: 12, backgroundColor: COLORS.white }}>
           <QRCode
             value={voucherCode}
             size={180}
-            backgroundColor="#ffffff"
-            color="#000000"
+            backgroundColor={COLORS.white}
+            color={COLORS.black}
           />
         </View>
-        <Text className="text-gray-500 text-xs text-center mt-4 leading-relaxed">
-          Show the QR to use the voucher to the merchant staff
+        <Text style={{ color: "#6B7280", fontSize: 12, textAlign: "center", marginTop: 16, lineHeight: 18 }}>
+          Show the QR to the merchant staff to use your voucher
         </Text>
       </View>
 
@@ -64,7 +65,7 @@ export function TicketStub({
             top: 9,
             borderStyle: "dashed",
             borderTopWidth: 1.5,
-            borderColor: "#d1d5db",
+            borderColor: "#D1D5DB",
           }}
         />
         {/* Right notch */}
@@ -82,19 +83,22 @@ export function TicketStub({
       </View>
 
       {/* Bottom half: code + dates */}
-      <View className="items-center px-6 pt-4 pb-6">
+      <View style={{ alignItems: "center", paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24 }}>
         <Pressable
           onPress={handleCopy}
-          className="flex-row items-center bg-gray-100 rounded-lg px-5 py-3 mb-3"
+          style={{ flexDirection: "row", alignItems: "center", backgroundColor: "#F3F4F6", paddingHorizontal: 20, paddingVertical: 12, marginBottom: 12 }}
+          accessibilityLabel={copied ? "Code copied" : `Copy voucher code ${voucherCode}`}
+          accessibilityRole="button"
+          accessibilityHint="Double tap to copy code to clipboard"
         >
-          <Text className="text-black font-poppins-semibold text-base tracking-widest mr-2">
+          <Text style={{ color: COLORS.black, fontFamily: "Poppins_600SemiBold", fontSize: 16, letterSpacing: 4, marginRight: 8 }}>
             {voucherCode}
           </Text>
-          <Text className="text-gray-500 text-base">
+          <Text style={{ color: "#6B7280", fontSize: 16 }}>
             {copied ? "✓" : "⎘"}
           </Text>
         </Pressable>
-        <Text className="text-gray-400 text-xs text-center">
+        <Text style={{ color: "#6B7280", fontSize: 12, textAlign: "center" }}>
           Valid through:{" "}
           {formatValidityWindow(voucherValidFrom, voucherValidTo)}
         </Text>

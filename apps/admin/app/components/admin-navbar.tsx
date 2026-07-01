@@ -8,6 +8,15 @@ import {
 } from "@repo/ui";
 import { authClient } from "~/lib/auth-client";
 
+const NAV_LINKS = [
+  { to: "/dashboard/", label: "Overview", exact: true },
+  { to: "/dashboard/businesses", label: "Businesses", exact: false },
+  { to: "/dashboard/vouchers", label: "Vouchers", exact: false },
+  { to: "/dashboard/audit-log", label: "Audit Log", exact: false },
+  { to: "/dashboard/pilot-features", label: "Pilot Features", exact: false },
+  { to: "/dashboard/analytics", label: "Analytics", exact: false },
+] as const;
+
 export const AdminNavbar = () => {
   const navigate = useNavigate();
   const { data: session } = authClient.useSession();
@@ -25,74 +34,46 @@ export const AdminNavbar = () => {
   }
 
   return (
-    <header className="py-4 bg-background border-b border-border">
-      <nav className="mx-auto max-w-6xl px-6 flex flex-row items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link to="/dashboard" className="text-sm font-semibold text-foreground">
-            Areacodes Admin
+    <header className="bg-background border-b border-border">
+      <div className="mx-auto max-w-6xl px-6">
+        {/* Top row: logo + avatar */}
+        <div className="flex items-center justify-between py-3">
+          <Link to="/dashboard/" className="text-sm font-bold uppercase tracking-wide text-foreground">
+            Areacodes <span className="text-muted-foreground font-normal">Admin</span>
           </Link>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link
-              to="/dashboard"
-              className="hover:text-foreground transition-colors"
-              activeProps={{ className: "text-foreground font-medium" }}
-            >
-              Overview
-            </Link>
-            <Link
-              to="/dashboard/businesses"
-              className="hover:text-foreground transition-colors"
-              activeProps={{ className: "text-foreground font-medium" }}
-            >
-              Businesses
-            </Link>
-            <Link
-              to="/dashboard/vouchers"
-              className="hover:text-foreground transition-colors"
-              activeProps={{ className: "text-foreground font-medium" }}
-            >
-              Vouchers
-            </Link>
-            <Link
-              to="/dashboard/audit-log"
-              className="hover:text-foreground transition-colors"
-              activeProps={{ className: "text-foreground font-medium" }}
-            >
-              Audit Log
-            </Link>
-            <Link
-              to="/dashboard/pilot-features"
-              className="hover:text-foreground transition-colors"
-              activeProps={{ className: "text-foreground font-medium" }}
-            >
-              Pilot Features
-            </Link>
-            <Link
-              to="/dashboard/analytics"
-              className="hover:text-foreground transition-colors"
-              activeProps={{ className: "text-foreground font-medium" }}
-            >
-              Analytics
-            </Link>
-          </div>
+          {isMounted ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background">
+                  {initial}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleSignOut}>
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+          )}
         </div>
-        {isMounted ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background">
-                {initial}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleSignOut}>
-                Sign out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
-        )}
-      </nav>
+
+        {/* Nav links row - scrollable on small screens */}
+        <nav className="flex items-center gap-1 overflow-x-auto pb-px scrollbar-none -mx-6 px-6">
+          {NAV_LINKS.map(({ to, label, exact }) => (
+            <Link
+              key={to}
+              to={to}
+              activeOptions={exact ? { exact: true } : undefined}
+              className="shrink-0 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors border-b-2 border-transparent whitespace-nowrap"
+              activeProps={{ className: "shrink-0 px-3 py-2 text-sm text-foreground font-medium border-b-2 border-foreground whitespace-nowrap transition-colors" }}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
+      </div>
     </header>
   );
 };

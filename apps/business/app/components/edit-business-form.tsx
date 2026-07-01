@@ -5,14 +5,7 @@ import { useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  Button,
-  Skeleton,
-} from "@repo/ui";
+import { Button, Skeleton } from "@repo/ui";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRef, useState, useEffect } from "react";
@@ -158,52 +151,50 @@ export const EditBusinessForm = () => {
       className="contents"
     >
       <div className="flex flex-col gap-6">
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold leading-none">
+        <div className="bg-surface-raised border border-border">
+          <div className="px-5 pt-5 pb-4 border-b border-border">
+            <span className="inline-block bg-foreground text-background px-2 py-1 text-sm font-bold uppercase tracking-tight leading-none">
               Business Information
-            </h2>
-            <CardDescription>Update your business details</CardDescription>
-            <CardContent className="p-4">
-              <BusinessInformationStep form={form} idPrefix="edit-business-form" />
-            </CardContent>
-          </CardHeader>
-        </Card>
+            </span>
+            <p className="text-xs text-muted-foreground mt-2">Update your business details</p>
+          </div>
+          <div className="p-5">
+            <BusinessInformationStep form={form} idPrefix="edit-business-form" />
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold leading-none">
+        <div className="bg-surface-raised border border-border">
+          <div className="px-5 pt-5 pb-4 border-b border-border">
+            <span className="inline-block bg-foreground text-background px-2 py-1 text-sm font-bold uppercase tracking-tight leading-none">
               Business Location
-            </h2>
-            <CardDescription>
-              Update your business address and location
-            </CardDescription>
-            <CardContent className="p-4">
-              <BusinessLocationStep
-                form={form}
-                idPrefix="edit-business-form"
-                searchLabel="Search for a new address"
-                searchPlaceholder="Search to update your business address…"
-              />
-            </CardContent>
-          </CardHeader>
-        </Card>
+            </span>
+            <p className="text-xs text-muted-foreground mt-2">Update your address and pin your location</p>
+          </div>
+          <div className="p-5">
+            <BusinessLocationStep
+              form={form}
+              idPrefix="edit-business-form"
+              searchLabel="Search for a new address"
+              searchPlaceholder="Search to update your business address…"
+            />
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader>
-            <h2 className="text-lg font-semibold leading-none">
+        <div className="bg-surface-raised border border-border">
+          <div className="px-5 pt-5 pb-4 border-b border-border">
+            <span className="inline-block bg-foreground text-background px-2 py-1 text-sm font-bold uppercase tracking-tight leading-none">
               Business Image
-            </h2>
-            <CardDescription>Update your business logo</CardDescription>
-            <CardContent className="p-4">
-              <BusinessImageStep
-                form={form}
-                logoFileRef={logoFileRef}
-                existingLogoUrl={business.logoUrl}
-              />
-            </CardContent>
-          </CardHeader>
-        </Card>
+            </span>
+            <p className="text-xs text-muted-foreground mt-2">Update your business logo</p>
+          </div>
+          <div className="p-5">
+            <BusinessImageStep
+              form={form}
+              logoFileRef={logoFileRef}
+              existingLogoUrl={business.logoUrl}
+            />
+          </div>
+        </div>
 
         <div className="flex flex-row justify-end items-center gap-4 pt-4">
           <Button

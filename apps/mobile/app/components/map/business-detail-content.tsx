@@ -34,14 +34,19 @@ export function BusinessDetailContent({
             )}
           </View>
         </View>
-        <Pressable onPress={onClose} hitSlop={12}>
+        <Pressable
+          onPress={onClose}
+          hitSlop={12}
+          accessibilityLabel="Close business details"
+          accessibilityRole="button"
+        >
           <Text className="text-white text-2xl leading-none">×</Text>
         </Pressable>
       </View>
 
       <View className="border-b border-gray-800 mx-4 mb-4" />
 
-      <Text className="text-gray-500 text-sm uppercase tracking-wide px-4 mb-2">
+      <Text className="text-gray-400 text-xs uppercase tracking-wide px-4 mb-2">
         About
       </Text>
       <Text className="text-white text-base px-4 mb-6 leading-relaxed">
@@ -55,7 +60,10 @@ export function BusinessDetailContent({
         <Pressable
           key={voucher._id}
           onPress={() => openClaim(voucher._id as string, distanceMetres ?? undefined)}
-          className="bg-zinc-800 rounded-lg mx-4 mb-3 p-4 active:opacity-70"
+          className="bg-zinc-800 mx-4 mb-3 p-4 active:opacity-70"
+          accessibilityLabel={`${voucher.title} - valid until ${new Date(voucher.voucherValidTo).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`}
+          accessibilityRole="button"
+          accessibilityHint="Double tap to claim this voucher"
         >
           <Text className="text-white font-poppins-semibold text-lg mb-1">
             {voucher.title}
@@ -63,7 +71,7 @@ export function BusinessDetailContent({
           <Text className="text-gray-400 text-base mb-2 leading-relaxed">
             {voucher.description}
           </Text>
-          <Text className="text-gray-500 text-sm">
+          <Text className="text-gray-400 text-sm">
             Until{" "}
             {new Date(voucher.voucherValidTo).toLocaleDateString("en-GB", {
               day: "numeric",

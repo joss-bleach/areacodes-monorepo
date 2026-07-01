@@ -1,13 +1,13 @@
 import {
-  Animated,
   Image,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { ScreenHeader } from "../components/screen-header";
+import { SkeletonBox } from "../components/skeleton-box";
 import { useQuery } from "convex/react";
 import { api } from "@repo/convex";
 import { authClient } from "../lib/auth-client";
@@ -54,29 +54,16 @@ function walletEntryToRevealEntry(entry: WalletEntry): RevealEntry {
   };
 }
 
-function SkeletonBox({ className }: { className?: string }) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.7, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.3, duration: 700, useNativeDriver: true }),
-      ]),
-    ).start();
-  }, [opacity]);
-  return <Animated.View style={{ opacity }} className={`bg-zinc-800 rounded-md ${className ?? ""}`} />;
-}
-
 function WalletCardSkeleton() {
   return (
-    <View className="bg-zinc-900 rounded-xl p-4 mb-3">
+    <View className="bg-zinc-900 p-4 mb-3">
       <View className="flex-row items-center mb-3">
-        <SkeletonBox className="w-10 h-10 rounded-full mr-3" />
-        <SkeletonBox className="h-4 flex-1" />
+        <SkeletonBox style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }} />
+        <SkeletonBox style={{ height: 16, flex: 1 }} />
       </View>
       <View className="border-t border-gray-800 pt-3">
-        <SkeletonBox className="h-5 w-3/4 mb-2" />
-        <SkeletonBox className="h-3 w-1/3" />
+        <SkeletonBox style={{ height: 20, width: "75%", marginBottom: 8 }} />
+        <SkeletonBox style={{ height: 12, width: "33%" }} />
       </View>
     </View>
   );
@@ -84,8 +71,12 @@ function WalletCardSkeleton() {
 
 function WalletSkeleton() {
   return (
-    <View className="px-4 py-6">
-      <SkeletonBox className="h-3 w-24 mb-4" />
+    <View
+      className="px-4 py-6"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <SkeletonBox style={{ height: 12, width: 96, marginBottom: 16 }} />
       <WalletCardSkeleton />
       <WalletCardSkeleton />
       <WalletCardSkeleton />
@@ -106,16 +97,20 @@ function VoucherCard({ entry, onPress }: { entry: WalletEntry; onPress: () => vo
   return (
     <Pressable
       onPress={onPress}
-      className="bg-zinc-900 rounded-xl p-4 mb-3 active:opacity-70"
+      className="bg-zinc-900 p-4 mb-3 active:opacity-70"
+      accessibilityLabel={`${entry.voucher?.title ?? "Voucher"} from ${entry.businessName ?? "business"}${expiryLabel ? `, ${expiryLabel}` : ""}`}
+      accessibilityRole="button"
+      accessibilityHint="Double tap to view voucher"
     >
       <View className="flex-row items-center mb-3">
         {entry.businessLogoUrl ? (
           <Image
             source={{ uri: entry.businessLogoUrl }}
             className="w-10 h-10 rounded-full mr-3 bg-gray-800"
+            accessibilityElementsHidden
           />
         ) : (
-          <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" />
+          <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" accessibilityElementsHidden />
         )}
         <View className="flex-1">
           <Text className="text-white font-poppins-semibold text-sm leading-snug">
@@ -139,10 +134,13 @@ function CachedRevealCard({ reveal, onPress }: { reveal: CachedReveal; onPress: 
   return (
     <Pressable
       onPress={onPress}
-      className="bg-zinc-900 rounded-xl p-4 mb-3 active:opacity-70"
+      className="bg-zinc-900 p-4 mb-3 active:opacity-70"
+      accessibilityLabel={`${reveal.voucherTitle ?? "Voucher"} from ${reveal.businessName ?? "business"} — offline cached code`}
+      accessibilityRole="button"
+      accessibilityHint="Double tap to view voucher code"
     >
       <View className="flex-row items-center mb-3">
-        <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" />
+        <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" accessibilityElementsHidden />
         <Text className="text-white font-poppins-semibold text-sm flex-1">
           {reveal.businessName ?? ""}
         </Text>
@@ -151,7 +149,7 @@ function CachedRevealCard({ reveal, onPress }: { reveal: CachedReveal; onPress: 
         <Text className="text-white font-poppins-bold text-base mb-0.5">
           {reveal.voucherTitle ?? "Voucher"}
         </Text>
-        <Text className="text-yellow-500 text-xs">Offline — showing cached code</Text>
+        <Text className="text-gray-400 text-xs">Offline - showing cached code</Text>
       </View>
     </Pressable>
   );
@@ -177,7 +175,6 @@ export default function WalletScreen() {
     if (!sessionLoading && !session) openAuthSheet();
   }, [sessionLoading, session]);
 
-  // Session still resolving
   if (sessionLoading) {
     return (
       <View className="flex-1 bg-black">
@@ -187,7 +184,6 @@ export default function WalletScreen() {
     );
   }
 
-  // Not signed in — auth sheet opened above
   if (!session) {
     return (
       <View className="flex-1 bg-black">
@@ -196,7 +192,6 @@ export default function WalletScreen() {
     );
   }
 
-  // Wallet loading — fall back to cached reveals if available
   if (walletResult === undefined || !walletResult.ok) {
     const validCached = filterValidReveals(cachedReveals, Date.now());
     if (validCached.length > 0) {
@@ -262,7 +257,7 @@ export default function WalletScreen() {
             <Text className="text-gray-400 text-base text-center">
               No vouchers yet.
             </Text>
-            <Text className="text-gray-600 text-sm text-center mt-2">
+            <Text className="text-gray-400 text-sm text-center mt-2">
               Browse the map to find and save vouchers.
             </Text>
           </View>
@@ -271,7 +266,7 @@ export default function WalletScreen() {
             {activeEntries.length > 0 && (
               <>
                 <Text className="text-gray-400 text-xs uppercase tracking-wide mb-3">
-                  Active vouchers
+                  Active
                 </Text>
                 {activeEntries.map((entry) => (
                   <VoucherCard
@@ -288,11 +283,14 @@ export default function WalletScreen() {
                 <Pressable
                   onPress={() => setPastExpanded((p) => !p)}
                   className="flex-row items-center mb-3"
+                  style={{ paddingVertical: 8 }}
+                  accessibilityLabel={pastExpanded ? "Hide past vouchers" : `Show past vouchers (${pastEntries.length})`}
+                  accessibilityRole="button"
                 >
                   <Text className="text-gray-400 text-xs uppercase tracking-wide flex-1">
                     Past
                   </Text>
-                  <Text className="text-gray-600 text-xs">
+                  <Text className="text-gray-400 text-xs">
                     {pastExpanded ? "Hide" : `Show (${pastEntries.length})`}
                   </Text>
                 </Pressable>

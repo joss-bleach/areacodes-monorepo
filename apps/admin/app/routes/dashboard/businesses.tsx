@@ -25,8 +25,6 @@ import {
   SelectValue,
   Textarea,
 } from "@repo/ui";
-import { AdminNavbar } from "~/components/admin-navbar";
-import { RequireAdmin } from "~/components/require-admin";
 import { Flag, RotateCcw, Plus, CheckCircle, Clock, Send, Copy, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -36,21 +34,18 @@ export const Route = createFileRoute("/dashboard/businesses")({
 
 function BusinessesPage() {
   return (
-    <RequireAdmin>
-      <AdminNavbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-8 flex items-start justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold">Businesses</h1>
-            <p className="text-muted-foreground mt-1">
-              View and manage all registered businesses
-            </p>
-          </div>
-          <AddBusinessButton />
+    <main className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mb-8 flex items-start justify-between">
+        <div>
+          <h1 className="inline-block bg-foreground text-background px-2 py-1 text-2xl font-bold uppercase tracking-tight leading-none">Businesses</h1>
+          <p className="text-muted-foreground mt-3">
+            View and manage all registered businesses
+          </p>
         </div>
-        <BusinessesList />
-      </main>
-    </RequireAdmin>
+        <AddBusinessButton />
+      </div>
+      <BusinessesList />
+    </main>
   );
 }
 
@@ -181,9 +176,9 @@ function AddressAutocomplete({
         )}
       </div>
       {resolved && (
-        <p className="text-xs text-green-600 dark:text-green-400 mt-1 flex items-center gap-1">
+        <p className="text-xs text-foreground mt-1 flex items-center gap-1">
           <CheckCircle className="h-3 w-3" />
-          Address resolved — coordinates set automatically
+          Address found
         </p>
       )}
       {showSuggestions && suggestions.length > 0 && (
@@ -350,7 +345,7 @@ function AddBusinessDialog({
               <Label>Address *</Label>
               <AddressAutocomplete onResolve={setResolvedLocation} />
               {!resolvedLocation && (
-                <p className="text-xs text-muted-foreground">Select from suggestions — coordinates are resolved automatically.</p>
+                <p className="text-xs text-muted-foreground">Select an address from the suggestions.</p>
               )}
             </div>
           </div>
@@ -519,7 +514,7 @@ function BusinessesList() {
                       </td>
                       <td className="py-4 px-4">
                         {business.hasLoggedIn ? (
-                          <span className="inline-flex items-center gap-1.5 text-xs text-green-700 dark:text-green-400">
+                          <span className="inline-flex items-center gap-1.5 text-xs text-foreground">
                             <CheckCircle className="h-3.5 w-3.5" />
                             Logged in
                           </span>
@@ -552,8 +547,8 @@ function BusinessesList() {
                       <td className="py-4 px-4">
                         <span className={`inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold ${
                           business.flaggedAt !== undefined
-                            ? "border-red-500/50 text-red-700 dark:text-red-400"
-                            : "border-green-500/50 text-green-700 dark:text-green-400"
+                            ? "border-destructive/50 text-destructive"
+                            : "border-foreground/30 text-foreground"
                         }`}>
                           {business.flaggedAt !== undefined ? "Flagged" : "Active"}
                         </span>
@@ -563,7 +558,7 @@ function BusinessesList() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-green-700 hover:text-green-700 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/20"
+                            className="text-foreground hover:text-foreground hover:bg-muted"
                             onClick={() => setReinstateTarget({ id: business._id as Id<"businesses">, name: business.name })}
                           >
                             <RotateCcw className="h-4 w-4 mr-1" />

@@ -1,7 +1,12 @@
 # ADR 0001: Voucher code generated at reveal, not at claim
 
 ## Status
-Accepted
+Superseded by ADR 0009 (provision-into-POS + capability architecture).
+
+The reveal-time code generation still holds, but its original rationale ("codes pushed to the
+business's system only when genuinely needed") no longer describes the Square path: vouchers are now
+provisioned into the POS as a `CatalogDiscount` at creation, and the reveal code is visual/audit only
+on Square. The code is machine-matched only on the Manual path. See ADR 0009.
 
 ## Context
 When a Customer saves a Voucher (Claim), we need to decide when to generate the unique Voucher Code. Options are: at claim time, at reveal time ("Use Now" tap), or statically at voucher creation (shared code).

@@ -1,7 +1,8 @@
-import { Pressable, Text, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Svg, { Path } from "react-native-svg";
+import { StampText } from "./stamp-text";
 
 function MapArrowIcon() {
   return (
@@ -23,19 +24,19 @@ export function ScreenHeader({ title }: { title: string }) {
 
   return (
     <View
-      className="bg-black flex-row items-center px-4 pb-3"
+      className="bg-black flex-row items-center px-4 pb-4"
       style={{ paddingTop: insets.top + 8 }}
     >
       <Pressable
         onPress={() => router.navigate("/(tabs)")}
         className="mr-4 p-1"
         hitSlop={12}
+        accessibilityLabel="Back to map"
+        accessibilityRole="button"
       >
         <MapArrowIcon />
       </Pressable>
-      <Text className="text-white text-xl font-poppins-bold flex-1">
-        {title}
-      </Text>
+      <StampText size="md">{title}</StampText>
     </View>
   );
 }

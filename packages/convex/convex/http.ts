@@ -6,7 +6,8 @@ import { authComponent, createAuth } from "./betterAuth/auth";
 const http = httpRouter();
 
 // Better Auth handles all /auth/* routes
-authComponent.registerRoutes(http, createAuth);
+// cors: true enables CORS headers and OPTIONS preflight for cross-origin admin/mobile clients
+authComponent.registerRoutes(http, createAuth, { cors: true });
 
 async function verifyStripeSignature(
   payload: string,

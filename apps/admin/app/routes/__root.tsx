@@ -7,6 +7,7 @@ import {
 import { ConvexReactClient } from "convex/react";
 import { ConvexBetterAuthProvider, type AuthClient } from "@convex-dev/better-auth/react";
 import { CookieBanner, Toaster } from "@repo/ui";
+import { useState, useEffect } from "react";
 import { authClient } from "~/lib/auth-client";
 import appCss from "~/styles/globals.css?url";
 
@@ -29,20 +30,55 @@ export const Route = createRootRoute({
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", type: "image/svg+xml", href: "/areacodes-icon.svg" },
       { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
     ],
   }),
   component: RootComponent,
 });
 
+function OttExchange({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return !new URLSearchParams(window.location.search).has("ott");
+  });
+
+  useEffect(() => {
+    if (ready) return;
+    const ott = new URLSearchParams(window.location.search).get("ott");
+    if (!ott) { setReady(true); return; }
+
+    (authClient as any).crossDomain
+      .verifyOneTimeToken({ token: ott })
+      .finally(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("ott");
+        window.history.replaceState({}, "", url.toString());
+        setReady(true);
+      });
+  }, []);
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground" />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function RootComponent() {
   return (
     <RootDocument>
-      <ConvexBetterAuthProvider client={convex} authClient={authClient as unknown as AuthClient}>
-        <Outlet />
-        <Toaster />
-        <CookieBanner />
-      </ConvexBetterAuthProvider>
+      <OttExchange>
+        <ConvexBetterAuthProvider client={convex} authClient={authClient as unknown as AuthClient}>
+          <Outlet />
+          <Toaster />
+          <CookieBanner />
+        </ConvexBetterAuthProvider>
+      </OttExchange>
     </RootDocument>
   );
 }

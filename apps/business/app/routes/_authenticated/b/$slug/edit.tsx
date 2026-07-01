@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BusinessNavbar } from "~/components/business-navbar";
 import { EditBusinessForm } from "~/components/edit-business-form";
 
 export const Route = createFileRoute("/_authenticated/b/$slug/edit")({
@@ -8,15 +7,16 @@ export const Route = createFileRoute("/_authenticated/b/$slug/edit")({
 
 function EditPage() {
   return (
-    <>
-      <BusinessNavbar />
-      <main className="container-app py-8">
-        <h1 className="text-2xl mb-2">Edit business profile</h1>
-        <p className="text-muted-foreground mb-6">
+    <main className="container-app py-8">
+      <div className="mb-6">
+        <span className="inline-block bg-foreground text-background px-2 py-1 text-xl font-bold uppercase tracking-tight leading-none">
+          Edit Profile
+        </span>
+        <p className="text-xs text-muted-foreground mt-2">
           Update your business details and logo
         </p>
-        <EditBusinessForm />
-      </main>
-    </>
+      </div>
+      <EditBusinessForm />
+    </main>
   );
 }

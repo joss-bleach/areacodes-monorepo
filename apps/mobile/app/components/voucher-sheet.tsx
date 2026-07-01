@@ -15,6 +15,7 @@ import { useQuery, useMutation, useConvexAuth } from "convex/react";
 import { Effect } from "effect";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
+import { COLORS } from "../constants/colors";
 import { authClient } from "../lib/auth-client";
 import { formatValidityWindow } from "../lib/voucher-utils";
 import { formatDistance } from "../lib/distance";
@@ -29,6 +30,7 @@ import {
   captureVoucherRevealed,
   captureVoucherViewed,
 } from "../lib/analytics";
+import { SkeletonBox } from "./skeleton-box";
 import { TicketStub } from "./ticket-stub";
 import {
   loadRevealCache,
@@ -38,38 +40,29 @@ import { tryClaim, tryReveal, ClaimError } from "../lib/mutation-effects";
 
 // --- Skeletons ---
 
-function SkeletonBox({ className }: { className?: string }) {
-  const opacity = useRef(new Animated.Value(0.3)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.7, duration: 700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.3, duration: 700, useNativeDriver: true }),
-      ]),
-    ).start();
-  }, [opacity]);
-  return <Animated.View style={{ opacity }} className={`bg-zinc-800 rounded-md ${className ?? ""}`} />;
-}
-
 function ClaimSkeleton() {
   return (
-    <View className="px-4 pb-8 pt-2">
+    <View
+      className="px-4 pb-8 pt-2"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       <View className="flex-row items-center mb-4">
-        <SkeletonBox className="w-10 h-10 rounded-full mr-3" />
-        <View className="flex-1 gap-1.5">
-          <SkeletonBox className="h-5 w-40" />
-          <SkeletonBox className="h-3 w-24" />
+        <SkeletonBox style={{ width: 40, height: 40, borderRadius: 20, marginRight: 12 }} />
+        <View style={{ flex: 1, gap: 6 }}>
+          <SkeletonBox style={{ height: 20, width: 160 }} />
+          <SkeletonBox style={{ height: 12, width: 96 }} />
         </View>
       </View>
       <View className="border-b border-gray-800 mb-4" />
-      <SkeletonBox className="h-3 w-14 mb-2" />
-      <SkeletonBox className="h-5 w-48 mb-3" />
-      <SkeletonBox className="h-4 w-full mb-1.5" />
-      <SkeletonBox className="h-4 w-3/4 mb-4" />
+      <SkeletonBox style={{ height: 12, width: 56, marginBottom: 8 }} />
+      <SkeletonBox style={{ height: 20, width: 192, marginBottom: 12 }} />
+      <SkeletonBox style={{ height: 16, width: "100%", marginBottom: 6 }} />
+      <SkeletonBox style={{ height: 16, width: "75%", marginBottom: 16 }} />
       <View className="border-b border-gray-800 mb-4" />
-      <SkeletonBox className="h-3 w-10 mb-2" />
-      <SkeletonBox className="h-4 w-48 mb-6" />
-      <SkeletonBox className="h-12 w-full rounded" />
+      <SkeletonBox style={{ height: 12, width: 40, marginBottom: 8 }} />
+      <SkeletonBox style={{ height: 16, width: 192, marginBottom: 24 }} />
+      <SkeletonBox style={{ height: 48, width: "100%" }} />
     </View>
   );
 }
@@ -115,9 +108,6 @@ function ClaimContent({
 
   const alreadyClaimed = claimed || claimRecord != null;
 
-  // Poll convexAuthedRef until Convex confirms the auth handshake (≤5 s).
-  // Needed because WebSocket reconnects reset auth state; calling the mutation
-  // before the handshake completes causes UNAUTHENTICATED even with a valid JWT.
   function waitForConvexAuth(): Effect.Effect<void, ClaimError> {
     return Effect.async<void, ClaimError>((resume) => {
       const deadline = Date.now() + 5000;
@@ -146,8 +136,6 @@ function ClaimContent({
         Effect.flatMap(() =>
           tryClaim(() => claimVoucher({ voucherId: voucherId as Id<"vouchers"> })),
         ),
-        // If UNAUTHENTICATED still fires (server-side race), wait for auth
-        // to settle again then do one more attempt.
         Effect.catchIf(
           (e) => e instanceof ClaimError && e.code === "UNAUTHENTICATED",
           () =>
@@ -166,7 +154,6 @@ function ClaimContent({
               const layout: LayoutRect = { x: pageX, y: pageY, width, height };
               triggerClaimAnimation(layout);
             });
-            // Dismiss immediately so the tab bar reappears behind the animation
             close();
           }),
         ),
@@ -200,9 +187,10 @@ function ClaimContent({
             <Image
               source={{ uri: voucher.business.logoUrl }}
               className="w-10 h-10 rounded-full mr-3 bg-gray-800"
+              accessibilityElementsHidden
             />
           ) : (
-            <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" />
+            <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" accessibilityElementsHidden />
           )}
           <View className="flex-1">
             <Text className="text-white text-lg font-poppins-bold leading-snug">
@@ -224,27 +212,27 @@ function ClaimContent({
         <View className="border-b border-gray-800 mb-4" />
 
         {/* Voucher */}
-        <Text className="text-gray-500 text-xs uppercase tracking-wide mb-1">
+        <Text className="text-gray-400 text-xs uppercase tracking-wide mb-1">
           Voucher
         </Text>
         <Text className="text-white text-base font-poppins-semibold mb-1">
           {voucher.title}
         </Text>
-        <Text className="text-gray-300 text-sm leading-relaxed mb-4">
+        <Text className="text-gray-400 text-sm leading-relaxed mb-4">
           {voucher.description}
         </Text>
 
         <View className="border-b border-gray-800 mb-4" />
 
         {/* Terms */}
-        <Text className="text-gray-500 text-xs uppercase tracking-wide mb-1">
+        <Text className="text-gray-400 text-xs uppercase tracking-wide mb-1">
           Terms
         </Text>
-        <Text className="text-gray-300 text-sm mb-1">
+        <Text className="text-gray-400 text-sm mb-1">
           {formatValidityWindow(voucher.voucherValidFrom, voucher.voucherValidTo)}
         </Text>
         {voucher.voucherTerms ? (
-          <Text className="text-gray-500 text-xs leading-relaxed mb-4">
+          <Text className="text-gray-400 text-xs leading-relaxed mb-4">
             {voucher.voucherTerms}
           </Text>
         ) : (
@@ -253,16 +241,24 @@ function ClaimContent({
 
         {/* CTA */}
         {claimError ? (
-          <Text className="text-red-400 text-xs mb-2">{claimError}</Text>
+          <Text
+            className="text-red-400 text-xs mb-2"
+            accessibilityLiveRegion="polite"
+          >
+            {claimError}
+          </Text>
         ) : null}
 
         <Pressable
           onPress={handleClaim}
           disabled={claiming || alreadyClaimed}
           className="border border-white px-4 py-3.5 items-center"
+          accessibilityLabel={alreadyClaimed ? "Saved to wallet" : "Save to wallet"}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: claiming || alreadyClaimed }}
         >
           {claiming ? (
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={COLORS.white} />
           ) : alreadyClaimed ? (
             <View className="flex-row items-center">
               <Text className="text-white font-poppins-semibold text-sm mr-2">
@@ -340,9 +336,10 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
             <Image
               source={{ uri: entry.businessLogoUrl }}
               className="w-10 h-10 rounded-full mr-3 bg-gray-800"
+              accessibilityElementsHidden
             />
           ) : (
-            <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" />
+            <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" accessibilityElementsHidden />
           )}
           <View className="flex-1">
             <Text className="text-white text-lg font-poppins-bold leading-snug">
@@ -353,13 +350,13 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
 
         <View className="border-b border-gray-800 mb-4" />
 
-        <Text className="text-gray-500 text-xs uppercase tracking-wide mb-1">
+        <Text className="text-gray-400 text-xs uppercase tracking-wide mb-1">
           Voucher
         </Text>
         <Text className="text-white text-base font-poppins-semibold mb-1">
           {entry.voucherTitle}
         </Text>
-        <Text className="text-gray-300 text-sm leading-relaxed mb-4">
+        <Text className="text-gray-400 text-sm leading-relaxed mb-4">
           {entry.voucherDescription}
         </Text>
 
@@ -368,17 +365,24 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
         {/* QR section */}
         {revealing ? (
           <View className="items-center py-12">
-            <ActivityIndicator color="#ffffff" />
+            <ActivityIndicator color={COLORS.white} />
             <Text className="text-gray-400 text-xs mt-3">
-              Loading your voucher code…
+              Loading your voucher code...
             </Text>
           </View>
         ) : revealError ? (
           <View className="items-center py-8">
-            <Text className="text-red-400 text-sm mb-4">{revealError}</Text>
+            <Text
+              className="text-red-400 text-sm mb-4"
+              accessibilityLiveRegion="polite"
+            >
+              {revealError}
+            </Text>
             <Pressable
               onPress={doReveal}
               className="border border-white px-6 py-3"
+              accessibilityLabel="Try loading voucher code again"
+              accessibilityRole="button"
             >
               <Text className="text-white text-sm font-poppins-semibold">
                 Try again
@@ -407,8 +411,8 @@ export const VoucherSheet = forwardRef<BottomSheetModal>(
       <BottomSheetModal
         ref={ref}
         snapPoints={["75%"]}
-        backgroundStyle={{ backgroundColor: "#111111" }}
-        handleIndicatorStyle={{ backgroundColor: "#444444" }}
+        backgroundStyle={{ backgroundColor: COLORS.raisedSurface }}
+        handleIndicatorStyle={{ backgroundColor: COLORS.handleIndicator }}
         onDismiss={clearMode}
         enableDynamicSizing={false}
       >

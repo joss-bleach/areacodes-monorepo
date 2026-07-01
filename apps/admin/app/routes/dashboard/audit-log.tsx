@@ -8,8 +8,6 @@ import {
   CardDescription,
   Skeleton,
 } from "@repo/ui";
-import { AdminNavbar } from "~/components/admin-navbar";
-import { RequireAdmin } from "~/components/require-admin";
 
 export const Route = createFileRoute("/dashboard/audit-log")({
   component: AuditLogPage,
@@ -17,18 +15,15 @@ export const Route = createFileRoute("/dashboard/audit-log")({
 
 function AuditLogPage() {
   return (
-    <RequireAdmin>
-      <AdminNavbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Audit Log</h1>
-          <p className="text-muted-foreground mt-1">
-            Chronological record of all admin actions
-          </p>
-        </div>
-        <AuditLogList />
-      </main>
-    </RequireAdmin>
+    <main className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mb-8">
+        <h1 className="inline-block bg-foreground text-background px-2 py-1 text-2xl font-bold uppercase tracking-tight leading-none">Audit Log</h1>
+        <p className="text-muted-foreground mt-3">
+          Chronological record of all admin actions
+        </p>
+      </div>
+      <AuditLogList />
+    </main>
   );
 }
 

@@ -24,6 +24,15 @@ Explore the repo and fill your context window with relevant information that wil
 
 Pay extra attention to test files that touch the relevant parts of the code.
 
+# DESIGN REFERENCES
+
+If the issue or its PRD references UI/UX screens under `docs/design/` (e.g.
+`docs/design/voucher-provisioning/`), READ those PNG files with the Read tool before implementing any
+UI — they render as images and are the source of truth for layout, copy, states, and on-brand styling.
+Match them precisely (pixel-perfect): spacing, typography (Poppins UI, Geist Mono for codes), pure
+black/white, zero border-radius. Start from the folder's `README.md`, which maps each screen to its flow
+step. Build against the committed PNGs, not a live design tool.
+
 # EXECUTION
 
 If applicable, use RGR to complete the task.
@@ -47,7 +56,7 @@ Make a git commit. The commit message must:
 4. Files changed
 5. Blockers or notes for next iteration
 
-Keep it concise.
+Keep it concise. Do NOT add any `Co-Authored-By:` lines to the commit message.
 
 # THE ISSUE
 

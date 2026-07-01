@@ -13,8 +13,6 @@ import {
   Skeleton,
   Badge,
 } from "@repo/ui";
-import { AdminNavbar } from "~/components/admin-navbar";
-import { RequireAdmin } from "~/components/require-admin";
 import { X, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -24,18 +22,15 @@ export const Route = createFileRoute("/dashboard/pilot-features")({
 
 function PilotFeaturesPage() {
   return (
-    <RequireAdmin>
-      <AdminNavbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Pilot Features</h1>
-          <p className="text-muted-foreground mt-1">
-            Toggle global feature flags for all Pilot Businesses
-          </p>
-        </div>
-        <PilotFeaturesPanel />
-      </main>
-    </RequireAdmin>
+    <main className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mb-8">
+        <h1 className="inline-block bg-foreground text-background px-2 py-1 text-2xl font-bold uppercase tracking-tight leading-none">Pilot Features</h1>
+        <p className="text-muted-foreground mt-3">
+          Toggle global feature flags for all Pilot Businesses
+        </p>
+      </div>
+      <PilotFeaturesPanel />
+    </main>
   );
 }
 

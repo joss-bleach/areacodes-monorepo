@@ -16,8 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui";
-import { AdminNavbar } from "~/components/admin-navbar";
-import { RequireAdmin } from "~/components/require-admin";
 import { AlertTriangle } from "lucide-react";
 
 export const Route = createFileRoute("/dashboard/analytics")({
@@ -26,23 +24,20 @@ export const Route = createFileRoute("/dashboard/analytics")({
 
 function AnalyticsPage() {
   return (
-    <RequireAdmin>
-      <AdminNavbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Pilot Analytics</h1>
-          <p className="text-muted-foreground mt-1">
-            Week-by-week performance across all Pilot Businesses
-          </p>
-        </div>
-        <div className="space-y-8">
-          <CrossBusinessDiscovery />
-          <CoreFunnelTable />
-          <BusinessLeaderboard />
-          <VoucherFormatBreakdown />
-        </div>
-      </main>
-    </RequireAdmin>
+    <main className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mb-8">
+        <h1 className="inline-block bg-foreground text-background px-2 py-1 text-2xl font-bold uppercase tracking-tight leading-none">Pilot Analytics</h1>
+        <p className="text-muted-foreground mt-3">
+          Week-by-week performance across all Pilot Businesses
+        </p>
+      </div>
+      <div className="space-y-8">
+        <CrossBusinessDiscovery />
+        <CoreFunnelTable />
+        <BusinessLeaderboard />
+        <VoucherFormatBreakdown />
+      </div>
+    </main>
   );
 }
 

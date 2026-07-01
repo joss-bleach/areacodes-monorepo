@@ -19,6 +19,8 @@ try {
   if (e.code !== "ENOENT") throw e;
 }
 
-fs.symlinkSync(target, link, "dir");
+// Use a relative target so the symlink stays valid across machines/CI containers
+// (an absolute path baked in by one environment breaks in every other one).
+fs.symlinkSync(path.relative(linkDir, target), link, "dir");
 
 console.log("✓ NativeWind: symlinked tailwindcss v3 from apps/mobile");

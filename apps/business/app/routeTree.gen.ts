@@ -17,9 +17,11 @@ import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as ApiLocationRouteImport } from './routes/api/location'
 import { Route as AuthenticatedBCreateRouteImport } from './routes/_authenticated/b/create'
+import { Route as AuthenticatedBSlugRouteImport } from './routes/_authenticated/b/$slug'
 import { Route as AuthenticatedBSlugIndexRouteImport } from './routes/_authenticated/b/$slug/index'
 import { Route as AuthenticatedBSlugPosRouteImport } from './routes/_authenticated/b/$slug/pos'
 import { Route as AuthenticatedBSlugEditRouteImport } from './routes/_authenticated/b/$slug/edit'
+import { Route as AuthenticatedBSlugAnalyticsRouteImport } from './routes/_authenticated/b/$slug/analytics'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -60,21 +62,32 @@ const AuthenticatedBCreateRoute = AuthenticatedBCreateRouteImport.update({
   path: '/b/create',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedBSlugIndexRoute = AuthenticatedBSlugIndexRouteImport.update({
-  id: '/b/$slug/',
-  path: '/b/$slug/',
+const AuthenticatedBSlugRoute = AuthenticatedBSlugRouteImport.update({
+  id: '/b/$slug',
+  path: '/b/$slug',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedBSlugIndexRoute = AuthenticatedBSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedBSlugRoute,
 } as any)
 const AuthenticatedBSlugPosRoute = AuthenticatedBSlugPosRouteImport.update({
-  id: '/b/$slug/pos',
-  path: '/b/$slug/pos',
-  getParentRoute: () => AuthenticatedRoute,
+  id: '/pos',
+  path: '/pos',
+  getParentRoute: () => AuthenticatedBSlugRoute,
 } as any)
 const AuthenticatedBSlugEditRoute = AuthenticatedBSlugEditRouteImport.update({
-  id: '/b/$slug/edit',
-  path: '/b/$slug/edit',
-  getParentRoute: () => AuthenticatedRoute,
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => AuthenticatedBSlugRoute,
 } as any)
+const AuthenticatedBSlugAnalyticsRoute =
+  AuthenticatedBSlugAnalyticsRouteImport.update({
+    id: '/analytics',
+    path: '/analytics',
+    getParentRoute: () => AuthenticatedBSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -83,7 +96,9 @@ export interface FileRoutesByFullPath {
   '/api/location': typeof ApiLocationRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
+  '/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
   '/b/create': typeof AuthenticatedBCreateRoute
+  '/b/$slug/analytics': typeof AuthenticatedBSlugAnalyticsRoute
   '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
   '/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/b/$slug/': typeof AuthenticatedBSlugIndexRoute
@@ -96,6 +111,7 @@ export interface FileRoutesByTo {
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
   '/b/create': typeof AuthenticatedBCreateRoute
+  '/b/$slug/analytics': typeof AuthenticatedBSlugAnalyticsRoute
   '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
   '/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/b/$slug': typeof AuthenticatedBSlugIndexRoute
@@ -109,7 +125,9 @@ export interface FileRoutesById {
   '/api/location': typeof ApiLocationRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
+  '/_authenticated/b/$slug': typeof AuthenticatedBSlugRouteWithChildren
   '/_authenticated/b/create': typeof AuthenticatedBCreateRoute
+  '/_authenticated/b/$slug/analytics': typeof AuthenticatedBSlugAnalyticsRoute
   '/_authenticated/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
   '/_authenticated/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/_authenticated/b/$slug/': typeof AuthenticatedBSlugIndexRoute
@@ -123,7 +141,9 @@ export interface FileRouteTypes {
     | '/api/location'
     | '/sign-in/$'
     | '/sign-up/$'
+    | '/b/$slug'
     | '/b/create'
+    | '/b/$slug/analytics'
     | '/b/$slug/edit'
     | '/b/$slug/pos'
     | '/b/$slug/'
@@ -136,6 +156,7 @@ export interface FileRouteTypes {
     | '/sign-in/$'
     | '/sign-up/$'
     | '/b/create'
+    | '/b/$slug/analytics'
     | '/b/$slug/edit'
     | '/b/$slug/pos'
     | '/b/$slug'
@@ -148,7 +169,9 @@ export interface FileRouteTypes {
     | '/api/location'
     | '/sign-in/$'
     | '/sign-up/$'
+    | '/_authenticated/b/$slug'
     | '/_authenticated/b/create'
+    | '/_authenticated/b/$slug/analytics'
     | '/_authenticated/b/$slug/edit'
     | '/_authenticated/b/$slug/pos'
     | '/_authenticated/b/$slug/'
@@ -220,42 +243,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBCreateRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/b/$slug': {
+      id: '/_authenticated/b/$slug'
+      path: '/b/$slug'
+      fullPath: '/b/$slug'
+      preLoaderRoute: typeof AuthenticatedBSlugRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/b/$slug/': {
       id: '/_authenticated/b/$slug/'
-      path: '/b/$slug'
+      path: '/'
       fullPath: '/b/$slug/'
       preLoaderRoute: typeof AuthenticatedBSlugIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedBSlugRoute
     }
     '/_authenticated/b/$slug/pos': {
       id: '/_authenticated/b/$slug/pos'
-      path: '/b/$slug/pos'
+      path: '/pos'
       fullPath: '/b/$slug/pos'
       preLoaderRoute: typeof AuthenticatedBSlugPosRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedBSlugRoute
     }
     '/_authenticated/b/$slug/edit': {
       id: '/_authenticated/b/$slug/edit'
-      path: '/b/$slug/edit'
+      path: '/edit'
       fullPath: '/b/$slug/edit'
       preLoaderRoute: typeof AuthenticatedBSlugEditRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      parentRoute: typeof AuthenticatedBSlugRoute
+    }
+    '/_authenticated/b/$slug/analytics': {
+      id: '/_authenticated/b/$slug/analytics'
+      path: '/analytics'
+      fullPath: '/b/$slug/analytics'
+      preLoaderRoute: typeof AuthenticatedBSlugAnalyticsRouteImport
+      parentRoute: typeof AuthenticatedBSlugRoute
     }
   }
 }
 
-interface AuthenticatedRouteChildren {
-  AuthenticatedBCreateRoute: typeof AuthenticatedBCreateRoute
+interface AuthenticatedBSlugRouteChildren {
+  AuthenticatedBSlugAnalyticsRoute: typeof AuthenticatedBSlugAnalyticsRoute
   AuthenticatedBSlugEditRoute: typeof AuthenticatedBSlugEditRoute
   AuthenticatedBSlugPosRoute: typeof AuthenticatedBSlugPosRoute
   AuthenticatedBSlugIndexRoute: typeof AuthenticatedBSlugIndexRoute
 }
 
-const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedBCreateRoute: AuthenticatedBCreateRoute,
+const AuthenticatedBSlugRouteChildren: AuthenticatedBSlugRouteChildren = {
+  AuthenticatedBSlugAnalyticsRoute: AuthenticatedBSlugAnalyticsRoute,
   AuthenticatedBSlugEditRoute: AuthenticatedBSlugEditRoute,
   AuthenticatedBSlugPosRoute: AuthenticatedBSlugPosRoute,
   AuthenticatedBSlugIndexRoute: AuthenticatedBSlugIndexRoute,
+}
+
+const AuthenticatedBSlugRouteWithChildren =
+  AuthenticatedBSlugRoute._addFileChildren(AuthenticatedBSlugRouteChildren)
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedBSlugRoute: typeof AuthenticatedBSlugRouteWithChildren
+  AuthenticatedBCreateRoute: typeof AuthenticatedBCreateRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedBSlugRoute: AuthenticatedBSlugRouteWithChildren,
+  AuthenticatedBCreateRoute: AuthenticatedBCreateRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

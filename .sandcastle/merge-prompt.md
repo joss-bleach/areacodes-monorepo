@@ -11,7 +11,7 @@ For each branch:
 3. After resolving conflicts, run `bun run check-types` and `bun run test` to verify everything works
 4. If tests fail, fix the issues before proceeding to the next branch
 
-After all branches are merged, make a single commit summarizing the merge.
+After all branches are merged, make a single commit summarizing the merge. Do NOT add any `Co-Authored-By:` lines to the commit message.
 
 # CLOSE ISSUES
 

@@ -3,6 +3,7 @@ import { ActivityIndicator, Platform, Pressable, Text, View } from "react-native
 import { useRouter } from "expo-router";
 import * as AppleAuthentication from "expo-apple-authentication";
 import Svg, { Path } from "react-native-svg";
+import { COLORS } from "../constants/colors";
 import { authClient } from "../lib/auth-client";
 import {
   captureSignInCompleted,
@@ -109,6 +110,11 @@ export function SocialAuthButtons({ mode, onError, onSuccess, theme = "dark" }: 
     }
   }
 
+  const isDark = theme === "dark";
+  const bgColor = isDark ? COLORS.secondarySurface : COLORS.white;
+  const borderColor = isDark ? "#374151" : "#E5E7EB";
+  const textColor = isDark ? COLORS.white : "#111827";
+
   return (
     <>
       {Platform.OS === "ios" && (
@@ -119,9 +125,9 @@ export function SocialAuthButtons({ mode, onError, onSuccess, theme = "dark" }: 
               : AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN
           }
           buttonStyle={
-            theme === "light"
-              ? AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-              : AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+            isDark
+              ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+              : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
           }
           cornerRadius={0}
           style={{ height: 44, marginBottom: 12, opacity: appleLoading ? 0.5 : 1 }}
@@ -140,20 +146,23 @@ export function SocialAuthButtons({ mode, onError, onSuccess, theme = "dark" }: 
           marginBottom: 12,
           opacity: socialLoading ? 0.5 : 1,
           borderWidth: 1,
-          backgroundColor: theme === "light" ? "white" : "#111827",
-          borderColor: theme === "light" ? "#E5E7EB" : "#374151",
+          backgroundColor: bgColor,
+          borderColor: borderColor,
         }}
+        accessibilityLabel={mode === "sign-up" ? "Sign up with Google" : "Sign in with Google"}
+        accessibilityRole="button"
+        accessibilityState={{ disabled: socialLoading }}
       >
         {googleLoading ? (
-          <ActivityIndicator color={theme === "light" ? "#111827" : "#ffffff"} />
+          <ActivityIndicator color={textColor} />
         ) : (
           <>
-            <GoogleIcon color={theme === "light" ? "#111827" : "white"} />
+            <GoogleIcon color={textColor} />
             <Text
               style={{
                 fontFamily: "Poppins_600SemiBold",
                 fontSize: 14,
-                color: theme === "light" ? "#111827" : "white",
+                color: textColor,
               }}
             >
               Continue with Google

@@ -18,8 +18,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@repo/ui";
-import { AdminNavbar } from "~/components/admin-navbar";
-import { RequireAdmin } from "~/components/require-admin";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -29,18 +27,15 @@ export const Route = createFileRoute("/dashboard/vouchers")({
 
 function VouchersPage() {
   return (
-    <RequireAdmin>
-      <AdminNavbar />
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-semibold">Vouchers</h1>
-          <p className="text-muted-foreground mt-1">
-            View and manage all voucher codes
-          </p>
-        </div>
-        <VouchersList />
-      </main>
-    </RequireAdmin>
+    <main className="mx-auto max-w-6xl px-6 py-8">
+      <div className="mb-8">
+        <h1 className="inline-block bg-foreground text-background px-2 py-1 text-2xl font-bold uppercase tracking-tight leading-none">Vouchers</h1>
+        <p className="text-muted-foreground mt-3">
+          View and manage all voucher codes
+        </p>
+      </div>
+      <VouchersList />
+    </main>
   );
 }
 
@@ -137,10 +132,10 @@ function VouchersList() {
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${
+                          className={`inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold ${
                             voucher.deletedAt !== undefined
-                              ? "border-red-500/50 text-red-700 dark:text-red-400"
-                              : "border-green-500/50 text-green-700 dark:text-green-400"
+                              ? "border-destructive/50 text-destructive"
+                              : "border-foreground/30 text-foreground"
                           }`}
                         >
                           {voucher.deletedAt !== undefined ? "Removed" : "Active"}

@@ -29,11 +29,11 @@ USER ${AGENT_UID}:${AGENT_GID}
 RUN curl -fsSL https://bun.sh/install | bash
 ENV PATH="/home/agent/.bun/bin:$PATH"
 
+# Add local bin to PATH before installs so scripts see it and skip sudo
+ENV PATH="/home/agent/.local/bin:$PATH"
+
 # Install Claude Code CLI
 RUN curl -fsSL https://claude.ai/install.sh | bash
-
-# Add Claude to PATH
-ENV PATH="/home/agent/.local/bin:$PATH"
 
 WORKDIR /home/agent
 

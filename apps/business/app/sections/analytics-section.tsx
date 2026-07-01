@@ -16,7 +16,7 @@ import {
   TableHead,
   TableCell,
 } from "@repo/ui";
-import { Users, UserPlus, Repeat2, BarChart3 } from "lucide-react";
+import { Users, UserPlus, Repeat2 } from "lucide-react";
 import { BoundaryAlert } from "~/components/boundary-alert";
 
 const AnalyticsSectionLoading = () => (
@@ -108,8 +108,7 @@ export const AnalyticsSection = () => {
 
   return (
     <section className="my-8">
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-        <BarChart3 className="h-5 w-5" />
+      <h2 className="inline-block bg-foreground text-background px-2 py-1 text-lg font-bold uppercase tracking-tight leading-none mb-4">
         Analytics
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -124,7 +123,7 @@ export const AnalyticsSection = () => {
                 <Icon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-4xl font-bold font-mono text-foreground">
+                <div className="text-4xl font-bold text-foreground">
                   {stat.value}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">

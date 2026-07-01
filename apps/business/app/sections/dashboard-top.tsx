@@ -16,15 +16,10 @@ function PilotBadge({ trialEnd }: { trialEnd: number }) {
     0,
     Math.ceil((trialEnd - Date.now()) / (1000 * 60 * 60 * 24)),
   );
-  const endDate = new Date(trialEnd).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 border border-blue-200 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-300">
-      Pilot — {daysLeft} day{daysLeft !== 1 ? "s" : ""} remaining (ends {endDate})
+    <span className="inline-flex items-center border border-border px-2 py-0.5 text-xs font-bold uppercase tracking-tight text-muted-foreground leading-none">
+      Pilot — {daysLeft}d left
     </span>
   );
 }
@@ -58,11 +53,13 @@ export const DashboardTop = () => {
 
   return (
     <div className="flex flex-col mb-6">
-      <h1 className="text-4xl text-foreground">
-        {greeting}, {business.name}
+      <h1 className="text-sm font-bold uppercase tracking-tight text-muted-foreground mb-2">
+        {greeting}
       </h1>
-      <div className="flex items-center gap-3 mt-1">
-        <p className="text-muted-foreground">Your voucher overview.</p>
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="inline-block bg-foreground text-background px-2 py-1 text-2xl font-bold uppercase tracking-tight leading-none">
+          {business.name}
+        </span>
         {subscription?.status === "trialing" && subscription.trialEnd && (
           <PilotBadge trialEnd={subscription.trialEnd} />
         )}

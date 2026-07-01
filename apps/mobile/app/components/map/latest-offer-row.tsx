@@ -16,7 +16,10 @@ export function LatestOfferRow({
   return (
     <Pressable
       onPress={onPress}
-      className="bg-zinc-800 px-4 py-3 mb-2 rounded-lg"
+      className="bg-zinc-800 px-4 py-3 mb-2"
+      accessibilityLabel={`${voucherTitle} from ${businessName}, ${industryName}`}
+      accessibilityRole="button"
+      accessibilityHint="Double tap to view voucher"
     >
       <Text
         className="text-white text-lg font-poppins-medium mb-0.5"
@@ -25,7 +28,7 @@ export function LatestOfferRow({
         {voucherTitle}
       </Text>
       <Text
-        className="text-gray-500 text-base uppercase tracking-wide"
+        className="text-gray-400 text-base uppercase tracking-wide"
         numberOfLines={1}
       >
         {businessName} | {industryName}

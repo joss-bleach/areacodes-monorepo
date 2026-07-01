@@ -2,7 +2,6 @@ import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useConvexAuth, useQuery } from "convex/react";
 import { useEffect } from "react";
 import { api } from "@repo/convex";
-import { BusinessNavbar } from "~/components/business-navbar";
 import { CreateBusinessForm } from "~/components/create-business-form";
 import { authClient } from "~/lib/auth-client";
 import * as z from "zod";
@@ -46,17 +45,16 @@ function CreatePage() {
 
   // business === null — show create form
   return (
-    <>
-      <BusinessNavbar />
-      <main className="container-app py-8">
-        <h1 className="text-2xl mb-2">
-          Create your business profile
-        </h1>
-        <p className="text-muted-foreground mb-6">
+    <main className="container-app py-8">
+      <div className="mb-6">
+        <span className="inline-block bg-foreground text-background px-2 py-1 text-2xl font-bold uppercase tracking-tight leading-none">
+          Create Profile
+        </span>
+        <p className="text-xs text-muted-foreground mt-2">
           Set up your business to start creating vouchers
         </p>
-        <CreateBusinessForm />
-      </main>
-    </>
+      </div>
+      <CreateBusinessForm />
+    </main>
   );
 }
