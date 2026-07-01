@@ -22,6 +22,7 @@ import { Route as AuthenticatedBSlugIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedBSlugPosRouteImport } from './routes/_authenticated/b/$slug/pos'
 import { Route as AuthenticatedBSlugEditRouteImport } from './routes/_authenticated/b/$slug/edit'
 import { Route as AuthenticatedBSlugAnalyticsRouteImport } from './routes/_authenticated/b/$slug/analytics'
+import { Route as AuthenticatedBSlugSettingsRouteImport } from './routes/_authenticated/b/$slug/settings'
 
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
@@ -88,6 +89,12 @@ const AuthenticatedBSlugAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthenticatedBSlugRoute,
   } as any)
+const AuthenticatedBSlugSettingsRoute =
+  AuthenticatedBSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedBSlugRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug/analytics': typeof AuthenticatedBSlugAnalyticsRoute
   '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
   '/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
+  '/b/$slug/settings': typeof AuthenticatedBSlugSettingsRoute
   '/b/$slug/': typeof AuthenticatedBSlugIndexRoute
 }
 export interface FileRoutesByTo {
@@ -114,6 +122,7 @@ export interface FileRoutesByTo {
   '/b/$slug/analytics': typeof AuthenticatedBSlugAnalyticsRoute
   '/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
   '/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
+  '/b/$slug/settings': typeof AuthenticatedBSlugSettingsRoute
   '/b/$slug': typeof AuthenticatedBSlugIndexRoute
 }
 export interface FileRoutesById {
@@ -130,6 +139,7 @@ export interface FileRoutesById {
   '/_authenticated/b/$slug/analytics': typeof AuthenticatedBSlugAnalyticsRoute
   '/_authenticated/b/$slug/edit': typeof AuthenticatedBSlugEditRoute
   '/_authenticated/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
+  '/_authenticated/b/$slug/settings': typeof AuthenticatedBSlugSettingsRoute
   '/_authenticated/b/$slug/': typeof AuthenticatedBSlugIndexRoute
 }
 export interface FileRouteTypes {
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/b/$slug/analytics'
     | '/b/$slug/edit'
     | '/b/$slug/pos'
+    | '/b/$slug/settings'
     | '/b/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/b/$slug/analytics'
     | '/b/$slug/edit'
     | '/b/$slug/pos'
+    | '/b/$slug/settings'
     | '/b/$slug'
   id:
     | '__root__'
@@ -174,6 +186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/b/$slug/analytics'
     | '/_authenticated/b/$slug/edit'
     | '/_authenticated/b/$slug/pos'
+    | '/_authenticated/b/$slug/settings'
     | '/_authenticated/b/$slug/'
   fileRoutesById: FileRoutesById
 }
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBSlugAnalyticsRouteImport
       parentRoute: typeof AuthenticatedBSlugRoute
     }
+    '/_authenticated/b/$slug/settings': {
+      id: '/_authenticated/b/$slug/settings'
+      path: '/settings'
+      fullPath: '/b/$slug/settings'
+      preLoaderRoute: typeof AuthenticatedBSlugSettingsRouteImport
+      parentRoute: typeof AuthenticatedBSlugRoute
+    }
   }
 }
 
@@ -285,6 +305,7 @@ interface AuthenticatedBSlugRouteChildren {
   AuthenticatedBSlugAnalyticsRoute: typeof AuthenticatedBSlugAnalyticsRoute
   AuthenticatedBSlugEditRoute: typeof AuthenticatedBSlugEditRoute
   AuthenticatedBSlugPosRoute: typeof AuthenticatedBSlugPosRoute
+  AuthenticatedBSlugSettingsRoute: typeof AuthenticatedBSlugSettingsRoute
   AuthenticatedBSlugIndexRoute: typeof AuthenticatedBSlugIndexRoute
 }
 
@@ -292,6 +313,7 @@ const AuthenticatedBSlugRouteChildren: AuthenticatedBSlugRouteChildren = {
   AuthenticatedBSlugAnalyticsRoute: AuthenticatedBSlugAnalyticsRoute,
   AuthenticatedBSlugEditRoute: AuthenticatedBSlugEditRoute,
   AuthenticatedBSlugPosRoute: AuthenticatedBSlugPosRoute,
+  AuthenticatedBSlugSettingsRoute: AuthenticatedBSlugSettingsRoute,
   AuthenticatedBSlugIndexRoute: AuthenticatedBSlugIndexRoute,
 }
 

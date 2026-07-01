@@ -30,6 +30,7 @@
     "@convex-dev/better-auth": "^0.12.4",
     "better-auth": "^1.6.20",
     "convex": "^1.17.0",
-    "effect": "^3.16.0"
+    "effect": "^3.16.0",
+    "hash-wasm": "^4.12.0"
   }
 }

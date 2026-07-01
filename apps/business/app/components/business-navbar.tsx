@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
-import { Settings } from "lucide-react";
+import { Settings, KeyRound } from "lucide-react";
 import { useState, useEffect } from "react";
 import {
   DropdownMenu,
@@ -63,6 +63,12 @@ export const BusinessNavbar = () => {
                   >
                     <Settings className="w-4 h-4" />
                     Edit business profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => navigate({ to: `/b/$slug/settings`, params: { slug } })}
+                  >
+                    <KeyRound className="w-4 h-4" />
+                    Settings
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </>
