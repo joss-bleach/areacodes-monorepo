@@ -1,7 +1,10 @@
-import { internalAction, internalMutation } from "../_generated/server";
+import {
+  internalAction,
+  internalMutation,
+  internalQuery,
+} from "../_generated/server";
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
-import type { Id } from "../_generated/dataModel";
 import { decryptConnectionTokens } from "./posConnections";
 import { mapDiscountToCatalogObject } from "@areacodes/domain";
 
@@ -89,7 +92,7 @@ export const provisionVoucher = internalAction({
     try {
       const tokens = await decryptConnectionTokens(connection.encryptedTokens);
       accessToken = tokens.accessToken;
-    } catch (err) {
+    } catch {
       await ctx.runMutation(internal.functions.squareProvisioner.setProvisioningFailed, {
         voucherId,
         lastError: "Failed to decrypt Square credentials",
@@ -132,10 +135,10 @@ export const provisionVoucher = internalAction({
       }
 
       if (!res.ok) {
-        const body = await res.text().catch(() => "");
+        const errorText = await res.text().catch(() => "");
         await ctx.runMutation(internal.functions.squareProvisioner.setProvisioningFailed, {
           voucherId,
-          lastError: `Square API error (${res.status}): ${body.slice(0, 200)}`,
+          lastError: `Square API error (${res.status}): ${errorText.slice(0, 200)}`,
           lastAttemptAt: now,
         });
         return;
@@ -235,8 +238,6 @@ export const retryPendingAndFailed = internalAction({
 });
 
 // ── Internal queries (used by internalActions only) ───────────────────────────
-
-import { internalQuery } from "../_generated/server";
 
 export const getVoucherForProvisioning = internalQuery({
   args: { voucherId: v.id("vouchers") },

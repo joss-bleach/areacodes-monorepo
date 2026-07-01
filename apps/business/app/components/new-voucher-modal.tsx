@@ -65,11 +65,11 @@ interface CreateWizardProps {
 }
 
 const CreateWizard = ({ businessId, hasSquareConnection, onSuccess }: CreateWizardProps) => {
-  const WIZARD_STEPS = hasSquareConnection
+  const WIZARD_STEPS: readonly WizardStep[] = hasSquareConnection
     ? WIZARD_STEPS_WITH_PROVIDER
     : WIZARD_STEPS_MANUAL_ONLY;
 
-  const [currentStep, setCurrentStep] = useState<WizardStep>(WIZARD_STEPS[0]);
+  const [currentStep, setCurrentStep] = useState<WizardStep>(WIZARD_STEPS[0]!);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const createVoucher = useMutation(api.functions.vouchers.createVoucher);
 
@@ -87,7 +87,7 @@ const CreateWizard = ({ businessId, hasSquareConnection, onSuccess }: CreateWiza
     mode: "onBlur",
   });
 
-  const currentIndex = WIZARD_STEPS.indexOf(currentStep as any);
+  const currentIndex = WIZARD_STEPS.indexOf(currentStep);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === WIZARD_STEPS.length - 1;
 

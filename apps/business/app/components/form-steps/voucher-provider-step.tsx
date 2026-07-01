@@ -55,7 +55,7 @@ export const VoucherProviderStep = ({ form }: VoucherProviderStepProps) => {
                       : ["percentage", "fixed_amount", "free_item", "bogof", "custom"];
                   const currentKind = form.getValues("discount.kind");
                   if (!caps.includes(currentKind)) {
-                    form.setValue("discount.kind", option.value === "square" ? "percentage" : "percentage");
+                    form.setValue("discount.kind", "percentage");
                     form.setValue("discount.value", undefined);
                     form.setValue("discount.itemName", undefined);
                     form.setValue("discount.customText", undefined);
