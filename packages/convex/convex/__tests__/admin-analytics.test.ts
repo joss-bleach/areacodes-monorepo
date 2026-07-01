@@ -83,7 +83,9 @@ describe("getWeeklyFunnel", () => {
         userId: "owner-a",
         title: "10% Off",
         description: "Desc",
-        voucherFormat: "barcode",
+        provider: "manual",
+        discount: { kind: "custom", customText: "10% off" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -92,7 +94,9 @@ describe("getWeeklyFunnel", () => {
         userId: "owner-b",
         title: "Free Item",
         description: "Desc",
-        voucherFormat: "qr_code",
+        provider: "manual",
+        discount: { kind: "free_item", itemName: "coffee" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -115,21 +119,42 @@ describe("getWeeklyFunnel", () => {
         claimedAt: WEEK_B_TS,
       });
 
-      // One reveal + redemption for c1 in week A
+      // One reveal for c1 in week A, one for c2 in week A
       await ctx.db.insert("reveals", {
         claimId: c1,
         voucherCode: "CODE001",
         revealedAt: WEEK_A_TS,
         expiresAt: 9_999_999_999_999,
-        redeemedAt: WEEK_A_TS,
       });
-      // c2 revealed in week A but redeemed in week B
       await ctx.db.insert("reveals", {
         claimId: c2,
         voucherCode: "CODE002",
         revealedAt: WEEK_A_TS,
         expiresAt: 9_999_999_999_999,
-        redeemedAt: WEEK_B_TS,
+      });
+
+      // c1 redeemed in week A, c2 redeemed in week B
+      await ctx.db.insert("redemptionEvents", {
+        voucherId: vA,
+        businessId: bizA,
+        source: "manual",
+        trustTier: "manual",
+        occurredAt: WEEK_A_TS,
+        recordedAt: WEEK_A_TS,
+        claimId: c1,
+        customerId: "cust-1",
+        idempotencyKey: `manual:${c1}`,
+      });
+      await ctx.db.insert("redemptionEvents", {
+        voucherId: vB,
+        businessId: bizB,
+        source: "manual",
+        trustTier: "manual",
+        occurredAt: WEEK_B_TS,
+        recordedAt: WEEK_B_TS,
+        claimId: c2,
+        customerId: "cust-2",
+        idempotencyKey: `manual:${c2}`,
       });
     });
 
@@ -177,7 +202,9 @@ describe("getBusinessLeaderboard", () => {
         userId: "owner-a",
         title: "10% Off",
         description: "Desc",
-        voucherFormat: "barcode",
+        provider: "manual",
+        discount: { kind: "custom", customText: "10% off" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -193,7 +220,17 @@ describe("getBusinessLeaderboard", () => {
         voucherCode: "CODE001",
         revealedAt: 2000,
         expiresAt: 9_999_999_999_999,
-        redeemedAt: 3000,
+      });
+      await ctx.db.insert("redemptionEvents", {
+        voucherId: vA,
+        businessId: bizA,
+        source: "manual",
+        trustTier: "manual",
+        occurredAt: 3000,
+        recordedAt: 3000,
+        claimId: c1,
+        customerId: "cust-1",
+        idempotencyKey: `manual:${c1}`,
       });
     });
 
@@ -229,7 +266,9 @@ describe("getCrossBusinessDiscoveryCount", () => {
         userId: "owner",
         title: "10% Off",
         description: "Desc",
-        voucherFormat: "barcode",
+        provider: "manual",
+        discount: { kind: "custom", customText: "10% off" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -257,7 +296,9 @@ describe("getCrossBusinessDiscoveryCount", () => {
         userId: "owner-a",
         title: "V",
         description: "D",
-        voucherFormat: "barcode",
+        provider: "manual",
+        discount: { kind: "custom", customText: "deal" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -266,7 +307,9 @@ describe("getCrossBusinessDiscoveryCount", () => {
         userId: "owner-b",
         title: "V",
         description: "D",
-        voucherFormat: "qr_code",
+        provider: "manual",
+        discount: { kind: "custom", customText: "deal" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -283,101 +326,6 @@ describe("getCrossBusinessDiscoveryCount", () => {
       {},
     );
     expect(result).toBe(1);
-  });
-});
-
-// ── getVoucherFormatBreakdown ─────────────────────────────────────────────────
-
-describe("getVoucherFormatBreakdown", () => {
-  test("returns empty array when no claims exist", async () => {
-    const t = convexTest(schema, modules);
-    const adminT = t.withIdentity({ subject: "admin_1", role: "admin" });
-
-    const result = await adminT.query(
-      api.functions.adminAnalytics.getVoucherFormatBreakdown,
-      {},
-    );
-    expect(result).toEqual([]);
-  });
-
-  test("groups claims and redemptions by voucher format", async () => {
-    const t = convexTest(schema, modules);
-    const adminT = t.withIdentity({ subject: "admin_1", role: "admin" });
-
-    const biz = await seedBiz(t, "Cafe A");
-    await t.run(async (ctx) => {
-      const vBar = await ctx.db.insert("vouchers", {
-        businessId: biz,
-        userId: "owner",
-        title: "Barcode V",
-        description: "D",
-        voucherFormat: "barcode",
-        voucherValidFrom: 1,
-        voucherValidTo: 9_999_999_999_999,
-      });
-      const vQr = await ctx.db.insert("vouchers", {
-        businessId: biz,
-        userId: "owner",
-        title: "QR V",
-        description: "D",
-        voucherFormat: "qr_code",
-        voucherValidFrom: 1,
-        voucherValidTo: 9_999_999_999_999,
-      });
-
-      const c1 = await ctx.db.insert("claims", {
-        customerId: "cust-1",
-        voucherId: vBar,
-        claimedAt: 1000,
-      });
-      const c2 = await ctx.db.insert("claims", {
-        customerId: "cust-2",
-        voucherId: vBar,
-        claimedAt: 1000,
-      });
-      const c3 = await ctx.db.insert("claims", {
-        customerId: "cust-3",
-        voucherId: vQr,
-        claimedAt: 1000,
-      });
-
-      // c1 redeemed; c2 and c3 not
-      await ctx.db.insert("reveals", {
-        claimId: c1,
-        voucherCode: "CODE001",
-        revealedAt: 2000,
-        expiresAt: 9_999_999_999_999,
-        redeemedAt: 3000,
-      });
-      await ctx.db.insert("reveals", {
-        claimId: c2,
-        voucherCode: "CODE002",
-        revealedAt: 2000,
-        expiresAt: 9_999_999_999_999,
-      });
-      await ctx.db.insert("reveals", {
-        claimId: c3,
-        voucherCode: "CODE003",
-        revealedAt: 2000,
-        expiresAt: 9_999_999_999_999,
-      });
-    });
-
-    const result = await adminT.query(
-      api.functions.adminAnalytics.getVoucherFormatBreakdown,
-      {},
-    );
-
-    const barcode = result.find((r) => r.format === "barcode")!;
-    const qr = result.find((r) => r.format === "qr_code")!;
-
-    expect(barcode).toBeDefined();
-    expect(barcode.claimCount).toBe(2);
-    expect(barcode.redemptionCount).toBe(1);
-
-    expect(qr).toBeDefined();
-    expect(qr.claimCount).toBe(1);
-    expect(qr.redemptionCount).toBe(0);
   });
 });
 

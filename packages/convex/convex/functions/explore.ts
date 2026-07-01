@@ -1,7 +1,7 @@
 import { query } from "../_generated/server";
 import { v } from "convex/values";
 import { isHidden } from "./visibility";
-import { isActiveVoucher } from "../lib/voucher_filters";
+import { isActiveVoucher, isCustomerVisible } from "../lib/voucher_filters";
 import { isBusinessSuspended } from "../lib/subscription_gate";
 
 export const getBusinessesWithVouchers = query({
@@ -37,28 +37,21 @@ export const getBusinessesWithVouchers = query({
           .filter((q) => isActiveVoucher(q, now))
           .collect();
 
-        if (vouchers.length === 0) return null;
+        const visibleVouchers = vouchers.filter((v) => isCustomerVisible(v, now));
+        if (visibleVouchers.length === 0) return null;
 
-        const [industry, logoUrl, vouchersWithUrls] = await Promise.all([
+        const [industry, logoUrl] = await Promise.all([
           ctx.db.get(business.industryId),
           business.logoStorageId
             ? ctx.storage.getUrl(business.logoStorageId)
             : null,
-          Promise.all(
-            vouchers.map(async (voucher) => ({
-              ...voucher,
-              voucherUrl: voucher.voucherStorageId
-                ? await ctx.storage.getUrl(voucher.voucherStorageId)
-                : null,
-            }))
-          ),
         ]);
 
         return {
           ...business,
           logoUrl,
           industry,
-          vouchers: vouchersWithUrls,
+          vouchers: visibleVouchers,
         };
       })
     );
@@ -84,26 +77,20 @@ export const getBusinessByIdWithVouchers = query({
       .filter((q) => isActiveVoucher(q, now))
       .collect();
 
-    const [industry, logoUrl, vouchersWithUrls] = await Promise.all([
+    const visibleVouchers = vouchers.filter((v) => isCustomerVisible(v, now));
+
+    const [industry, logoUrl] = await Promise.all([
       ctx.db.get(business.industryId),
       business.logoStorageId
         ? ctx.storage.getUrl(business.logoStorageId)
         : null,
-      Promise.all(
-        vouchers.map(async (voucher) => ({
-          ...voucher,
-          voucherUrl: voucher.voucherStorageId
-            ? await ctx.storage.getUrl(voucher.voucherStorageId)
-            : null,
-        }))
-      ),
     ]);
 
     return {
       ...business,
       logoUrl,
       industry,
-      vouchers: vouchersWithUrls,
+      vouchers: visibleVouchers,
     };
   },
 });

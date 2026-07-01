@@ -5,7 +5,7 @@ import type { Id } from "../_generated/dataModel";
 import { Effect, Layer } from "effect";
 import { VoucherRepo, VoucherService, type IVoucherRepo } from "@areacodes/domain";
 import { isHidden } from "./visibility";
-import { isActiveVoucher } from "../lib/voucher_filters";
+import { isActiveVoucher, isCustomerVisible } from "../lib/voucher_filters";
 import { isBusinessSuspended } from "../lib/subscription_gate";
 import { internal } from "../_generated/api";
 
@@ -28,9 +28,9 @@ function makeConvexRepo(ctx: MutationCtx): IVoucherRepo {
           userId: data.userId,
           title: data.title,
           description: data.description,
-          voucherFormat: data.voucherFormat,
-          voucherStorageId: data.voucherStorageId as Id<"_storage"> | undefined,
-          voucherGenCode: data.voucherGenCode,
+          provider: data.provider,
+          discount: data.discount,
+          provisioning: data.provisioning,
           voucherTerms: data.voucherTerms,
           voucherValidFrom: data.voucherValidFrom,
           voucherValidTo: data.voucherValidTo,
@@ -39,36 +39,40 @@ function makeConvexRepo(ctx: MutationCtx): IVoucherRepo {
       }),
     patch: (id, data) =>
       Effect.promise(async () => {
-        await ctx.db.patch(id as Id<"vouchers">, {
-          ...(data.title !== undefined ? { title: data.title } : {}),
-          ...(data.description !== undefined ? { description: data.description } : {}),
-          ...(data.voucherFormat !== undefined ? { voucherFormat: data.voucherFormat } : {}),
-          ...(Object.prototype.hasOwnProperty.call(data, "voucherStorageId")
-            ? { voucherStorageId: data.voucherStorageId as Id<"_storage"> | undefined }
-            : {}),
-          ...(Object.prototype.hasOwnProperty.call(data, "voucherGenCode")
-            ? { voucherGenCode: data.voucherGenCode }
-            : {}),
-          ...(Object.prototype.hasOwnProperty.call(data, "voucherTerms")
-            ? { voucherTerms: data.voucherTerms }
-            : {}),
-          ...(data.voucherValidFrom !== undefined ? { voucherValidFrom: data.voucherValidFrom } : {}),
-          ...(data.voucherValidTo !== undefined ? { voucherValidTo: data.voucherValidTo } : {}),
-          ...(data.deletedAt !== undefined ? { deletedAt: data.deletedAt } : {}),
-        });
-      }),
-    deleteStorage: (storageId) =>
-      Effect.promise(async () => {
-        await ctx.storage.delete(storageId as Id<"_storage">);
+        const patch: Record<string, unknown> = {};
+        if (data.title !== undefined) patch.title = data.title;
+        if (data.description !== undefined) patch.description = data.description;
+        if (data.discount !== undefined) patch.discount = data.discount;
+        if (Object.prototype.hasOwnProperty.call(data, "voucherTerms"))
+          patch.voucherTerms = data.voucherTerms;
+        if (data.voucherValidFrom !== undefined) patch.voucherValidFrom = data.voucherValidFrom;
+        if (data.voucherValidTo !== undefined) patch.voucherValidTo = data.voucherValidTo;
+        if (data.deletedAt !== undefined) patch.deletedAt = data.deletedAt;
+        if (data.provisioning !== undefined) patch.provisioning = data.provisioning;
+        await ctx.db.patch(id as Id<"vouchers">, patch);
       }),
   };
 }
+
+const discountValidator = v.object({
+  kind: v.union(
+    v.literal("percentage"),
+    v.literal("fixed_amount"),
+    v.literal("free_item"),
+    v.literal("bogof"),
+    v.literal("custom"),
+  ),
+  value: v.optional(v.number()),
+  currency: v.optional(v.string()),
+  itemName: v.optional(v.string()),
+  customText: v.optional(v.string()),
+});
 
 export const getVouchersByBusiness = query({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, { businessId }) => {
     await requireAuth(ctx);
-    const vouchers = await ctx.db
+    return ctx.db
       .query("vouchers")
       .withIndex("by_business", (q) => q.eq("businessId", businessId))
       .filter((q) =>
@@ -78,15 +82,6 @@ export const getVouchersByBusiness = query({
         )
       )
       .collect();
-
-    return await Promise.all(
-      vouchers.map(async (voucher) => ({
-        ...voucher,
-        voucherUrl: voucher.voucherStorageId
-          ? await ctx.storage.getUrl(voucher.voucherStorageId)
-          : null,
-      }))
-    );
   },
 });
 
@@ -102,14 +97,7 @@ export const getActiveVouchersByBusiness = query({
       .filter((q) => isActiveVoucher(q, now))
       .collect();
 
-    return await Promise.all(
-      vouchers.map(async (voucher) => ({
-        ...voucher,
-        voucherUrl: voucher.voucherStorageId
-          ? await ctx.storage.getUrl(voucher.voucherStorageId)
-          : null,
-      }))
-    );
+    return vouchers.filter((v) => isCustomerVisible(v, now));
   },
 });
 
@@ -118,7 +106,7 @@ export const getExpiringVouchersByBusiness = query({
   handler: async (ctx, { businessId }) => {
     const now = Date.now();
     const thirtyDaysFromNow = now + 30 * 24 * 60 * 60 * 1000;
-    const vouchers = await ctx.db
+    return ctx.db
       .query("vouchers")
       .withIndex("by_business", (q) => q.eq("businessId", businessId))
       .filter((q) =>
@@ -130,15 +118,6 @@ export const getExpiringVouchersByBusiness = query({
         )
       )
       .collect();
-
-    return await Promise.all(
-      vouchers.map(async (voucher) => ({
-        ...voucher,
-        voucherUrl: voucher.voucherStorageId
-          ? await ctx.storage.getUrl(voucher.voucherStorageId)
-          : null,
-      }))
-    );
   },
 });
 
@@ -151,11 +130,8 @@ export const getVoucherByIdWithBusiness = query({
     const business = await ctx.db.get(voucher.businessId);
     if (!business || isHidden(business)) return null;
 
-    const [industry, voucherUrl, logoUrl] = await Promise.all([
+    const [industry, logoUrl] = await Promise.all([
       ctx.db.get(business.industryId),
-      voucher.voucherStorageId
-        ? ctx.storage.getUrl(voucher.voucherStorageId)
-        : null,
       business.logoStorageId
         ? ctx.storage.getUrl(business.logoStorageId)
         : null,
@@ -163,7 +139,6 @@ export const getVoucherByIdWithBusiness = query({
 
     return {
       ...voucher,
-      voucherUrl,
       business: { ...business, logoUrl, industry },
     };
   },
@@ -174,13 +149,8 @@ export const createVoucher = mutation({
     businessId: v.id("businesses"),
     title: v.string(),
     description: v.string(),
-    voucherFormat: v.union(
-      v.literal("barcode"),
-      v.literal("qr_code"),
-      v.literal("generated_text")
-    ),
-    voucherStorageId: v.optional(v.id("_storage")),
-    voucherGenCode: v.optional(v.string()),
+    provider: v.union(v.literal("square"), v.literal("manual")),
+    discount: discountValidator,
     voucherTerms: v.optional(v.string()),
     voucherValidFrom: v.number(),
     voucherValidTo: v.number(),
@@ -220,13 +190,7 @@ export const updateVoucher = mutation({
     voucherId: v.id("vouchers"),
     title: v.string(),
     description: v.string(),
-    voucherFormat: v.union(
-      v.literal("barcode"),
-      v.literal("qr_code"),
-      v.literal("generated_text")
-    ),
-    voucherStorageId: v.optional(v.id("_storage")),
-    voucherGenCode: v.optional(v.string()),
+    discount: discountValidator,
     voucherTerms: v.optional(v.string()),
     voucherValidFrom: v.number(),
     voucherValidTo: v.number(),

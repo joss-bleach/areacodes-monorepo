@@ -4,13 +4,6 @@ import { internal } from "./_generated/api";
 const crons = cronJobs();
 
 crons.daily(
-  "poll POS redemptions",
-  { hourUTC: 2, minuteUTC: 0 },
-  internal.functions.posConnections.runRedemptionPolling,
-  {},
-);
-
-crons.daily(
   "sync PostHog weekly views",
   { hourUTC: 3, minuteUTC: 0 },
   internal.functions.adminAnalytics.syncPosthogWeeklyViews,

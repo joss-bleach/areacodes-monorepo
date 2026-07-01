@@ -28,7 +28,6 @@ function makeConvexVoucherRepo(ctx: QueryCtx | MutationCtx): IVoucherRepo {
       Effect.promise(() => ctx.db.get(id as Id<"vouchers">)),
     insert: () => Effect.die("not available in this context"),
     patch: () => Effect.die("not available in this context"),
-    deleteStorage: () => Effect.die("not available in this context"),
   };
 }
 

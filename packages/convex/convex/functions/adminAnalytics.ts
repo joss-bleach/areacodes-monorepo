@@ -12,8 +12,6 @@ import { internal } from "../_generated/api";
 async function requireAdmin(ctx: QueryCtx | MutationCtx): Promise<void> {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Unauthenticated");
-  // Better Auth's convex() plugin includes all user fields in the JWT payload,
-  // so role is available as a claim on the identity token.
   if ((identity as { role?: string }).role !== "admin")
     throw new Error("Forbidden: Admin only");
 }
@@ -34,7 +32,6 @@ function makeAdminRepo(ctx: QueryCtx): IAdminAnalyticsRepo {
         return vouchers.map((v) => ({
           id: v._id as unknown as string,
           businessId: v.businessId as unknown as string,
-          voucherFormat: v.voucherFormat,
           deletedAt: v.deletedAt,
         }));
       }),
@@ -56,7 +53,15 @@ function makeAdminRepo(ctx: QueryCtx): IAdminAnalyticsRepo {
         return reveals.map((r) => ({
           claimId: r.claimId as unknown as string,
           revealedAt: r.revealedAt,
-          redeemedAt: r.redeemedAt,
+        }));
+      }),
+
+    getAllRedemptionEvents: () =>
+      Effect.promise(async () => {
+        const events = await ctx.db.query("redemptionEvents").collect();
+        return events.map((e) => ({
+          businessId: e.businessId as unknown as string,
+          occurredAt: e.occurredAt,
         }));
       }),
   };
@@ -91,14 +96,6 @@ export const getCrossBusinessDiscoveryCount = query({
   handler: async (ctx) => {
     await requireAdmin(ctx);
     return runAdminEffect(ctx, PilotAnalyticsService.getCrossBusinessDiscoveryCount());
-  },
-});
-
-export const getVoucherFormatBreakdown = query({
-  args: {},
-  handler: async (ctx) => {
-    await requireAdmin(ctx);
-    return runAdminEffect(ctx, PilotAnalyticsService.getVoucherFormatBreakdown());
   },
 });
 

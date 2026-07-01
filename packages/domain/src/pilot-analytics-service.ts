@@ -18,24 +18,21 @@ export interface BusinessLeaderboardEntry {
   hasZeroActivity: boolean;
 }
 
-export interface FormatBreakdownRow {
-  format: string;
-  claimCount: number;
-  redemptionCount: number;
-}
-
 // ── Admin analytics repository interface ──────────────────────────────────────
 
 export interface IAdminAnalyticsRepo {
   readonly getAllBusinesses: () => Effect.Effect<Array<{ id: string; name: string }>>;
   readonly getAllVouchers: () => Effect.Effect<
-    Array<{ id: string; businessId: string; voucherFormat: string; deletedAt?: number }>
+    Array<{ id: string; businessId: string; deletedAt?: number }>
   >;
   readonly getAllClaims: () => Effect.Effect<
     Array<{ claimId: string; customerId: string; voucherId: string; claimedAt: number }>
   >;
   readonly getAllReveals: () => Effect.Effect<
-    Array<{ claimId: string; revealedAt: number; redeemedAt?: number }>
+    Array<{ claimId: string; revealedAt: number }>
+  >;
+  readonly getAllRedemptionEvents: () => Effect.Effect<
+    Array<{ businessId: string; occurredAt: number }>
   >;
 }
 
@@ -64,7 +61,10 @@ export interface IPilotAnalyticsRepo {
   ) => Effect.Effect<Array<{ claimId: string; customerId: string }>>;
   readonly getRevealsByClaim: (
     claimId: string,
-  ) => Effect.Effect<Array<{ redeemedAt?: number | undefined }>>;
+  ) => Effect.Effect<Array<{ revealedAt: number }>>;
+  readonly getRedemptionCountForVoucher: (
+    voucherId: string,
+  ) => Effect.Effect<number>;
 }
 
 export class PilotAnalyticsRepo extends Context.Tag(
@@ -81,21 +81,11 @@ export const getTotalRedemptions = (
     const vouchers = yield* repo.getVouchersForBusiness(businessId);
     let total = 0;
     for (const voucher of vouchers) {
-      const claims = yield* repo.getClaimsForVoucher(voucher.id);
-      for (const claim of claims) {
-        const reveals = yield* repo.getRevealsByClaim(claim.claimId);
-        total += reveals.filter((r) => r.redeemedAt != null).length;
-      }
+      total += yield* repo.getRedemptionCountForVoucher(voucher.id);
     }
     return total;
   });
 
-// A New Customer is a genuinely acquired customer: one whose first-ever claim
-// at this business falls within the measurement period. With no pre-pilot claim
-// data, every distinct customer who has claimed here was acquired during the
-// pilot, so the count is the number of distinct claiming customers. Customers
-// who returned (claimed more than once) are still acquired customers and are
-// counted here as well as under getReturnCustomerCount.
 export const getNewCustomerCount = (
   businessId: string,
 ): Effect.Effect<number, never, PilotAnalyticsRepo> =>
@@ -153,6 +143,7 @@ export const getWeeklyFunnel = (): Effect.Effect<
     const repo = yield* AdminAnalyticsRepo;
     const claims = yield* repo.getAllClaims();
     const reveals = yield* repo.getAllReveals();
+    const redemptionEvents = yield* repo.getAllRedemptionEvents();
 
     const weekData = new Map<number, WeeklyFunnelRow>();
 
@@ -171,9 +162,10 @@ export const getWeeklyFunnel = (): Effect.Effect<
 
     for (const reveal of reveals) {
       getOrCreate(getWeekStart(reveal.revealedAt)).revealCount++;
-      if (reveal.redeemedAt != null) {
-        getOrCreate(getWeekStart(reveal.redeemedAt)).redemptionCount++;
-      }
+    }
+
+    for (const event of redemptionEvents) {
+      getOrCreate(getWeekStart(event.occurredAt)).redemptionCount++;
     }
 
     return [...weekData.values()].sort((a, b) => a.weekStart - b.weekStart);
@@ -190,6 +182,7 @@ export const getBusinessLeaderboard = (): Effect.Effect<
     const vouchers = yield* repo.getAllVouchers();
     const claims = yield* repo.getAllClaims();
     const reveals = yield* repo.getAllReveals();
+    const redemptionEvents = yield* repo.getAllRedemptionEvents();
 
     const voucherToBusinessId = new Map(vouchers.map((v) => [v.id, v.businessId]));
 
@@ -221,10 +214,12 @@ export const getBusinessLeaderboard = (): Effect.Effect<
       const businessId = claimToBusinessId.get(reveal.claimId);
       if (!businessId) continue;
       const s = stats.get(businessId);
-      if (s) {
-        s.revealCount++;
-        if (reveal.redeemedAt != null) s.redemptionCount++;
-      }
+      if (s) s.revealCount++;
+    }
+
+    for (const event of redemptionEvents) {
+      const s = stats.get(event.businessId);
+      if (s) s.redemptionCount++;
     }
 
     const entries: BusinessLeaderboardEntry[] = businesses.map((biz) => {
@@ -267,46 +262,6 @@ export const getCrossBusinessDiscoveryCount = (): Effect.Effect<
     return [...customerBusinesses.values()].filter((s) => s.size >= 2).length;
   });
 
-export const getVoucherFormatBreakdown = (): Effect.Effect<
-  FormatBreakdownRow[],
-  never,
-  AdminAnalyticsRepo
-> =>
-  Effect.gen(function* () {
-    const repo = yield* AdminAnalyticsRepo;
-    const vouchers = yield* repo.getAllVouchers();
-    const claims = yield* repo.getAllClaims();
-    const reveals = yield* repo.getAllReveals();
-
-    const voucherFormatMap = new Map(vouchers.map((v) => [v.id, v.voucherFormat]));
-    const claimVoucherMap = new Map(claims.map((c) => [c.claimId, c.voucherId]));
-    const formatStats = new Map<string, { claimCount: number; redemptionCount: number }>();
-
-    function getOrCreateFormat(format: string) {
-      let s = formatStats.get(format);
-      if (!s) {
-        s = { claimCount: 0, redemptionCount: 0 };
-        formatStats.set(format, s);
-      }
-      return s;
-    }
-
-    for (const claim of claims) {
-      const format = voucherFormatMap.get(claim.voucherId);
-      if (format) getOrCreateFormat(format).claimCount++;
-    }
-
-    for (const reveal of reveals) {
-      if (reveal.redeemedAt == null) continue;
-      const voucherId = claimVoucherMap.get(reveal.claimId);
-      if (!voucherId) continue;
-      const format = voucherFormatMap.get(voucherId);
-      if (format) getOrCreateFormat(format).redemptionCount++;
-    }
-
-    return [...formatStats.entries()].map(([format, s]) => ({ format, ...s }));
-  });
-
 export const getVoucherStats = (
   businessId: string,
 ): Effect.Effect<VoucherStat[], never, PilotAnalyticsRepo> =>
@@ -317,12 +272,11 @@ export const getVoucherStats = (
     for (const voucher of vouchers) {
       const claims = yield* repo.getClaimsForVoucher(voucher.id);
       let revealCount = 0;
-      let redemptionCount = 0;
       for (const claim of claims) {
         const reveals = yield* repo.getRevealsByClaim(claim.claimId);
         revealCount += reveals.length;
-        redemptionCount += reveals.filter((r) => r.redeemedAt != null).length;
       }
+      const redemptionCount = yield* repo.getRedemptionCountForVoucher(voucher.id);
       stats.push({
         voucherId: voucher.id,
         title: voucher.title,

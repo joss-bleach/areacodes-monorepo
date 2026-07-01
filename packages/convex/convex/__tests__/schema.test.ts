@@ -37,7 +37,9 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
         userId: "user_abc",
         title: "20% off",
         description: "Save 20%",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1000,
         voucherValidTo: 9999999999999,
       });
@@ -98,7 +100,9 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
         userId: "user_1",
         title: "Free coffee",
         description: "One free coffee",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1000,
         voucherValidTo: 9999999999999,
         flaggedAt: 9999,
@@ -213,7 +217,9 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
         userId: "user_2",
         title: "Free item",
         description: "Get one free",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9999999999999,
       });
@@ -261,7 +267,9 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
         userId: "user_3",
         title: "10% off",
         description: "Save 10%",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9999999999999,
       });
@@ -283,7 +291,9 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
         userId: "user_4",
         title: "15% off",
         description: "Save 15%",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9999999999999,
       });
@@ -321,7 +331,9 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
         userId: "user_5",
         title: "Offer",
         description: "Desc",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9999999999999,
       });
@@ -372,7 +384,9 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
         userId: "user_6",
         title: "Offer2",
         description: "Desc2",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9999999999999,
       });
@@ -424,7 +438,12 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
       const connId = await ctx.db.insert("posConnections", {
         businessId,
         provider: "square",
-        credentials: "encrypted-token-ref",
+        status: "connected",
+        externalMerchantId: "merchant-test-1",
+        scopes: ["ITEMS_READ", "ITEMS_WRITE"],
+        encryptedTokens: "encrypted-token-ref",
+        encryptionKeyVersion: "v1",
+        tokenExpiresAt: 9999999999999,
         connectedAt: 444444,
       });
 
@@ -432,15 +451,21 @@ describe("schema migration — flaggedAt, userId, new tables", () => {
       expect(conn?.provider).toBe("square");
       expect(conn?.businessId).toBe(businessId);
 
+      // Only square is supported in OAuth schema; second connection uses different merchantId
       const conn2Id = await ctx.db.insert("posConnections", {
         businessId,
-        provider: "zettle",
-        credentials: "another-encrypted-ref",
+        provider: "square",
+        status: "connected",
+        externalMerchantId: "merchant-test-2",
+        scopes: ["ITEMS_READ"],
+        encryptedTokens: "another-encrypted-ref",
+        encryptionKeyVersion: "v1",
+        tokenExpiresAt: 9999999999999,
         connectedAt: 555555,
       });
 
       const conn2 = await ctx.db.get(conn2Id);
-      expect(conn2?.provider).toBe("zettle");
+      expect(conn2?.provider).toBe("square");
     });
   });
 

@@ -29,7 +29,9 @@ async function seedVoucher(t: ReturnType<typeof convexTest>) {
       userId: "owner-1",
       title: "10% Off",
       description: "Save 10%",
-      voucherFormat: "generated_text",
+      provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
       voucherValidFrom: 1,
       voucherValidTo: 9_999_999_999_999,
     });
@@ -60,7 +62,9 @@ async function seedVoucherWithBusiness(t: ReturnType<typeof convexTest>) {
       userId: "owner-2",
       title: "20% Off",
       description: "Save 20%",
-      voucherFormat: "generated_text",
+      provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
       voucherValidFrom: 1,
       voucherValidTo: 9_999_999_999_999,
     });

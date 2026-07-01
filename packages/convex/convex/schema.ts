@@ -34,23 +34,65 @@ export default defineSchema({
     userId: v.string(),
     title: v.string(),
     description: v.string(),
-    voucherFormat: v.union(
-      v.literal("barcode"),
-      v.literal("qr_code"),
-      v.literal("generated_text")
-    ),
-    voucherStorageId: v.optional(v.id("_storage")),
-    voucherGenCode: v.optional(v.string()),
+    provider: v.union(v.literal("square"), v.literal("manual")),
+    discount: v.object({
+      kind: v.union(
+        v.literal("percentage"),
+        v.literal("fixed_amount"),
+        v.literal("free_item"),
+        v.literal("bogof"),
+        v.literal("custom"),
+      ),
+      value: v.optional(v.number()),
+      currency: v.optional(v.string()),
+      itemName: v.optional(v.string()),
+      customText: v.optional(v.string()),
+    }),
+    provisioning: v.object({
+      status: v.union(
+        v.literal("not_required"),
+        v.literal("pending"),
+        v.literal("provisioned"),
+        v.literal("failed"),
+      ),
+      externalId: v.optional(v.string()),
+      lastError: v.optional(v.string()),
+      lastAttemptAt: v.optional(v.number()),
+      provisionedAt: v.optional(v.number()),
+    }),
     voucherTerms: v.optional(v.string()),
     voucherValidFrom: v.number(),
     voucherValidTo: v.number(),
     deletedAt: v.optional(v.number()),
     flaggedAt: v.optional(v.number()),
-    redemptionCount: v.optional(v.number()),
   })
     .index("by_business", ["businessId"])
     .index("by_user", ["userId"])
-    .index("by_valid_to", ["voucherValidTo"]),
+    .index("by_valid_to", ["voucherValidTo"])
+    .index("by_provisioning_status", ["provisioning.status"]),
+
+  redemptionEvents: defineTable({
+    voucherId: v.id("vouchers"),
+    businessId: v.id("businesses"),
+    source: v.union(v.literal("square"), v.literal("manual")),
+    trustTier: v.union(v.literal("square"), v.literal("manual")),
+    occurredAt: v.number(),
+    recordedAt: v.number(),
+    claimId: v.optional(v.id("claims")),
+    customerId: v.optional(v.string()),
+    providerOrderRef: v.optional(v.string()),
+    amountDiscounted: v.optional(v.number()),
+    idempotencyKey: v.string(),
+  })
+    .index("by_voucher", ["voucherId"])
+    .index("by_business", ["businessId"])
+    .index("by_idempotency", ["idempotencyKey"]),
+
+  redemptionAuth: defineTable({
+    businessId: v.id("businesses"),
+    redemptionPinHash: v.string(),
+    redemptionPinSetAt: v.number(),
+  }).index("by_business", ["businessId"]),
 
   auditLog: defineTable({
     userId: v.string(),
@@ -72,18 +114,28 @@ export default defineSchema({
     voucherCode: v.string(),
     revealedAt: v.number(),
     expiresAt: v.number(),
-    redeemedAt: v.optional(v.number()),
   })
     .index("by_claim", ["claimId"])
     .index("by_voucher_code", ["voucherCode"]),
 
   posConnections: defineTable({
     businessId: v.id("businesses"),
-    provider: v.union(v.literal("square"), v.literal("zettle")),
-    credentials: v.string(),
+    provider: v.literal("square"),
+    status: v.union(
+      v.literal("connected"),
+      v.literal("expired"),
+      v.literal("revoked"),
+    ),
+    externalMerchantId: v.string(),
+    scopes: v.array(v.string()),
+    encryptedTokens: v.string(),
+    encryptionKeyVersion: v.string(),
+    tokenExpiresAt: v.number(),
+    lastReconciledAt: v.optional(v.number()),
     connectedAt: v.number(),
-    lastPolledAt: v.optional(v.number()),
-  }).index("by_business", ["businessId"]),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_external_merchant", ["externalMerchantId"]),
 
   subscriptions: defineTable({
     businessId: v.id("businesses"),

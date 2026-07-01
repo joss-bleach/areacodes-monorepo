@@ -25,7 +25,8 @@ function PosStatusCard() {
     businessId ? { businessId } : "skip",
   );
 
-  const connectedProviders = connections?.map((c) => c.provider) ?? [];
+  const isSquareConnected =
+    connections?.some((c) => c.provider === "square" && c.status === "connected") ?? false;
 
   return (
     <Card className="mb-8">
@@ -41,22 +42,15 @@ function PosStatusCard() {
         </Button>
       </CardHeader>
       <CardContent>
-        {connectedProviders.length === 0 ? (
+        {!isSquareConnected ? (
           <p className="text-sm text-muted-foreground">
-            No POS provider connected. Connect Square or Zettle to track redemptions automatically.
+            No POS provider connected. Connect Square to track redemptions automatically.
           </p>
         ) : (
           <div className="flex items-center gap-2">
-            {connectedProviders.includes("square") && (
-              <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                Square connected
-              </Badge>
-            )}
-            {connectedProviders.includes("zettle") && (
-              <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
-                Zettle connected
-              </Badge>
-            )}
+            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+              Square connected
+            </Badge>
           </div>
         )}
       </CardContent>

@@ -44,7 +44,18 @@ function makeConvexRepo(ctx: QueryCtx): IPilotAnalyticsRepo {
           .query("reveals")
           .withIndex("by_claim", (q) => q.eq("claimId", claimId as Id<"claims">))
           .collect();
-        return reveals.map((r) => ({ redeemedAt: r.redeemedAt }));
+        return reveals.map((r) => ({ revealedAt: r.revealedAt }));
+      }),
+
+    getRedemptionCountForVoucher: (voucherId) =>
+      Effect.promise(async () => {
+        const events = await ctx.db
+          .query("redemptionEvents")
+          .withIndex("by_voucher", (q) =>
+            q.eq("voucherId", voucherId as Id<"vouchers">),
+          )
+          .collect();
+        return events.length;
       }),
   };
 }

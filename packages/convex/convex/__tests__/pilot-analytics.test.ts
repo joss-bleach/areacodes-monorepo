@@ -54,7 +54,9 @@ describe("getTotalRedemptions", () => {
         userId: "owner-1",
         title: "10% Off",
         description: "Save 10%",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -91,7 +93,9 @@ describe("getTotalRedemptions", () => {
         userId: "owner-1",
         title: "V1",
         description: "V1",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -100,7 +104,9 @@ describe("getTotalRedemptions", () => {
         userId: "owner-1",
         title: "V2",
         description: "V2",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -125,15 +131,13 @@ describe("getTotalRedemptions", () => {
         claimId: c1,
         voucherCode: "CODE000001",
         revealedAt: 2000,
-        expiresAt: 9999999,
-        redeemedAt: 3000,
+        expiresAt: 9999999
       });
       await ctx.db.insert("reveals", {
         claimId: c2,
         voucherCode: "CODE000002",
         revealedAt: 2000,
-        expiresAt: 9999999,
-        redeemedAt: 3000,
+        expiresAt: 9999999
       });
       // c3 not redeemed
       await ctx.db.insert("reveals", {
@@ -141,6 +145,29 @@ describe("getTotalRedemptions", () => {
         voucherCode: "CODE000003",
         revealedAt: 2000,
         expiresAt: 9999999,
+      });
+      // Redemption events for c1 and c2 (c3 was not redeemed)
+      await ctx.db.insert("redemptionEvents", {
+        voucherId: v1,
+        businessId,
+        source: "manual",
+        trustTier: "manual",
+        occurredAt: 3000,
+        recordedAt: 3000,
+        claimId: c1,
+        customerId: "cust-1",
+        idempotencyKey: `manual:${c1}`,
+      });
+      await ctx.db.insert("redemptionEvents", {
+        voucherId: v2,
+        businessId,
+        source: "manual",
+        trustTier: "manual",
+        occurredAt: 3000,
+        recordedAt: 3000,
+        claimId: c2,
+        customerId: "cust-2",
+        idempotencyKey: `manual:${c2}`,
       });
     });
 
@@ -167,7 +194,9 @@ describe("getNewCustomerCount", () => {
         userId: "owner-1",
         title: "V1",
         description: "V1",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -192,7 +221,9 @@ describe("getNewCustomerCount", () => {
         userId: "owner-1",
         title: "V1",
         description: "V1",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -201,7 +232,9 @@ describe("getNewCustomerCount", () => {
         userId: "owner-1",
         title: "V2",
         description: "V2",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -236,7 +269,9 @@ describe("getReturnCustomerCount", () => {
         userId: "owner-1",
         title: "V1",
         description: "V1",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -263,7 +298,9 @@ describe("getReturnCustomerCount", () => {
         userId: "owner-1",
         title: "V1",
         description: "V1",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -272,7 +309,9 @@ describe("getReturnCustomerCount", () => {
         userId: "owner-1",
         title: "V2",
         description: "V2",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -321,7 +360,9 @@ describe("getVoucherStats", () => {
         userId: "owner-1",
         title: "10% Off",
         description: "Save 10%",
-        voucherFormat: "generated_text",
+        provider: "manual",
+        discount: { kind: "custom", customText: "test" },
+        provisioning: { status: "not_required" },
         voucherValidFrom: 1,
         voucherValidTo: 9_999_999_999_999,
       });
@@ -330,13 +371,12 @@ describe("getVoucherStats", () => {
       const c1 = await ctx.db.insert("claims", { customerId: "cust-1", voucherId: v1, claimedAt: 1000 });
       const c2 = await ctx.db.insert("claims", { customerId: "cust-2", voucherId: v1, claimedAt: 1000 });
 
-      // c1: revealed and redeemed
+      // c1: revealed and redeemed (redemptionEvent inserted)
       await ctx.db.insert("reveals", {
         claimId: c1,
         voucherCode: "CODE000001",
         revealedAt: 2000,
-        expiresAt: 9999999,
-        redeemedAt: 3000,
+        expiresAt: 9999999
       });
       // c2: revealed but not redeemed
       await ctx.db.insert("reveals", {
@@ -344,6 +384,17 @@ describe("getVoucherStats", () => {
         voucherCode: "CODE000002",
         revealedAt: 2000,
         expiresAt: 9999999,
+      });
+      await ctx.db.insert("redemptionEvents", {
+        voucherId: v1,
+        businessId,
+        source: "manual",
+        trustTier: "manual",
+        occurredAt: 3000,
+        recordedAt: 3000,
+        claimId: c1,
+        customerId: "cust-1",
+        idempotencyKey: `manual:${c1}`,
       });
     });
 

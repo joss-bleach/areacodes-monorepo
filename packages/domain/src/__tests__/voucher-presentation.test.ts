@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  voucherStatus,
-  voucherFormatLabel,
-  type VoucherFormat,
-} from "../voucher-presentation.js";
+import { voucherStatus } from "../voucher-presentation.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = 1_700_000_000_000;
@@ -71,19 +67,5 @@ describe("voucherStatus", () => {
       NOW
     );
     expect(result).toBe("expiring");
-  });
-});
-
-describe("voucherFormatLabel", () => {
-  test("returns 'Barcode' for barcode format", () => {
-    expect(voucherFormatLabel("barcode")).toBe("Barcode");
-  });
-
-  test("returns 'QR Code' for qr_code format", () => {
-    expect(voucherFormatLabel("qr_code")).toBe("QR Code");
-  });
-
-  test("returns 'Text' for generated_text format", () => {
-    expect(voucherFormatLabel("generated_text")).toBe("Text");
   });
 });

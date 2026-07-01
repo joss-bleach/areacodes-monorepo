@@ -24,16 +24,35 @@ export interface Business {
   _creationTime: number;
 }
 
+export type DiscountKind = "percentage" | "fixed_amount" | "free_item" | "bogof" | "custom";
+export type Provider = "square" | "manual";
+export type ProvisioningStatus = "not_required" | "pending" | "provisioned" | "failed";
+
+export interface Discount {
+  kind: DiscountKind;
+  value?: number;
+  currency?: string;
+  itemName?: string;
+  customText?: string;
+}
+
+export interface Provisioning {
+  status: ProvisioningStatus;
+  externalId?: string;
+  lastError?: string;
+  lastAttemptAt?: number;
+  provisionedAt?: number;
+}
+
 export interface Voucher {
   _id: string;
   businessId: string;
   userId: string;
   title: string;
   description: string;
-  voucherFormat: "barcode" | "qr_code" | "generated_text";
-  voucherStorageId?: string;
-  voucherUrl?: string | null;
-  voucherGenCode?: string;
+  provider: Provider;
+  discount: Discount;
+  provisioning: Provisioning;
   voucherTerms?: string;
   voucherValidFrom: number;
   voucherValidTo: number;

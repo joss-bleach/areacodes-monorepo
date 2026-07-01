@@ -5,7 +5,6 @@ import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import {
   voucherStatus,
-  voucherFormatLabel,
   type VoucherStatus,
 } from "@areacodes/domain";
 import {
@@ -44,15 +43,10 @@ type ConvexVoucher = {
   businessId: Id<"businesses">;
   title: string;
   description: string;
-  voucherFormat: "barcode" | "qr_code" | "generated_text";
-  voucherStorageId?: Id<"_storage">;
-  voucherGenCode?: string;
   voucherTerms?: string;
   voucherValidFrom: number;
   voucherValidTo: number;
   deletedAt?: number;
-  voucherUrl: string | null;
-  redemptionCount?: number;
 };
 
 
@@ -162,10 +156,8 @@ export const VoucherTable = () => {
             <TableRow>
               <TableHead>Title</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Format</TableHead>
               <TableHead>Valid Until</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Redemptions</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -173,7 +165,7 @@ export const VoucherTable = () => {
             {vouchers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={5}
                   className="py-8 text-center text-sm text-muted-foreground"
                 >
                   No vouchers found. Create your first voucher to get started.
@@ -197,9 +189,6 @@ export const VoucherTable = () => {
                       {voucher.description}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {voucherFormatLabel(voucher.voucherFormat)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
                       {new Date(voucher.voucherValidTo).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
@@ -212,9 +201,6 @@ export const VoucherTable = () => {
                       >
                         {statusLabel[status]}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {(voucher as ConvexVoucher).redemptionCount ?? "—"}
                     </TableCell>
                     <TableCell className="text-right">
                       <VoucherActionsDropdown
@@ -248,7 +234,7 @@ const VoucherTableLoading = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              {["Title", "Description", "Format", "Valid Until", "Status", "Redemptions", "Actions"].map(
+              {["Title", "Description", "Valid Until", "Status", "Actions"].map(
                 (h) => (
                   <TableHead key={h}>{h}</TableHead>
                 )
@@ -265,16 +251,10 @@ const VoucherTableLoading = () => {
                   <Skeleton className="h-4 w-48" />
                 </TableCell>
                 <TableCell>
-                  <Skeleton className="h-4 w-20" />
-                </TableCell>
-                <TableCell>
                   <Skeleton className="h-4 w-24" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-6 w-16" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-10" />
                 </TableCell>
                 <TableCell>
                   <Skeleton className="h-8 w-8 ml-auto" />

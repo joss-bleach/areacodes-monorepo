@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useConvexAuth, useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
-import { voucherFormatLabel } from "@areacodes/domain";
 import type { Id } from "@repo/convex";
 import {
   Card,
@@ -94,9 +93,6 @@ function VouchersList() {
                     Business
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
-                    Format
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
                     Valid Until
                   </th>
                   <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">
@@ -111,7 +107,7 @@ function VouchersList() {
                 {vouchers.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={5}
                       className="py-8 px-4 text-center text-sm text-muted-foreground"
                     >
                       No vouchers found.
@@ -128,9 +124,6 @@ function VouchersList() {
                       </td>
                       <td className="py-4 px-4 text-sm text-muted-foreground">
                         {voucher.business?.name ?? "—"}
-                      </td>
-                      <td className="py-4 px-4 text-sm text-muted-foreground">
-                        {voucherFormatLabel(voucher.voucherFormat)}
                       </td>
                       <td className="py-4 px-4 text-sm text-muted-foreground">
                         {new Date(voucher.voucherValidTo).toLocaleDateString()}

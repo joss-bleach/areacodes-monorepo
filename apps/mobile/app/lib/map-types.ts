@@ -4,7 +4,6 @@ export type MapVoucher = {
   description: string;
   voucherValidFrom: number;
   voucherValidTo: number;
-  voucherUrl: string | null;
 };
 
 export type MapBusiness = {

@@ -2,7 +2,7 @@
 import { convexTest } from "convex-test";
 import { describe, expect, test } from "vitest";
 import schema from "../schema";
-import { api, internal } from "../_generated/api";
+import { api } from "../_generated/api";
 
 const modules = import.meta.glob("../../convex/**/*.{js,ts}", { eager: false });
 
@@ -27,49 +27,48 @@ async function seedBusiness(t: ReturnType<typeof convexTest>) {
   });
 }
 
-async function seedVoucherWithReveal(
-  t: ReturnType<typeof convexTest>,
-  businessId: Awaited<ReturnType<typeof seedBusiness>>,
-  voucherCode: string,
-) {
-  return t.run(async (ctx) => {
-    const voucherId = await ctx.db.insert("vouchers", {
-      businessId,
-      userId: "owner-1",
-      title: "10% off",
-      description: "Test voucher",
-      voucherFormat: "generated_text",
-      voucherValidFrom: 1,
-      voucherValidTo: 9_999_999_999_999,
-    });
+// ── getPosConnections ─────────────────────────────────────────────────────────
 
-    const claimId = await ctx.db.insert("claims", {
-      customerId: "customer-1",
-      voucherId,
-      claimedAt: Date.now(),
-    });
+describe("getPosConnections", () => {
+  test("throws for unauthenticated requests", async () => {
+    const t = convexTest(schema, modules);
+    const businessId = await seedBusiness(t);
 
-    await ctx.db.insert("reveals", {
-      claimId,
-      voucherCode,
-      revealedAt: Date.now(),
-      expiresAt: Date.now() + 2 * 60 * 60 * 1000,
-    });
-
-    return { voucherId, claimId };
+    await expect(
+      t.query(api.functions.posConnections.getPosConnections, { businessId }),
+    ).rejects.toThrow();
   });
-}
 
-describe("connectPosProvider", () => {
-  test("creates a posConnection record for a business", async () => {
+  test("returns empty array when no connections exist", async () => {
     const t = convexTest(schema, modules);
     const ownerT = t.withIdentity({ subject: "owner-1" });
     const businessId = await seedBusiness(t);
 
-    await ownerT.mutation(api.functions.posConnections.connectPosProvider, {
-      businessId,
-      provider: "square",
-      apiKey: "sq_test_key",
+    const connections = await ownerT.query(
+      api.functions.posConnections.getPosConnections,
+      { businessId },
+    );
+
+    expect(connections).toEqual([]);
+  });
+
+  test("returns OAuth-shaped posConnections for a business", async () => {
+    const t = convexTest(schema, modules);
+    const ownerT = t.withIdentity({ subject: "owner-1" });
+    const businessId = await seedBusiness(t);
+
+    await t.run(async (ctx) => {
+      await ctx.db.insert("posConnections", {
+        businessId,
+        provider: "square",
+        status: "connected",
+        externalMerchantId: "merchant_abc123",
+        scopes: ["PAYMENTS_READ", "ORDERS_READ"],
+        encryptedTokens: "enc:tok_abc",
+        encryptionKeyVersion: "v1",
+        tokenExpiresAt: 9_999_999_999_999,
+        connectedAt: 1_000_000_000_000,
+      });
     });
 
     const connections = await ownerT.query(
@@ -78,52 +77,40 @@ describe("connectPosProvider", () => {
     );
 
     expect(connections).toHaveLength(1);
-    expect(connections[0]?.provider).toBe("square");
-    expect(connections[0]?.businessId).toBe(businessId);
-    const creds = JSON.parse(connections[0]!.credentials) as { apiKey: string };
-    expect(creds.apiKey).toBe("sq_test_key");
+    expect(connections[0]!.provider).toBe("square");
+    expect(connections[0]!.status).toBe("connected");
+    expect(connections[0]!.externalMerchantId).toBe("merchant_abc123");
+    expect(connections[0]!.scopes).toEqual(["PAYMENTS_READ", "ORDERS_READ"]);
   });
 
-  test("replaces existing connection for same provider", async () => {
+  test("returns multiple connections for different merchants", async () => {
     const t = convexTest(schema, modules);
     const ownerT = t.withIdentity({ subject: "owner-1" });
     const businessId = await seedBusiness(t);
 
-    await ownerT.mutation(api.functions.posConnections.connectPosProvider, {
-      businessId,
-      provider: "square",
-      apiKey: "old_key",
-    });
-    await ownerT.mutation(api.functions.posConnections.connectPosProvider, {
-      businessId,
-      provider: "square",
-      apiKey: "new_key",
-    });
-
-    const connections = await ownerT.query(
-      api.functions.posConnections.getPosConnections,
-      { businessId },
-    );
-
-    expect(connections).toHaveLength(1);
-    const creds = JSON.parse(connections[0]!.credentials) as { apiKey: string };
-    expect(creds.apiKey).toBe("new_key");
-  });
-
-  test("allows connecting both Square and Zettle independently", async () => {
-    const t = convexTest(schema, modules);
-    const ownerT = t.withIdentity({ subject: "owner-1" });
-    const businessId = await seedBusiness(t);
-
-    await ownerT.mutation(api.functions.posConnections.connectPosProvider, {
-      businessId,
-      provider: "square",
-      apiKey: "sq_key",
-    });
-    await ownerT.mutation(api.functions.posConnections.connectPosProvider, {
-      businessId,
-      provider: "zettle",
-      apiKey: "zt_key",
+    await t.run(async (ctx) => {
+      await ctx.db.insert("posConnections", {
+        businessId,
+        provider: "square",
+        status: "connected",
+        externalMerchantId: "merchant_001",
+        scopes: ["PAYMENTS_READ"],
+        encryptedTokens: "enc:tok_001",
+        encryptionKeyVersion: "v1",
+        tokenExpiresAt: 9_999_999_999_999,
+        connectedAt: 1_000_000_000_000,
+      });
+      await ctx.db.insert("posConnections", {
+        businessId,
+        provider: "square",
+        status: "expired",
+        externalMerchantId: "merchant_002",
+        scopes: ["PAYMENTS_READ"],
+        encryptedTokens: "enc:tok_002",
+        encryptionKeyVersion: "v1",
+        tokenExpiresAt: 1000,
+        connectedAt: 1_000_000_000_000,
+      });
     });
 
     const connections = await ownerT.query(
@@ -132,123 +119,35 @@ describe("connectPosProvider", () => {
     );
 
     expect(connections).toHaveLength(2);
-    expect(connections.map((c) => c.provider).sort()).toEqual(["square", "zettle"]);
+    const merchants = connections.map((c) => c.externalMerchantId).sort();
+    expect(merchants).toEqual(["merchant_001", "merchant_002"]);
   });
-});
 
-describe("disconnectPosProvider", () => {
-  test("removes the posConnection for a provider", async () => {
+  test("does not return connections for other businesses", async () => {
     const t = convexTest(schema, modules);
     const ownerT = t.withIdentity({ subject: "owner-1" });
-    const businessId = await seedBusiness(t);
+    const bizA = await seedBusiness(t);
+    const bizB = await seedBusiness(t);
 
-    await ownerT.mutation(api.functions.posConnections.connectPosProvider, {
-      businessId,
-      provider: "square",
-      apiKey: "sq_key",
-    });
-    await ownerT.mutation(api.functions.posConnections.disconnectPosProvider, {
-      businessId,
-      provider: "square",
+    await t.run(async (ctx) => {
+      await ctx.db.insert("posConnections", {
+        businessId: bizB,
+        provider: "square",
+        status: "connected",
+        externalMerchantId: "merchant_biz_b",
+        scopes: ["PAYMENTS_READ"],
+        encryptedTokens: "enc:tok_b",
+        encryptionKeyVersion: "v1",
+        tokenExpiresAt: 9_999_999_999_999,
+        connectedAt: 1_000_000_000_000,
+      });
     });
 
     const connections = await ownerT.query(
       api.functions.posConnections.getPosConnections,
-      { businessId },
+      { businessId: bizA },
     );
 
     expect(connections).toHaveLength(0);
-  });
-
-  test("is a no-op when no connection exists", async () => {
-    const t = convexTest(schema, modules);
-    const ownerT = t.withIdentity({ subject: "owner-1" });
-    const businessId = await seedBusiness(t);
-
-    // Should not throw
-    await ownerT.mutation(api.functions.posConnections.disconnectPosProvider, {
-      businessId,
-      provider: "zettle",
-    });
-
-    const connections = await ownerT.query(
-      api.functions.posConnections.getPosConnections,
-      { businessId },
-    );
-    expect(connections).toHaveLength(0);
-  });
-});
-
-describe("upsertRedemptionCounts", () => {
-  test("increments voucher redemptionCount for a matching voucherCode", async () => {
-    const t = convexTest(schema, modules);
-    const businessId = await seedBusiness(t);
-    const { voucherId } = await seedVoucherWithReveal(t, businessId, "A1B2C3D4E5F6");
-
-    await t.mutation(internal.functions.posConnections.upsertRedemptionCounts, {
-      counts: [{ voucherCode: "A1B2C3D4E5F6", count: 3 }],
-    });
-
-    const voucher = await t.run(async (ctx) => ctx.db.get(voucherId));
-    expect(voucher?.redemptionCount).toBe(3);
-  });
-
-  test("accumulates redemptionCount across multiple polling runs", async () => {
-    const t = convexTest(schema, modules);
-    const businessId = await seedBusiness(t);
-    const { voucherId } = await seedVoucherWithReveal(t, businessId, "X9Y8Z7W6V5U4");
-
-    await t.mutation(internal.functions.posConnections.upsertRedemptionCounts, {
-      counts: [{ voucherCode: "X9Y8Z7W6V5U4", count: 2 }],
-    });
-    await t.mutation(internal.functions.posConnections.upsertRedemptionCounts, {
-      counts: [{ voucherCode: "X9Y8Z7W6V5U4", count: 1 }],
-    });
-
-    const voucher = await t.run(async (ctx) => ctx.db.get(voucherId));
-    expect(voucher?.redemptionCount).toBe(3);
-  });
-
-  test("ignores voucherCodes with no matching reveal", async () => {
-    const t = convexTest(schema, modules);
-
-    // Should not throw even though no matching reveal exists
-    await t.mutation(internal.functions.posConnections.upsertRedemptionCounts, {
-      counts: [{ voucherCode: "UNKNOWNCODE12", count: 5 }],
-    });
-  });
-
-  test("skips counts of zero", async () => {
-    const t = convexTest(schema, modules);
-    const businessId = await seedBusiness(t);
-    const { voucherId } = await seedVoucherWithReveal(t, businessId, "P1Q2R3S4T5U6");
-
-    await t.mutation(internal.functions.posConnections.upsertRedemptionCounts, {
-      counts: [{ voucherCode: "P1Q2R3S4T5U6", count: 0 }],
-    });
-
-    const voucher = await t.run(async (ctx) => ctx.db.get(voucherId));
-    expect(voucher?.redemptionCount).toBeUndefined();
-  });
-});
-
-describe("Redemption Count visible per voucher", () => {
-  test("getVouchersByBusiness includes redemptionCount field", async () => {
-    const t = convexTest(schema, modules);
-    const ownerT = t.withIdentity({ subject: "owner-1" });
-    const businessId = await seedBusiness(t);
-    const { voucherId } = await seedVoucherWithReveal(t, businessId, "C1D2E3F4G5H6");
-
-    await t.mutation(internal.functions.posConnections.upsertRedemptionCounts, {
-      counts: [{ voucherCode: "C1D2E3F4G5H6", count: 7 }],
-    });
-
-    const vouchers = await ownerT.query(
-      api.functions.vouchers.getVouchersByBusiness,
-      { businessId },
-    );
-
-    const v = vouchers.find((vch) => vch._id === voucherId);
-    expect(v?.redemptionCount).toBe(7);
   });
 });
