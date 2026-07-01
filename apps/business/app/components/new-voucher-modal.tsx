@@ -35,6 +35,7 @@ import { VoucherDateRange } from "~/components/voucher/voucher-date-range";
 import { VoucherDiscountKindStep } from "~/components/form-steps/voucher-discount-kind-step";
 import { VoucherDetailsStep } from "~/components/form-steps/voucher-details-step";
 import { VoucherReviewStep } from "~/components/form-steps/voucher-review-step";
+import { toMinorUnits, toMajorUnits } from "~/lib/discount-units";
 
 // ── Wizard steps (Provider is skipped: Manual auto-selected as only option) ───
 
@@ -77,23 +78,19 @@ const CreateWizard = ({ businessId, onSuccess }: CreateWizardProps) => {
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === WIZARD_STEPS.length - 1;
 
-  const validateStep = async (step: WizardStep): Promise<boolean> => {
+  const validateStep = (step: WizardStep): Promise<boolean> => {
     if (step === "discount") {
-      const result = await form.trigger("discount" as any);
-      return result;
+      return form.trigger("discount");
     }
-
     if (step === "details") {
-      const result = await form.trigger([
+      return form.trigger([
         "title",
         "description",
         "voucherValidFrom",
         "voucherValidTo",
-      ] as any);
-      return result;
+      ]);
     }
-
-    return true;
+    return Promise.resolve(true);
   };
 
   const goNext = async () => {
@@ -117,22 +114,12 @@ const CreateWizard = ({ businessId, onSuccess }: CreateWizardProps) => {
     setIsSubmitting(true);
 
     try {
-      // Convert fixed_amount from major units (UI) to minor units (domain)
-      const discount =
-        data.discount.kind === "fixed_amount" && data.discount.value != null
-          ? {
-              ...data.discount,
-              value: Math.round(data.discount.value * 100),
-              currency: data.discount.currency ?? "GBP",
-            }
-          : data.discount;
-
       await createVoucher({
         businessId,
         provider: data.provider,
         title: data.title,
         description: data.description,
-        discount,
+        discount: toMinorUnits(data.discount),
         voucherTerms: data.voucherTerms || undefined,
         voucherValidFrom: data.voucherValidFrom!.getTime(),
         voucherValidTo: data.voucherValidTo!.getTime(),
@@ -268,18 +255,11 @@ const EditForm = ({ editVoucherId, onSuccess }: EditFormProps) => {
 
   useEffect(() => {
     if (editVoucherData) {
-      // Convert fixed_amount from minor units (domain) to major units (UI)
-      const discount =
-        editVoucherData.discount.kind === "fixed_amount" &&
-        editVoucherData.discount.value != null
-          ? { ...editVoucherData.discount, value: editVoucherData.discount.value / 100 }
-          : editVoucherData.discount;
-
       form.reset({
         provider: editVoucherData.provider,
         title: editVoucherData.title,
         description: editVoucherData.description,
-        discount,
+        discount: toMajorUnits(editVoucherData.discount),
         voucherTerms: editVoucherData.voucherTerms || "",
         voucherValidFrom: new Date(editVoucherData.voucherValidFrom),
         voucherValidTo: new Date(editVoucherData.voucherValidTo),
@@ -292,20 +272,11 @@ const EditForm = ({ editVoucherId, onSuccess }: EditFormProps) => {
     setIsSubmitting(true);
 
     try {
-      const discount =
-        data.discount.kind === "fixed_amount" && data.discount.value != null
-          ? {
-              ...data.discount,
-              value: Math.round(data.discount.value * 100),
-              currency: data.discount.currency ?? "GBP",
-            }
-          : data.discount;
-
       await updateVoucher({
         voucherId: editVoucherId as Id<"vouchers">,
         title: data.title,
         description: data.description,
-        discount,
+        discount: toMinorUnits(data.discount),
         voucherTerms: data.voucherTerms || undefined,
         voucherValidFrom: data.voucherValidFrom!.getTime(),
         voucherValidTo: data.voucherValidTo!.getTime(),

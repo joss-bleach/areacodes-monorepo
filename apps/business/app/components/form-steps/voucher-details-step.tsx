@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Controller, type UseFormReturn } from "react-hook-form";
-import { ChevronDownIcon } from "lucide-react";
 import {
   Input,
   Textarea,
@@ -8,36 +7,18 @@ import {
   FieldGroup,
   FieldLabel,
   FieldError,
-  Button,
-  Calendar,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-  cn,
 } from "@repo/ui";
 import { deriveVoucherCopy } from "@areacodes/domain";
 import type { VoucherFormValues } from "~/schemas/voucher-form-schema";
-import type { Discount } from "@areacodes/domain";
+import { toMinorUnits } from "~/lib/discount-units";
+import { DateField } from "./date-field";
 
 interface VoucherDetailsStepProps {
   form: UseFormReturn<VoucherFormValues>;
 }
 
-function toMinorUnits(discount: VoucherFormValues["discount"]): Discount {
-  if (discount.kind === "fixed_amount" && discount.value != null) {
-    return {
-      ...discount,
-      value: Math.round(discount.value * 100),
-      currency: discount.currency ?? "GBP",
-    };
-  }
-  return discount;
-}
-
 export const VoucherDetailsStep = ({ form }: VoucherDetailsStepProps) => {
   const discount = form.watch("discount");
-  const [startDateOpen, setStartDateOpen] = useState(false);
-  const [endDateOpen, setEndDateOpen] = useState(false);
 
   // Auto-derive title/description when discount changes, unless user has manually edited them
   useEffect(() => {
@@ -96,92 +77,17 @@ export const VoucherDetailsStep = ({ form }: VoucherDetailsStepProps) => {
       </FieldGroup>
 
       <div className="flex flex-col sm:flex-row gap-4">
-        <Controller
+        <DateField
+          control={form.control}
           name="voucherValidFrom"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field className="flex-1" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="voucher-valid-from">Valid from</FieldLabel>
-              <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="voucher-valid-from"
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-between font-normal",
-                      !field.value && "text-muted-foreground"
-                    )}
-                    aria-invalid={fieldState.invalid}
-                  >
-                    <span className="truncate">
-                      {field.value ? field.value.toLocaleDateString() : "Select date"}
-                    </span>
-                    <ChevronDownIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto overflow-hidden p-0" align="start" sideOffset={4}>
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    captionLayout="dropdown"
-                    fromDate={new Date()}
-                    fromYear={new Date().getFullYear()}
-                    toYear={new Date().getFullYear() + 10}
-                    onSelect={(date) => {
-                      field.onChange(date);
-                      setStartDateOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
+          id="voucher-valid-from"
+          label="Valid from"
         />
-
-        <Controller
-          name="voucherValidTo"
+        <DateField
           control={form.control}
-          render={({ field, fieldState }) => (
-            <Field className="flex-1" data-invalid={fieldState.invalid}>
-              <FieldLabel htmlFor="voucher-valid-to">Valid to</FieldLabel>
-              <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    id="voucher-valid-to"
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-between font-normal",
-                      !field.value && "text-muted-foreground"
-                    )}
-                    aria-invalid={fieldState.invalid}
-                  >
-                    <span className="truncate">
-                      {field.value ? field.value.toLocaleDateString() : "Select date"}
-                    </span>
-                    <ChevronDownIcon className="h-4 w-4 opacity-50 shrink-0 ml-2" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto overflow-hidden p-0" align="start" sideOffset={4}>
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    captionLayout="dropdown"
-                    fromDate={new Date()}
-                    fromYear={new Date().getFullYear()}
-                    toYear={new Date().getFullYear() + 10}
-                    onSelect={(date) => {
-                      field.onChange(date);
-                      setEndDateOpen(false);
-                    }}
-                  />
-                </PopoverContent>
-              </Popover>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
+          name="voucherValidTo"
+          id="voucher-valid-to"
+          label="Valid to"
         />
       </div>
 
