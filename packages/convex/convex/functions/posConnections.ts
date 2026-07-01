@@ -23,12 +23,26 @@ async function requireAuth(ctx: QueryCtx | MutationCtx): Promise<string> {
   return identity.subject;
 }
 
+// Ensures the caller is authenticated AND owns the target business.
+// Prevents cross-tenant access to another business's POS connections.
+async function requireBusinessOwner(
+  ctx: QueryCtx | MutationCtx,
+  businessId: Id<"businesses">,
+): Promise<string> {
+  const userId = await requireAuth(ctx);
+  const business = await ctx.db.get(businessId);
+  if (!business || business.userId !== userId) {
+    throw new Error("Business not found");
+  }
+  return userId;
+}
+
 // ── Public queries ─────────────────────────────────────────────────────────────
 
 export const getPosConnections = query({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, { businessId }) => {
-    await requireAuth(ctx);
+    await requireBusinessOwner(ctx, businessId);
     const connections = await ctx.db
       .query("posConnections")
       .withIndex("by_business", (q) => q.eq("businessId", businessId))
@@ -48,7 +62,7 @@ export const disconnectSquare = mutation({
     connectionId: v.id("posConnections"),
   },
   handler: async (ctx, { businessId, connectionId }) => {
-    await requireAuth(ctx);
+    await requireBusinessOwner(ctx, businessId);
     const conn = await ctx.db.get(connectionId);
     if (!conn || conn.businessId !== businessId) {
       throw new Error("Connection not found");

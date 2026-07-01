@@ -39,6 +39,18 @@ describe("getPosConnections", () => {
     ).rejects.toThrow();
   });
 
+  test("throws when caller does not own the business", async () => {
+    const t = convexTest(schema, modules);
+    const otherT = t.withIdentity({ subject: "not-the-owner" });
+    const businessId = await seedBusiness(t); // owned by "owner-1"
+
+    await expect(
+      otherT.query(api.functions.posConnections.getPosConnections, {
+        businessId,
+      }),
+    ).rejects.toThrow();
+  });
+
   test("returns empty array when no connections exist", async () => {
     const t = convexTest(schema, modules);
     const ownerT = t.withIdentity({ subject: "owner-1" });
@@ -238,6 +250,38 @@ describe("disconnectSquare", () => {
     const conn = await t.run((ctx) => ctx.db.get(connectionId));
     expect(conn?.status).toBe("revoked");
     expect(conn?.encryptedTokens).toBeUndefined();
+  });
+
+  test("rejects disconnect from a user who does not own the business", async () => {
+    const t = convexTest(schema, modules);
+    const otherT = t.withIdentity({ subject: "not-the-owner" });
+    const businessId = await seedBusiness(t); // owned by "owner-1"
+
+    const connectionId = await t.run(async (ctx) =>
+      ctx.db.insert("posConnections", {
+        businessId,
+        provider: "square",
+        status: "connected",
+        externalMerchantId: "merchant_owned",
+        scopes: ["ITEMS_READ"],
+        encryptedTokens: "enc:tok_owned",
+        encryptionKeyVersion: "v1",
+        tokenExpiresAt: 9_999_999_999_999,
+        connectedAt: 1_000_000_000_000,
+      }),
+    );
+
+    await expect(
+      otherT.mutation(api.functions.posConnections.disconnectSquare, {
+        businessId,
+        connectionId,
+      }),
+    ).rejects.toThrow();
+
+    // Connection remains untouched
+    const conn = await t.run((ctx) => ctx.db.get(connectionId));
+    expect(conn?.status).toBe("connected");
+    expect(conn?.encryptedTokens).toBe("enc:tok_owned");
   });
 
   test("rejects disconnect for connection belonging to another business", async () => {
