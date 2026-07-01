@@ -85,6 +85,18 @@ describe("getRedemptionPinStatus", () => {
 
     expect(status).not.toHaveProperty("redemptionPinHash");
   });
+
+  test("rejects a non-owner", async () => {
+    const t = convexTest(schema, modules);
+    const intruderT = t.withIdentity({ subject: "intruder-1" });
+    const businessId = await seedBusiness(t);
+
+    await expect(
+      intruderT.query(api.functions.redemptionAuth.getRedemptionPinStatus, {
+        businessId,
+      }),
+    ).rejects.toThrow();
+  });
 });
 
 // ── setRedemptionPin ─────────────────────────────────────────────────────────
@@ -100,6 +112,27 @@ describe("setRedemptionPin", () => {
         pin: "1234",
       }),
     ).rejects.toThrow();
+  });
+
+  test("rejects a non-owner", async () => {
+    const t = convexTest(schema, modules);
+    const intruderT = t.withIdentity({ subject: "intruder-1" });
+    const businessId = await seedBusiness(t);
+
+    await expect(
+      intruderT.action(api.functions.redemptionAuth.setRedemptionPin, {
+        businessId,
+        pin: "1234",
+      }),
+    ).rejects.toThrow();
+
+    const record = await t.run(async (ctx) =>
+      ctx.db
+        .query("redemptionAuth")
+        .withIndex("by_business", (q) => q.eq("businessId", businessId))
+        .first(),
+    );
+    expect(record).toBeNull();
   });
 
   test("stores a hash (not the plaintext PIN)", async () => {

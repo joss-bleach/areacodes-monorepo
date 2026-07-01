@@ -11,6 +11,18 @@ async function requireAuth(ctx: ActionCtx | QueryCtx): Promise<string> {
   return identity.subject;
 }
 
+// Ensures the authenticated user owns the business before mutating its
+// redemption auth. Mirrors the owner check used across the business services.
+async function requireBusinessOwner(
+  ctx: QueryCtx,
+  businessId: Id<"businesses">,
+  ownerId: string,
+): Promise<void> {
+  const business = await ctx.db.get(businessId);
+  if (!business) throw new Error("Business not found");
+  if (business.userId !== ownerId) throw new Error("Unauthorized");
+}
+
 // Use lightweight params in test environments to avoid CPU saturation across parallel test files.
 // Production uses OWASP-recommended argon2id parameters (19 MiB, 2 iterations).
 const IS_TEST = typeof process !== "undefined" && process.env.NODE_ENV === "test";
@@ -40,6 +52,13 @@ export const getAuth = internalQuery({
         q.eq("businessId", businessId as Id<"businesses">),
       )
       .first();
+  },
+});
+
+export const assertOwner = internalQuery({
+  args: { businessId: v.id("businesses"), ownerId: v.string() },
+  handler: async (ctx, { businessId, ownerId }) => {
+    await requireBusinessOwner(ctx, businessId, ownerId);
   },
 });
 
@@ -74,7 +93,8 @@ export const storePin = internalMutation({
 export const getRedemptionPinStatus = query({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, { businessId }) => {
-    await requireAuth(ctx);
+    const ownerId = await requireAuth(ctx);
+    await requireBusinessOwner(ctx, businessId, ownerId);
     const record = await ctx.db
       .query("redemptionAuth")
       .withIndex("by_business", (q) =>
@@ -95,7 +115,11 @@ export const setRedemptionPin = action({
     pin: v.string(),
   },
   handler: async (ctx, { businessId, pin }) => {
-    await requireAuth(ctx);
+    const ownerId = await requireAuth(ctx);
+    await ctx.runQuery(internal.functions.redemptionAuth.assertOwner, {
+      businessId,
+      ownerId,
+    });
     const hash = await hashPin(pin);
     const now = Date.now();
     await ctx.runMutation(internal.functions.redemptionAuth.storePin, {
