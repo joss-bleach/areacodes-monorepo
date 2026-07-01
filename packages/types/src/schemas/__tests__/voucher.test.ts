@@ -7,9 +7,10 @@ const yesterday = Date.now() - 24 * 60 * 60 * 1000;
 
 const validCreateInput = {
   businessId: "business123",
+  provider: "manual" as const,
   title: "10% off your next coffee",
   description: "Bring this voucher in-store to redeem",
-  voucherFormat: "generated_text" as const,
+  discount: { kind: "custom" as const, customText: "10% off" },
   voucherValidFrom: tomorrow,
   voucherValidTo: nextWeek,
 };
@@ -19,19 +20,26 @@ describe("createVoucherSchema", () => {
     expect(createVoucherSchema.safeParse(validCreateInput).success).toBe(true);
   });
 
-  test("accepts barcode format with storageId", () => {
+  test("accepts percentage discount", () => {
     const result = createVoucherSchema.safeParse({
       ...validCreateInput,
-      voucherFormat: "barcode",
-      voucherStorageId: "storage123",
+      discount: { kind: "percentage", value: 10 },
     });
     expect(result.success).toBe(true);
   });
 
-  test("accepts qr_code format", () => {
+  test("accepts fixed_amount discount", () => {
     const result = createVoucherSchema.safeParse({
       ...validCreateInput,
-      voucherFormat: "qr_code",
+      discount: { kind: "fixed_amount", value: 5, currency: "GBP" },
+    });
+    expect(result.success).toBe(true);
+  });
+
+  test("accepts free_item discount", () => {
+    const result = createVoucherSchema.safeParse({
+      ...validCreateInput,
+      discount: { kind: "free_item", itemName: "Coffee" },
     });
     expect(result.success).toBe(true);
   });
@@ -39,7 +47,6 @@ describe("createVoucherSchema", () => {
   test("accepts optional fields", () => {
     const result = createVoucherSchema.safeParse({
       ...validCreateInput,
-      voucherGenCode: "SAVE10",
       voucherTerms: "One per customer. Not valid with other offers.",
     });
     expect(result.success).toBe(true);
@@ -71,10 +78,10 @@ describe("createVoucherSchema", () => {
     }
   });
 
-  test("rejects invalid voucherFormat", () => {
+  test("rejects invalid discount kind", () => {
     const result = createVoucherSchema.safeParse({
       ...validCreateInput,
-      voucherFormat: "invalid_format",
+      discount: { kind: "invalid_kind" },
     });
     expect(result.success).toBe(false);
   });
@@ -127,7 +134,7 @@ describe("updateVoucherSchema", () => {
     businessId: "business123",
     title: "10% off",
     description: "In-store only",
-    voucherFormat: "generated_text" as const,
+    discount: { kind: "custom" as const, customText: "10% off" },
     voucherValidFrom: tomorrow,
     voucherValidTo: nextWeek,
   };

@@ -54,10 +54,7 @@ export const getAllVouchers = query({
     return await Promise.all(
       vouchers.map(async (voucher) => {
         const business = await ctx.db.get(voucher.businessId);
-        const voucherUrl = voucher.voucherStorageId
-          ? await ctx.storage.getUrl(voucher.voucherStorageId)
-          : null;
-        return { ...voucher, voucherUrl, business };
+        return { ...voucher, business };
       })
     );
   },

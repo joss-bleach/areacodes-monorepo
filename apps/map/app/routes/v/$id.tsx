@@ -9,7 +9,6 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  Input,
   Skeleton,
 } from "@repo/ui";
 import { BoundaryAlert } from "~/components/boundary-alert";
@@ -126,56 +125,7 @@ function VoucherView() {
             {voucher.description}
           </p>
 
-          {/* Voucher Code Display */}
-          <div className="mb-6">
-            {voucher.voucherFormat === "qr_code" && voucher.voucherUrl && (
-              <div className="bg-muted border border-border p-4 flex justify-center">
-                <div className="w-[200px] h-[200px] bg-background flex items-center justify-center">
-                  <img
-                    src={voucher.voucherUrl}
-                    alt="QR code"
-                    width={200}
-                    height={200}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-            )}
-
-            {voucher.voucherFormat === "barcode" && voucher.voucherUrl && (
-              <div className="bg-muted border border-border p-4 flex justify-center">
-                <div className="w-full max-w-xs h-12 bg-background flex items-center justify-center">
-                  <img
-                    src={voucher.voucherUrl}
-                    alt="Barcode"
-                    width={320}
-                    height={48}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </div>
-            )}
-
-            {voucher.voucherFormat === "generated_text" &&
-              voucher.voucherGenCode && (
-                <div className="bg-muted border border-border p-4">
-                  <div className="w-full min-w-0 overflow-hidden">
-                    <Input
-                      type="text"
-                      value={voucher.voucherGenCode}
-                      readOnly
-                      className="w-full font-mono text-xs min-w-0"
-                      aria-label="Voucher code"
-                      style={{
-                        textOverflow: "ellipsis",
-                        overflow: "hidden",
-                        whiteSpace: "nowrap",
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-          </div>
+          {/* Voucher discount display — POS integration coming soon */}
 
           {/* Voucher Terms */}
           {voucher.voucherTerms && (

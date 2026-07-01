@@ -9,33 +9,53 @@ export interface BusinessRef {
   userId: string;
 }
 
+export type DiscountKind = "percentage" | "fixed_amount" | "free_item" | "bogof" | "custom";
+export type Provider = "square" | "manual";
+export type ProvisioningStatus = "not_required" | "pending" | "provisioned" | "failed";
+
+export interface Discount {
+  kind: DiscountKind;
+  value?: number;
+  currency?: string;
+  itemName?: string;
+  customText?: string;
+}
+
+export interface Provisioning {
+  status: ProvisioningStatus;
+  externalId?: string;
+  lastError?: string;
+  lastAttemptAt?: number;
+  provisionedAt?: number;
+}
+
 export interface VoucherDoc {
   _id: string;
   businessId: string;
   userId: string;
   title: string;
   description: string;
-  voucherFormat: "barcode" | "qr_code" | "generated_text";
-  voucherStorageId?: string;
-  voucherGenCode?: string;
+  provider: Provider;
+  discount: Discount;
+  provisioning: Provisioning;
   voucherTerms?: string;
   voucherValidFrom: number;
   voucherValidTo: number;
   deletedAt?: number;
+  flaggedAt?: number;
 }
 
 export interface CreateVoucherArgs {
   title: string;
   description: string;
-  voucherFormat: "barcode" | "qr_code" | "generated_text";
-  voucherStorageId?: string;
-  voucherGenCode?: string;
+  provider: Provider;
+  discount: Discount;
   voucherTerms?: string;
   voucherValidFrom: number;
   voucherValidTo: number;
 }
 
-export type UpdateVoucherArgs = CreateVoucherArgs;
+export type UpdateVoucherArgs = Omit<CreateVoucherArgs, "provider">;
 
 export { NotFound, Unauthorized };
 
@@ -46,14 +66,13 @@ export class AlreadyRevealed extends Data.TaggedError("AlreadyRevealed")<{}> {}
 export class ClaimNotFound extends Data.TaggedError("ClaimNotFound")<{ id: string }> {}
 export class VouchersSuspended extends Data.TaggedError("VouchersSuspended")<{}> {}
 
-// ── Repository interface (injected dependency) ────────────────────────────────
+// ── Repository interface ──────────────────────────────────────────────────────
 
 export interface IVoucherRepo {
   readonly findBusiness: (id: string) => Effect.Effect<BusinessRef | null>;
   readonly findById: (id: string) => Effect.Effect<VoucherDoc | null>;
   readonly insert: (data: Omit<VoucherDoc, "_id">) => Effect.Effect<string>;
   readonly patch: (id: string, data: Partial<VoucherDoc>) => Effect.Effect<void>;
-  readonly deleteStorage: (storageId: string) => Effect.Effect<void>;
 }
 
 export class VoucherRepo extends Context.Tag("@areacodes/domain/VoucherRepo")<
@@ -76,14 +95,17 @@ export const create = (
       return yield* Effect.fail(new Unauthorized());
     }
 
+    const provisioningStatus: ProvisioningStatus =
+      args.provider === "manual" ? "not_required" : "pending";
+
     return yield* repo.insert({
       businessId,
       userId: ownerId,
       title: args.title,
       description: args.description,
-      voucherFormat: args.voucherFormat,
-      voucherStorageId: args.voucherStorageId,
-      voucherGenCode: args.voucherGenCode,
+      provider: args.provider,
+      discount: args.discount,
+      provisioning: { status: provisioningStatus },
       voucherTerms: args.voucherTerms,
       voucherValidFrom: args.voucherValidFrom,
       voucherValidTo: args.voucherValidTo,
@@ -102,20 +124,10 @@ export const update = (
     if (!voucher) return yield* Effect.fail(new NotFound({ id: voucherId }));
     if (voucher.userId !== ownerId) return yield* Effect.fail(new Unauthorized());
 
-    if (
-      voucher.voucherStorageId &&
-      args.voucherStorageId &&
-      voucher.voucherStorageId !== args.voucherStorageId
-    ) {
-      yield* repo.deleteStorage(voucher.voucherStorageId);
-    }
-
     yield* repo.patch(voucherId, {
       title: args.title,
       description: args.description,
-      voucherFormat: args.voucherFormat,
-      voucherStorageId: args.voucherStorageId,
-      voucherGenCode: args.voucherGenCode,
+      discount: args.discount,
       voucherTerms: args.voucherTerms,
       voucherValidFrom: args.voucherValidFrom,
       voucherValidTo: args.voucherValidTo,
@@ -132,10 +144,6 @@ export const softDelete = (
 
     if (!voucher) return yield* Effect.fail(new NotFound({ id: voucherId }));
     if (voucher.userId !== ownerId) return yield* Effect.fail(new Unauthorized());
-
-    if (voucher.voucherStorageId) {
-      yield* repo.deleteStorage(voucher.voucherStorageId);
-    }
 
     yield* repo.patch(voucherId, { deletedAt: Date.now() });
     return { success: true };
@@ -156,7 +164,6 @@ export interface RevealDoc {
   voucherCode: string;
   revealedAt: number;
   expiresAt: number;
-  redeemedAt?: number;
 }
 
 export type WalletEntryState = "claimed" | "revealed" | "expired" | "suspended";

@@ -1,13 +1,20 @@
 import { z } from "zod";
 
+const discountSchema = z.object({
+  kind: z.enum(["percentage", "fixed_amount", "free_item", "bogof", "custom"]),
+  value: z.number().optional(),
+  currency: z.string().optional(),
+  itemName: z.string().optional(),
+  customText: z.string().optional(),
+});
+
 export const createVoucherSchema = z
   .object({
     businessId: z.string().min(1),
     title: z.string().min(1, "Title is required"),
     description: z.string().min(1, "Description is required"),
-    voucherFormat: z.enum(["barcode", "qr_code", "generated_text"]),
-    voucherStorageId: z.string().optional(),
-    voucherGenCode: z.string().optional(),
+    provider: z.enum(["square", "manual"]),
+    discount: discountSchema,
     voucherTerms: z.string().optional(),
     voucherValidFrom: z.number(),
     voucherValidTo: z.number(),
@@ -34,9 +41,7 @@ export const updateVoucherSchema = z
     businessId: z.string().min(1),
     title: z.string().min(1, "Title is required"),
     description: z.string().min(1, "Description is required"),
-    voucherFormat: z.enum(["barcode", "qr_code", "generated_text"]),
-    voucherStorageId: z.string().optional(),
-    voucherGenCode: z.string().optional(),
+    discount: discountSchema,
     voucherTerms: z.string().optional(),
     voucherValidFrom: z.number(),
     voucherValidTo: z.number(),

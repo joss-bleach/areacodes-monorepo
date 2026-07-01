@@ -31,7 +31,10 @@ export const seedMockData = mutation({
       latitude: 50.8218, longitude: -0.1374, industryId: tattooInd,
     });
     await ctx.db.insert("vouchers", {
-      businessId: b1, userId, voucherFormat: "generated_text",
+      businessId: b1, userId,
+      provider: "manual",
+      discount: { kind: "custom", customText: "£50 small tattoos and two for £90" },
+      provisioning: { status: "not_required" },
       title: "Walk in Wednesday",
       description: "£50 small tattoos and two for £90. All Wednesdays, June–August 2026.",
       voucherValidFrom: now, voucherValidTo: in60,
@@ -45,7 +48,10 @@ export const seedMockData = mutation({
       latitude: 50.8265, longitude: -0.1389, industryId: coffeeInd,
     });
     await ctx.db.insert("vouchers", {
-      businessId: b2, userId, voucherFormat: "generated_text",
+      businessId: b2, userId,
+      provider: "manual",
+      discount: { kind: "free_item", itemName: "pastry" },
+      provisioning: { status: "not_required" },
       title: "Free pastry with a large",
       description: "Get a free pastry with any large hot drink, every day until end of July.",
       voucherValidFrom: now, voucherValidTo: in30,
@@ -59,7 +65,10 @@ export const seedMockData = mutation({
       latitude: 50.8195, longitude: -0.1413, industryId: barInd,
     });
     await ctx.db.insert("vouchers", {
-      businessId: b3, userId, voucherFormat: "generated_text",
+      businessId: b3, userId,
+      provider: "manual",
+      discount: { kind: "fixed_amount", value: 3500, currency: "GBP" },
+      provisioning: { status: "not_required" },
       title: "High Score Date Night",
       description: "Two cocktails + unlimited arcade play for £35. Fridays and Saturdays.",
       voucherValidFrom: now, voucherValidTo: in30,
@@ -73,7 +82,10 @@ export const seedMockData = mutation({
       latitude: 50.8301, longitude: -0.1357, industryId: cafeInd,
     });
     await ctx.db.insert("vouchers", {
-      businessId: b4, userId, voucherFormat: "generated_text",
+      businessId: b4, userId,
+      provider: "manual",
+      discount: { kind: "custom", customText: "Private reading session with tea" },
+      provisioning: { status: "not_required" },
       title: "Midnight page-turner pass",
       description: "Stay after closing for a private reading session with tea included. Fridays only.",
       voucherValidFrom: now, voucherValidTo: in60,
@@ -87,7 +99,10 @@ export const seedMockData = mutation({
       latitude: 50.8289, longitude: -0.1621, industryId: shopInd,
     });
     await ctx.db.insert("vouchers", {
-      businessId: b5, userId, voucherFormat: "generated_text",
+      businessId: b5, userId,
+      provider: "manual",
+      discount: { kind: "custom", customText: "Free personalised engraving on any item over £40" },
+      provisioning: { status: "not_required" },
       title: "Custom Engraving Upgrade",
       description: "Free personalised engraving on any item over £40.",
       voucherValidFrom: now, voucherValidTo: in30,
@@ -101,7 +116,10 @@ export const seedMockData = mutation({
       latitude: 50.8234, longitude: -0.1512, industryId: floristInd,
     });
     await ctx.db.insert("vouchers", {
-      businessId: b6, userId, voucherFormat: "generated_text",
+      businessId: b6, userId,
+      provider: "manual",
+      discount: { kind: "custom", customText: "10 stamps = free seasonal bouquet" },
+      provisioning: { status: "not_required" },
       title: '"Mystery Cutting" Punch Card',
       description: "10 stamps gets you a free seasonal bouquet, chosen by our florists.",
       voucherValidFrom: now, voucherValidTo: in60,

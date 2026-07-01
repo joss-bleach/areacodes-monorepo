@@ -18,6 +18,11 @@ export {
   RevealRepo,
   type BusinessRef,
   type VoucherDoc as VoucherServiceDoc,
+  type Provider,
+  type DiscountKind,
+  type Discount,
+  type Provisioning,
+  type ProvisioningStatus,
   type CreateVoucherArgs,
   type UpdateVoucherArgs,
   type IVoucherRepo,
@@ -34,10 +39,21 @@ export {
 } from "./voucher-service.js";
 export {
   voucherStatus,
-  voucherFormatLabel,
   type VoucherStatus,
-  type VoucherFormat,
 } from "./voucher-presentation.js";
+export * as ProviderCapabilities from "./provider-capabilities.js";
+export {
+  getCapabilities,
+  supportsKind,
+  deriveManualIdempotencyKey,
+  deriveSquareIdempotencyKey,
+  validateManualBurn,
+  type ProviderCapabilityRow,
+  type PresentationStyle,
+  type ReconciliationMechanism,
+  type BurnValidationInput,
+  type BurnValidationResult,
+} from "./provider-capabilities.js";
 export * as SubscriptionService from "./subscription-service.js";
 export {
   SubscriptionRepo,
@@ -62,7 +78,6 @@ export {
   type VoucherStat,
   type WeeklyFunnelRow,
   type BusinessLeaderboardEntry,
-  type FormatBreakdownRow,
 } from "./pilot-analytics-service.js";
 export * as AdminBusinessService from "./admin-business-service.js";
 export {
@@ -84,20 +99,3 @@ export {
   type IGitHubPort,
   type FeedbackIssue,
 } from "./feedback-service.js";
-export * as PosGateway from "./pos-gateway.js";
-export {
-  PosConnectionRepo,
-  SquareClient,
-  ZettleClient,
-  ProviderError,
-  type PosProvider,
-  type PosConnectionDoc,
-  type RedemptionCount,
-  type SquareOrder,
-  type SquareOrderDiscount,
-  type ZettlePurchase,
-  type ZettleDiscount,
-  type IPosConnectionRepo,
-  type ISquareClient,
-  type IZettleClient,
-} from "./pos-gateway.js";

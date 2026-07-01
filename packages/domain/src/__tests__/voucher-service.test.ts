@@ -18,11 +18,9 @@ import { SubscriptionRepo, type ISubscriptionRepo, type SubscriptionDoc } from "
 function makeTestRepo(options: {
   businesses?: BusinessRef[];
   vouchers?: VoucherDoc[];
-  deletedStorageIds?: string[];
 }) {
   const businesses = [...(options.businesses ?? [])];
   const vouchers = [...(options.vouchers ?? [])];
-  const deletedStorageIds = options.deletedStorageIds ?? [];
   let nextId = 1;
 
   const repo: IVoucherRepo = {
@@ -42,20 +40,17 @@ function makeTestRepo(options: {
       }
       return Effect.void;
     },
-    deleteStorage: (storageId) => {
-      deletedStorageIds.push(storageId);
-      return Effect.void;
-    },
   };
 
   const layer = Layer.succeed(VoucherRepo, repo);
-  return { layer, businesses, vouchers, deletedStorageIds };
+  return { layer, businesses, vouchers };
 }
 
 const baseArgs = {
   title: "10% Off",
   description: "Get 10% off your order",
-  voucherFormat: "generated_text" as const,
+  provider: "manual" as const,
+  discount: { kind: "custom" as const, customText: "10% off" },
   voucherValidFrom: 1_000_000,
   voucherValidTo: 2_000_000,
 };
@@ -72,7 +67,9 @@ const existingVoucher = (overrides: Partial<VoucherDoc> = {}): VoucherDoc => ({
   userId: "user-owner",
   title: "Old Title",
   description: "Old description",
-  voucherFormat: "generated_text",
+  provider: "manual",
+  discount: { kind: "custom", customText: "old deal" },
+  provisioning: { status: "not_required" },
   voucherValidFrom: 1_000_000,
   voucherValidTo: 2_000_000,
   ...overrides,
@@ -100,6 +97,40 @@ describe("VoucherService.create", () => {
     });
   });
 
+  test("sets provisioning.status to not_required for manual provider", async () => {
+    const { layer, vouchers } = makeTestRepo({
+      businesses: [existingBusiness()],
+    });
+
+    await Effect.runPromise(
+      Effect.provide(
+        VoucherService.create("user-owner", "biz-1", { ...baseArgs, provider: "manual" }),
+        layer,
+      ),
+    );
+
+    expect(vouchers[0]!.provisioning.status).toBe("not_required");
+  });
+
+  test("sets provisioning.status to pending for square provider", async () => {
+    const { layer, vouchers } = makeTestRepo({
+      businesses: [existingBusiness()],
+    });
+
+    await Effect.runPromise(
+      Effect.provide(
+        VoucherService.create("user-owner", "biz-1", {
+          ...baseArgs,
+          provider: "square",
+          discount: { kind: "percentage", value: 10 },
+        }),
+        layer,
+      ),
+    );
+
+    expect(vouchers[0]!.provisioning.status).toBe("pending");
+  });
+
   test("returns Unauthorized when caller does not own the business", async () => {
     const { layer } = makeTestRepo({
       businesses: [existingBusiness({ userId: "user-owner" })],
@@ -120,44 +151,26 @@ describe("VoucherService.create", () => {
 });
 
 describe("VoucherService.update", () => {
-  test("cleans up old storage asset when a new one is supplied", async () => {
-    const { layer, deletedStorageIds } = makeTestRepo({
-      vouchers: [
-        existingVoucher({ _id: "v-1", userId: "user-1", voucherStorageId: "old-storage" }),
-      ],
+  test("patches discount and dates on existing voucher", async () => {
+    const { layer, vouchers } = makeTestRepo({
+      vouchers: [existingVoucher({ _id: "v-1", userId: "user-1" })],
     });
 
     await Effect.runPromise(
       Effect.provide(
         VoucherService.update("user-1", "v-1", {
-          ...baseArgs,
-          voucherStorageId: "new-storage",
+          title: "New Title",
+          description: "New desc",
+          discount: { kind: "percentage", value: 20 },
+          voucherValidFrom: 1_000_000,
+          voucherValidTo: 3_000_000,
         }),
         layer,
       ),
     );
 
-    expect(deletedStorageIds).toContain("old-storage");
-  });
-
-  test("does not delete storage when same storageId is supplied", async () => {
-    const { layer, deletedStorageIds } = makeTestRepo({
-      vouchers: [
-        existingVoucher({ _id: "v-1", userId: "user-1", voucherStorageId: "same-storage" }),
-      ],
-    });
-
-    await Effect.runPromise(
-      Effect.provide(
-        VoucherService.update("user-1", "v-1", {
-          ...baseArgs,
-          voucherStorageId: "same-storage",
-        }),
-        layer,
-      ),
-    );
-
-    expect(deletedStorageIds).not.toContain("same-storage");
+    expect(vouchers[0]!.title).toBe("New Title");
+    expect(vouchers[0]!.discount).toEqual({ kind: "percentage", value: 20 });
   });
 
   test("returns NotFound for a non-existent voucher", async () => {
@@ -165,7 +178,13 @@ describe("VoucherService.update", () => {
 
     const result = await Effect.runPromise(
       Effect.provide(
-        Effect.either(VoucherService.update("user-1", "nonexistent", baseArgs)),
+        Effect.either(VoucherService.update("user-1", "nonexistent", {
+          title: "X",
+          description: "X",
+          discount: { kind: "custom", customText: "x" },
+          voucherValidFrom: 1,
+          voucherValidTo: 2,
+        })),
         layer,
       ),
     );
@@ -183,7 +202,13 @@ describe("VoucherService.update", () => {
 
     const result = await Effect.runPromise(
       Effect.provide(
-        Effect.either(VoucherService.update("wrong-user", "v-1", baseArgs)),
+        Effect.either(VoucherService.update("wrong-user", "v-1", {
+          title: "X",
+          description: "X",
+          discount: { kind: "custom", customText: "x" },
+          voucherValidFrom: 1,
+          voucherValidTo: 2,
+        })),
         layer,
       ),
     );
@@ -196,22 +221,7 @@ describe("VoucherService.update", () => {
 });
 
 describe("VoucherService.softDelete", () => {
-  test("sets deletedAt and cleans up storage asset", async () => {
-    const { layer, vouchers, deletedStorageIds } = makeTestRepo({
-      vouchers: [
-        existingVoucher({ _id: "v-1", userId: "user-1", voucherStorageId: "voucher-storage" }),
-      ],
-    });
-
-    await Effect.runPromise(
-      Effect.provide(VoucherService.softDelete("user-1", "v-1"), layer),
-    );
-
-    expect(vouchers[0]!.deletedAt).toBeTypeOf("number");
-    expect(deletedStorageIds).toContain("voucher-storage");
-  });
-
-  test("sets deletedAt when no storage asset exists", async () => {
+  test("sets deletedAt on the voucher", async () => {
     const { layer, vouchers } = makeTestRepo({
       vouchers: [existingVoucher({ _id: "v-1", userId: "user-1" })],
     });
@@ -334,7 +344,9 @@ const activeVoucher = (overrides: Partial<VoucherDoc> = {}): VoucherDoc => ({
   userId: "user-owner",
   title: "10% Off",
   description: "Get 10% off",
-  voucherFormat: "generated_text",
+  provider: "manual",
+  discount: { kind: "custom", customText: "10% off" },
+  provisioning: { status: "not_required" },
   ...VOUCHER_VALID,
   ...overrides,
 });
@@ -345,7 +357,9 @@ const expiredVoucher = (overrides: Partial<VoucherDoc> = {}): VoucherDoc => ({
   userId: "user-owner",
   title: "Expired Offer",
   description: "No longer valid",
-  voucherFormat: "generated_text",
+  provider: "manual",
+  discount: { kind: "custom", customText: "expired" },
+  provisioning: { status: "not_required" },
   ...VOUCHER_EXPIRED_RANGE,
   ...overrides,
 });
@@ -362,7 +376,7 @@ const existingClaim = (overrides: Partial<ClaimDoc> = {}): ClaimDoc => ({
 
 describe("VoucherService.claim", () => {
   test("happy path: claim created and returns claimId", async () => {
-    const { layer: voucherLayer, vouchers } = makeTestRepo({
+    const { layer: voucherLayer } = makeTestRepo({
       vouchers: [activeVoucher()],
     });
     const { layer: claimLayer, claims } = makeTestClaimRepo({});

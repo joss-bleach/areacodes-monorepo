@@ -19,41 +19,35 @@ const WED_JAN_14 = 13 * 86400000 + 3600000;
 
 function makeAdminTestRepo(data: {
   businesses?: Array<{ id: string; name: string }>;
-  vouchers?: Array<{
-    id: string;
-    businessId: string;
-    voucherFormat: string;
-    deletedAt?: number;
-  }>;
-  claims?: Array<{
-    claimId: string;
-    customerId: string;
-    voucherId: string;
-    claimedAt: number;
-  }>;
-  reveals?: Array<{ claimId: string; revealedAt: number; redeemedAt?: number }>;
+  vouchers?: Array<{ id: string; businessId: string; deletedAt?: number }>;
+  claims?: Array<{ claimId: string; customerId: string; voucherId: string; claimedAt: number }>;
+  reveals?: Array<{ claimId: string; revealedAt: number }>;
+  redemptionEvents?: Array<{ businessId: string; occurredAt: number }>;
 } = {}) {
   const repo: IAdminAnalyticsRepo = {
     getAllBusinesses: () => Effect.succeed(data.businesses ?? []),
     getAllVouchers: () => Effect.succeed(data.vouchers ?? []),
     getAllClaims: () => Effect.succeed(data.claims ?? []),
     getAllReveals: () => Effect.succeed(data.reveals ?? []),
+    getAllRedemptionEvents: () => Effect.succeed(data.redemptionEvents ?? []),
   };
   return Layer.succeed(AdminAnalyticsRepo, repo);
 }
 
 type VoucherEntry = { id: string; title: string };
 type ClaimEntry = { claimId: string; customerId: string };
-type RevealEntry = { redeemedAt?: number };
+type RevealEntry = { revealedAt: number };
 
 function makeTestRepo(data: {
   vouchers?: Map<string, VoucherEntry[]>;
   claims?: Map<string, ClaimEntry[]>;
   reveals?: Map<string, RevealEntry[]>;
+  redemptionCounts?: Map<string, number>;
 } = {}) {
   const voucherMap = data.vouchers ?? new Map<string, VoucherEntry[]>();
   const claimMap = data.claims ?? new Map<string, ClaimEntry[]>();
   const revealMap = data.reveals ?? new Map<string, RevealEntry[]>();
+  const redemptionCountMap = data.redemptionCounts ?? new Map<string, number>();
 
   const repo: IPilotAnalyticsRepo = {
     getVouchersForBusiness: (businessId) =>
@@ -62,6 +56,8 @@ function makeTestRepo(data: {
       Effect.succeed(claimMap.get(voucherId) ?? []),
     getRevealsByClaim: (claimId) =>
       Effect.succeed(revealMap.get(claimId) ?? []),
+    getRedemptionCountForVoucher: (voucherId) =>
+      Effect.succeed(redemptionCountMap.get(voucherId) ?? 0),
   };
 
   return Layer.succeed(PilotAnalyticsRepo, repo);
@@ -80,7 +76,7 @@ describe("PilotAnalyticsService.getTotalRedemptions", () => {
     expect(result).toBe(0);
   });
 
-  test("returns 0 when vouchers have no claims", async () => {
+  test("returns 0 when vouchers have no redemption events", async () => {
     const layer = makeTestRepo({
       vouchers: new Map([["biz-1", [{ id: "v-1", title: "10% Off" }]]]),
     });
@@ -92,35 +88,20 @@ describe("PilotAnalyticsService.getTotalRedemptions", () => {
     expect(result).toBe(0);
   });
 
-  test("returns 0 when claims have no redeemed reveals", async () => {
+  test("returns count from getRedemptionCountForVoucher", async () => {
     const layer = makeTestRepo({
       vouchers: new Map([["biz-1", [{ id: "v-1", title: "10% Off" }]]]),
-      claims: new Map([["v-1", [{ claimId: "c-1", customerId: "cust-1" }]]]),
-      reveals: new Map([["c-1", [{ redeemedAt: undefined }]]]),
+      redemptionCounts: new Map([["v-1", 3]]),
     });
 
     const result = await Effect.runPromise(
       Effect.provide(PilotAnalyticsService.getTotalRedemptions("biz-1"), layer),
     );
 
-    expect(result).toBe(0);
+    expect(result).toBe(3);
   });
 
-  test("counts redeemed reveals", async () => {
-    const layer = makeTestRepo({
-      vouchers: new Map([["biz-1", [{ id: "v-1", title: "10% Off" }]]]),
-      claims: new Map([["v-1", [{ claimId: "c-1", customerId: "cust-1" }]]]),
-      reveals: new Map([["c-1", [{ redeemedAt: 1000 }]]]),
-    });
-
-    const result = await Effect.runPromise(
-      Effect.provide(PilotAnalyticsService.getTotalRedemptions("biz-1"), layer),
-    );
-
-    expect(result).toBe(1);
-  });
-
-  test("counts redemptions across multiple vouchers and claims", async () => {
+  test("sums redemptions across multiple vouchers", async () => {
     const layer = makeTestRepo({
       vouchers: new Map([
         [
@@ -131,20 +112,9 @@ describe("PilotAnalyticsService.getTotalRedemptions", () => {
           ],
         ],
       ]),
-      claims: new Map([
-        [
-          "v-1",
-          [
-            { claimId: "c-1", customerId: "cust-1" },
-            { claimId: "c-2", customerId: "cust-2" },
-          ],
-        ],
-        ["v-2", [{ claimId: "c-3", customerId: "cust-1" }]],
-      ]),
-      reveals: new Map([
-        ["c-1", [{ redeemedAt: 1000 }]],
-        ["c-2", []],
-        ["c-3", [{ redeemedAt: 2000 }]],
+      redemptionCounts: new Map([
+        ["v-1", 1],
+        ["v-2", 2],
       ]),
     });
 
@@ -152,7 +122,7 @@ describe("PilotAnalyticsService.getTotalRedemptions", () => {
       Effect.provide(PilotAnalyticsService.getTotalRedemptions("biz-1"), layer),
     );
 
-    expect(result).toBe(2);
+    expect(result).toBe(3);
   });
 });
 
@@ -195,39 +165,7 @@ describe("PilotAnalyticsService.getNewCustomerCount", () => {
     expect(result).toBe(2);
   });
 
-  test("counts a returning customer as acquired (deduplicated across claims)", async () => {
-    const layer = makeTestRepo({
-      vouchers: new Map([
-        [
-          "biz-1",
-          [
-            { id: "v-1", title: "10% Off" },
-            { id: "v-2", title: "Free Coffee" },
-          ],
-        ],
-      ]),
-      claims: new Map([
-        [
-          "v-1",
-          [
-            { claimId: "c-1", customerId: "cust-return" },
-            { claimId: "c-2", customerId: "cust-new" },
-          ],
-        ],
-        ["v-2", [{ claimId: "c-3", customerId: "cust-return" }]],
-      ]),
-    });
-
-    const result = await Effect.runPromise(
-      Effect.provide(PilotAnalyticsService.getNewCustomerCount("biz-1"), layer),
-    );
-
-    // Two distinct customers were acquired: cust-return and cust-new. The
-    // returning customer is counted once despite claiming twice.
-    expect(result).toBe(2);
-  });
-
-  test("counts each distinct customer once even when all of them return", async () => {
+  test("counts each distinct customer once even if they claimed multiple vouchers", async () => {
     const layer = makeTestRepo({
       vouchers: new Map([
         [
@@ -311,32 +249,6 @@ describe("PilotAnalyticsService.getReturnCustomerCount", () => {
 
     expect(result).toBe(1);
   });
-
-  test("a customer with 3 or more claims counts as one return customer", async () => {
-    const layer = makeTestRepo({
-      vouchers: new Map([
-        [
-          "biz-1",
-          [
-            { id: "v-1", title: "V1" },
-            { id: "v-2", title: "V2" },
-            { id: "v-3", title: "V3" },
-          ],
-        ],
-      ]),
-      claims: new Map([
-        ["v-1", [{ claimId: "c-1", customerId: "cust-loyal" }]],
-        ["v-2", [{ claimId: "c-2", customerId: "cust-loyal" }]],
-        ["v-3", [{ claimId: "c-3", customerId: "cust-loyal" }]],
-      ]),
-    });
-
-    const result = await Effect.runPromise(
-      Effect.provide(PilotAnalyticsService.getReturnCustomerCount("biz-1"), layer),
-    );
-
-    expect(result).toBe(1);
-  });
 });
 
 // ── getVoucherStats ───────────────────────────────────────────────────────────
@@ -388,9 +300,10 @@ describe("PilotAnalyticsService.getVoucherStats", () => {
         ],
       ]),
       reveals: new Map([
-        ["c-1", [{ redeemedAt: 1000 }]],
-        ["c-2", [{ redeemedAt: undefined }]],
+        ["c-1", [{ revealedAt: 1000 }]],
+        ["c-2", [{ revealedAt: 2000 }]],
       ]),
+      redemptionCounts: new Map([["v-1", 1]]),
     });
 
     const result = await Effect.runPromise(
@@ -423,9 +336,13 @@ describe("PilotAnalyticsService.getVoucherStats", () => {
         ],
       ]),
       reveals: new Map([
-        ["c-1", [{ redeemedAt: 1000 }]],
-        ["c-2", [{ redeemedAt: 2000 }]],
+        ["c-1", [{ revealedAt: 1000 }]],
+        ["c-2", [{ revealedAt: 2000 }]],
         ["c-3", []],
+      ]),
+      redemptionCounts: new Map([
+        ["v-1", 1],
+        ["v-2", 1],
       ]),
     });
 
@@ -480,13 +397,16 @@ describe("PilotAnalyticsService.getWeeklyFunnel", () => {
     expect(week2.claimCount).toBe(1);
   });
 
-  test("buckets reveals and redemptions by their own timestamp", async () => {
+  test("buckets reveals and redemptionEvents by their own timestamp", async () => {
     const layer = makeAdminTestRepo({
       claims: [
         { claimId: "c-1", customerId: "cust-1", voucherId: "v-1", claimedAt: WED_JAN_07 },
       ],
       reveals: [
-        { claimId: "c-1", revealedAt: WED_JAN_07, redeemedAt: WED_JAN_14 },
+        { claimId: "c-1", revealedAt: WED_JAN_07 },
+      ],
+      redemptionEvents: [
+        { businessId: "biz-a", occurredAt: WED_JAN_14 },
       ],
     });
 
@@ -538,8 +458,8 @@ describe("PilotAnalyticsService.getBusinessLeaderboard", () => {
         { id: "biz-b", name: "Cafe B" },
       ],
       vouchers: [
-        { id: "v-a", businessId: "biz-a", voucherFormat: "barcode" },
-        { id: "v-b", businessId: "biz-b", voucherFormat: "qr_code" },
+        { id: "v-a", businessId: "biz-a" },
+        { id: "v-b", businessId: "biz-b" },
       ],
       claims: [
         { claimId: "c-1", customerId: "cust-1", voucherId: "v-a", claimedAt: 1000 },
@@ -547,8 +467,12 @@ describe("PilotAnalyticsService.getBusinessLeaderboard", () => {
         { claimId: "c-3", customerId: "cust-3", voucherId: "v-b", claimedAt: 1000 },
       ],
       reveals: [
-        { claimId: "c-2", revealedAt: 2000, redeemedAt: 3000 },
-        { claimId: "c-3", revealedAt: 2000, redeemedAt: 3000 },
+        { claimId: "c-2", revealedAt: 2000 },
+        { claimId: "c-3", revealedAt: 2000 },
+      ],
+      redemptionEvents: [
+        { businessId: "biz-b", occurredAt: 3000 },
+        { businessId: "biz-b", occurredAt: 3000 },
       ],
     });
 
@@ -566,7 +490,7 @@ describe("PilotAnalyticsService.getBusinessLeaderboard", () => {
   test("flags businesses with zero claims as zero-activity", async () => {
     const layer = makeAdminTestRepo({
       businesses: [{ id: "biz-a", name: "Cafe A" }],
-      vouchers: [{ id: "v-a", businessId: "biz-a", voucherFormat: "barcode" }],
+      vouchers: [{ id: "v-a", businessId: "biz-a" }],
     });
 
     const result = await Effect.runPromise(
@@ -580,7 +504,7 @@ describe("PilotAnalyticsService.getBusinessLeaderboard", () => {
     const layer = makeAdminTestRepo({
       businesses: [{ id: "biz-a", name: "Cafe A" }],
       vouchers: [
-        { id: "v-a", businessId: "biz-a", voucherFormat: "barcode", deletedAt: 1000 },
+        { id: "v-a", businessId: "biz-a", deletedAt: 1000 },
       ],
       claims: [
         { claimId: "c-1", customerId: "cust-1", voucherId: "v-a", claimedAt: 1000 },
@@ -597,7 +521,7 @@ describe("PilotAnalyticsService.getBusinessLeaderboard", () => {
   test("does not flag businesses that have claims and active vouchers", async () => {
     const layer = makeAdminTestRepo({
       businesses: [{ id: "biz-a", name: "Cafe A" }],
-      vouchers: [{ id: "v-a", businessId: "biz-a", voucherFormat: "barcode" }],
+      vouchers: [{ id: "v-a", businessId: "biz-a" }],
       claims: [
         { claimId: "c-1", customerId: "cust-1", voucherId: "v-a", claimedAt: 1000 },
       ],
@@ -626,7 +550,7 @@ describe("PilotAnalyticsService.getCrossBusinessDiscoveryCount", () => {
 
   test("does not count customers who claimed from only one business", async () => {
     const layer = makeAdminTestRepo({
-      vouchers: [{ id: "v-a", businessId: "biz-a", voucherFormat: "barcode" }],
+      vouchers: [{ id: "v-a", businessId: "biz-a" }],
       claims: [
         { claimId: "c-1", customerId: "cust-1", voucherId: "v-a", claimedAt: 1000 },
         { claimId: "c-2", customerId: "cust-1", voucherId: "v-a", claimedAt: 2000 },
@@ -643,14 +567,12 @@ describe("PilotAnalyticsService.getCrossBusinessDiscoveryCount", () => {
   test("counts customers who claimed from 2 or more distinct businesses", async () => {
     const layer = makeAdminTestRepo({
       vouchers: [
-        { id: "v-a", businessId: "biz-a", voucherFormat: "barcode" },
-        { id: "v-b", businessId: "biz-b", voucherFormat: "qr_code" },
+        { id: "v-a", businessId: "biz-a" },
+        { id: "v-b", businessId: "biz-b" },
       ],
       claims: [
-        // cust-1: claimed from biz-a and biz-b → discovered
         { claimId: "c-1", customerId: "cust-1", voucherId: "v-a", claimedAt: 1000 },
         { claimId: "c-2", customerId: "cust-1", voucherId: "v-b", claimedAt: 2000 },
-        // cust-2: only biz-a → not discovered
         { claimId: "c-3", customerId: "cust-2", voucherId: "v-a", claimedAt: 1000 },
       ],
     });
@@ -660,68 +582,5 @@ describe("PilotAnalyticsService.getCrossBusinessDiscoveryCount", () => {
     );
 
     expect(result).toBe(1);
-  });
-});
-
-// ── getVoucherFormatBreakdown ─────────────────────────────────────────────────
-
-describe("PilotAnalyticsService.getVoucherFormatBreakdown", () => {
-  test("returns empty array when no claims exist", async () => {
-    const layer = makeAdminTestRepo();
-
-    const result = await Effect.runPromise(
-      Effect.provide(PilotAnalyticsService.getVoucherFormatBreakdown(), layer),
-    );
-
-    expect(result).toEqual([]);
-  });
-
-  test("groups claims by voucher format", async () => {
-    const layer = makeAdminTestRepo({
-      vouchers: [
-        { id: "v-bar", businessId: "biz-a", voucherFormat: "barcode" },
-        { id: "v-qr", businessId: "biz-a", voucherFormat: "qr_code" },
-      ],
-      claims: [
-        { claimId: "c-1", customerId: "cust-1", voucherId: "v-bar", claimedAt: 1000 },
-        { claimId: "c-2", customerId: "cust-2", voucherId: "v-bar", claimedAt: 1000 },
-        { claimId: "c-3", customerId: "cust-3", voucherId: "v-qr", claimedAt: 1000 },
-      ],
-    });
-
-    const result = await Effect.runPromise(
-      Effect.provide(PilotAnalyticsService.getVoucherFormatBreakdown(), layer),
-    );
-
-    const barcode = result.find((r) => r.format === "barcode")!;
-    const qr = result.find((r) => r.format === "qr_code")!;
-    expect(barcode.claimCount).toBe(2);
-    expect(qr.claimCount).toBe(1);
-  });
-
-  test("groups redemptions by voucher format", async () => {
-    const layer = makeAdminTestRepo({
-      vouchers: [
-        { id: "v-bar", businessId: "biz-a", voucherFormat: "barcode" },
-        { id: "v-gen", businessId: "biz-a", voucherFormat: "generated_text" },
-      ],
-      claims: [
-        { claimId: "c-1", customerId: "cust-1", voucherId: "v-bar", claimedAt: 1000 },
-        { claimId: "c-2", customerId: "cust-2", voucherId: "v-gen", claimedAt: 1000 },
-      ],
-      reveals: [
-        { claimId: "c-1", revealedAt: 2000, redeemedAt: 3000 },
-        { claimId: "c-2", revealedAt: 2000 },
-      ],
-    });
-
-    const result = await Effect.runPromise(
-      Effect.provide(PilotAnalyticsService.getVoucherFormatBreakdown(), layer),
-    );
-
-    const barcode = result.find((r) => r.format === "barcode")!;
-    const gen = result.find((r) => r.format === "generated_text")!;
-    expect(barcode.redemptionCount).toBe(1);
-    expect(gen.redemptionCount).toBe(0);
   });
 });

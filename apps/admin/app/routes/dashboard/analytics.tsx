@@ -35,7 +35,6 @@ function AnalyticsPage() {
         <CrossBusinessDiscovery />
         <CoreFunnelTable />
         <BusinessLeaderboard />
-        <VoucherFormatBreakdown />
       </div>
     </main>
   );
@@ -209,55 +208,6 @@ function BusinessLeaderboard() {
   );
 }
 
-function VoucherFormatBreakdown() {
-  const { isAuthenticated } = useConvexAuth();
-  const rows = useQuery(
-    api.functions.adminAnalytics.getVoucherFormatBreakdown,
-    isAuthenticated ? {} : "skip",
-  );
-
-  function renderBody() {
-    if (rows === undefined) return <SkeletonRows rows={3} />;
-    if (rows.length === 0) {
-      return <p className="text-muted-foreground text-sm">No activity recorded yet.</p>;
-    }
-    return (
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Format</TableHead>
-            <TableHead className="text-right">Claims</TableHead>
-            <TableHead className="text-right">Redemptions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.format}>
-              <TableCell className="font-medium capitalize">
-                {formatVoucherFormat(row.format)}
-              </TableCell>
-              <TableCell className="text-right">{row.claimCount}</TableCell>
-              <TableCell className="text-right">{row.redemptionCount}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    );
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Voucher Format Breakdown</CardTitle>
-        <CardDescription>
-          Claims and redemptions split by voucher format across all Pilot Businesses
-        </CardDescription>
-      </CardHeader>
-      <CardContent>{renderBody()}</CardContent>
-    </Card>
-  );
-}
-
 function SkeletonRows({ rows }: { rows: number }) {
   return (
     <div className="space-y-2">
@@ -275,13 +225,4 @@ function formatWeekStart(ts: number): string {
     year: "numeric",
     timeZone: "UTC",
   });
-}
-
-function formatVoucherFormat(format: string): string {
-  const labels: Record<string, string> = {
-    barcode: "Barcode",
-    qr_code: "QR Code",
-    generated_text: "Generated Code",
-  };
-  return labels[format] ?? format;
 }
