@@ -285,6 +285,14 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
   const [revealing, setRevealing] = useState(false);
   const [revealError, setRevealError] = useState<string | null>(null);
 
+  // Reactively track the server-side burn so an open voucher flips to Redeemed
+  // live while the QR is on screen (no client-trust — driven by the event).
+  const redemptionEvent = useQuery(
+    api.functions.redemptionEvents.getRedemptionEventByClaim,
+    { claimId: entry.claimId as Id<"claims"> },
+  );
+  const isRedeemed = entry.isRedeemed || redemptionEvent != null;
+
   function doReveal() {
     return Effect.runPromise(
       Effect.sync(() => { setRevealing(true); setRevealError(null); }).pipe(
@@ -313,6 +321,7 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
 
   useEffect(() => {
     void (async () => {
+      if (isRedeemed) return;
       if (entry.activeCode && entry.codeExpiresAt && entry.codeExpiresAt > Date.now()) {
         setVoucherCode(entry.activeCode);
         return;
@@ -389,7 +398,7 @@ function RevealContent({ entry }: { entry: RevealEntry }) {
               </Text>
             </Pressable>
           </View>
-        ) : entry.isRedeemed ? (
+        ) : isRedeemed ? (
           <TicketStub
             voucherCode=""
             voucherValidFrom={entry.voucherValidFrom}
