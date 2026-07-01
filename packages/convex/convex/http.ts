@@ -3,6 +3,7 @@ import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { authComponent, createAuth } from "./betterAuth/auth";
 import { SQUARE_SCOPES } from "./lib/square";
+import { verifySquareWebhook } from "@areacodes/domain";
 import type { Id } from "./_generated/dataModel";
 
 const http = httpRouter();
@@ -176,6 +177,69 @@ http.route({
       `${businessAppUrl}/b/${slug}/pos?square_connect=success`,
       302,
     );
+  }),
+});
+
+// Square webhook: verify HMAC, route by merchant_id, upsert redemption events
+// for paid orders carrying our catalog discount IDs.
+http.route({
+  path: "/square/webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const secret = process.env.SQUARE_WEBHOOK_SECRET;
+    if (!secret) {
+      return new Response("Webhook secret not configured", { status: 500 });
+    }
+
+    const rawBody = await request.text();
+    const signatureHeader =
+      request.headers.get("x-square-hmacsha256-signature") ?? "";
+
+    const isValid = await verifySquareWebhook(
+      signatureHeader,
+      request.url,
+      rawBody,
+      secret,
+    );
+    if (!isValid) {
+      return new Response("Invalid signature", { status: 400 });
+    }
+
+    let event: unknown;
+    try {
+      event = JSON.parse(rawBody);
+    } catch {
+      return new Response("Invalid JSON", { status: 400 });
+    }
+
+    // Extract order completion event — extract-and-discard: raw payload not retained
+    const e = event as {
+      merchant_id?: string;
+      type?: string;
+      data?: {
+        object?: {
+          order_updated?: { order_id?: string; state?: string };
+        };
+      };
+    };
+
+    if (
+      e.merchant_id &&
+      e.type === "order.updated" &&
+      e.data?.object?.order_updated?.state === "COMPLETED" &&
+      e.data?.object?.order_updated?.order_id
+    ) {
+      await ctx.runAction(
+        internal.functions.squareReconciliation.handleSquareWebhookOrder,
+        {
+          merchantId: e.merchant_id,
+          orderId: e.data.object.order_updated.order_id,
+          recordedAt: Date.now(),
+        },
+      );
+    }
+
+    return new Response("OK", { status: 200 });
   }),
 });
 

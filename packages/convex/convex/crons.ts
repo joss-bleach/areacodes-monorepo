@@ -17,4 +17,11 @@ crons.interval(
   {},
 );
 
+crons.interval(
+  "poll Square orders for reconciliation",
+  { minutes: 30 },
+  internal.functions.squareReconciliation.pollSquareOrders,
+  {},
+);
+
 export default crons;

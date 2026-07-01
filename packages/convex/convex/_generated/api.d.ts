@@ -23,6 +23,7 @@ import type * as functions_pilotAnalytics from "../functions/pilotAnalytics.js";
 import type * as functions_posConnections from "../functions/posConnections.js";
 import type * as functions_pushTokens from "../functions/pushTokens.js";
 import type * as functions_squareProvisioner from "../functions/squareProvisioner.js";
+import type * as functions_squareReconciliation from "../functions/squareReconciliation.js";
 import type * as functions_redemptionAuth from "../functions/redemptionAuth.js";
 import type * as functions_redemptionEvents from "../functions/redemptionEvents.js";
 import type * as functions_seed from "../functions/seed.js";
@@ -56,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   "functions/posConnections": typeof functions_posConnections;
   "functions/pushTokens": typeof functions_pushTokens;
   "functions/squareProvisioner": typeof functions_squareProvisioner;
+  "functions/squareReconciliation": typeof functions_squareReconciliation;
   "functions/redemptionAuth": typeof functions_redemptionAuth;
   "functions/redemptionEvents": typeof functions_redemptionEvents;
   "functions/seed": typeof functions_seed;

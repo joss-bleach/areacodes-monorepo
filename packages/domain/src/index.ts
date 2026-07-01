@@ -94,6 +94,13 @@ export {
   deriveVoucherCopy,
   type VoucherCopy,
 } from "./voucher-copy.js";
+export {
+  mapSquareOrderToRedemptions,
+  verifySquareWebhook,
+  type SquareOrder,
+  type SquareOrderDiscount,
+  type SquareOrderRedemption,
+} from "./square-reconciliation.js";
 export * as FeedbackService from "./feedback-service.js";
 export {
   LLMPort,
