@@ -2,6 +2,8 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { authComponent, createAuth } from "./betterAuth/auth";
+import { SQUARE_SCOPES } from "./lib/square";
+import type { Id } from "./_generated/dataModel";
 
 const http = httpRouter();
 
@@ -85,6 +87,95 @@ http.route({
     });
 
     return new Response("OK", { status: 200 });
+  }),
+});
+
+// Square OAuth: redirect the browser to Square's authorization page.
+// Called from the business app via a direct link:
+//   {CONVEX_SITE_URL}/square/auth?businessId=xxx&slug=yyy
+http.route({
+  path: "/square/auth",
+  method: "GET",
+  handler: httpAction(async (_ctx, request) => {
+    const appId = process.env.SQUARE_APP_ID;
+    const redirectUri = process.env.SQUARE_OAUTH_REDIRECT_URI;
+    const squareBaseUrl =
+      process.env.SQUARE_BASE_URL ?? "https://connect.squareupsandbox.com";
+
+    if (!appId || !redirectUri) {
+      return new Response("Square OAuth not configured", { status: 500 });
+    }
+
+    const url = new URL(request.url);
+    const businessId = url.searchParams.get("businessId");
+    const slug = url.searchParams.get("slug");
+
+    if (!businessId || !slug) {
+      return new Response("Missing businessId or slug", { status: 400 });
+    }
+
+    // State encodes the businessId + slug so we can route the callback
+    const state = btoa(`${businessId}:${slug}`);
+
+    const authorizeUrl = new URL(`${squareBaseUrl}/oauth2/authorize`);
+    authorizeUrl.searchParams.set("client_id", appId);
+    authorizeUrl.searchParams.set("scope", SQUARE_SCOPES.join(" "));
+    authorizeUrl.searchParams.set("redirect_uri", redirectUri);
+    authorizeUrl.searchParams.set("state", state);
+    authorizeUrl.searchParams.set("session", "false");
+
+    return Response.redirect(authorizeUrl.toString(), 302);
+  }),
+});
+
+// Square OAuth callback: exchange the code for tokens, store encrypted connection,
+// then redirect the browser back to the business POS page.
+http.route({
+  path: "/square/callback",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const businessAppUrl = process.env.BUSINESS_APP_URL ?? "";
+
+    const url = new URL(request.url);
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    const error = url.searchParams.get("error");
+
+    if (error || !code || !state) {
+      return Response.redirect(
+        `${businessAppUrl}?square_error=${error ?? "missing_params"}`,
+        302,
+      );
+    }
+
+    let businessId: string;
+    let slug: string;
+    try {
+      const decoded = atob(state);
+      const colonIdx = decoded.indexOf(":");
+      businessId = decoded.slice(0, colonIdx);
+      slug = decoded.slice(colonIdx + 1);
+      if (!businessId || !slug) throw new Error("empty");
+    } catch {
+      return new Response("Invalid state parameter", { status: 400 });
+    }
+
+    try {
+      await ctx.runAction(
+        internal.functions.posConnections.completeSquareConnect,
+        { businessId: businessId as Id<"businesses">, code },
+      );
+    } catch {
+      return Response.redirect(
+        `${businessAppUrl}/b/${slug}/pos?square_error=connect_failed`,
+        302,
+      );
+    }
+
+    return Response.redirect(
+      `${businessAppUrl}/b/${slug}/pos?square_connect=success`,
+      302,
+    );
   }),
 });
 
