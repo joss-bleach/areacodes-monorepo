@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { useParams } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,6 +16,14 @@ import {
   DialogDescription,
   DialogFooter,
   Button,
+  Stepper,
+  StepperList,
+  StepperItem,
+  StepperTrigger,
+  StepperContent,
+  StepperIndicator,
+  StepperSeparator,
+  StepperTitle,
 } from "@repo/ui";
 import { toast } from "sonner";
 import {
@@ -24,12 +32,321 @@ import {
 } from "~/schemas/voucher-form-schema";
 import { VoucherFormFields } from "~/components/voucher/voucher-form-fields";
 import { VoucherDateRange } from "~/components/voucher/voucher-date-range";
+import { VoucherDiscountKindStep } from "~/components/form-steps/voucher-discount-kind-step";
+import { VoucherDetailsStep } from "~/components/form-steps/voucher-details-step";
+import { VoucherReviewStep } from "~/components/form-steps/voucher-review-step";
+
+// ── Wizard steps (Provider is skipped: Manual auto-selected as only option) ───
+
+const WIZARD_STEPS = ["discount", "details", "review"] as const;
+type WizardStep = (typeof WIZARD_STEPS)[number];
+
+const STEP_LABELS: Record<WizardStep, string> = {
+  discount: "Discount",
+  details: "Details",
+  review: "Review",
+};
+
+// ── Create wizard ─────────────────────────────────────────────────────────────
+
+interface CreateWizardProps {
+  businessId: Id<"businesses">;
+  onSuccess: () => void;
+}
+
+const CreateWizard = ({ businessId, onSuccess }: CreateWizardProps) => {
+  const [currentStep, setCurrentStep] = useState<WizardStep>(WIZARD_STEPS[0]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const createVoucher = useMutation(api.functions.vouchers.createVoucher);
+
+  const form = useForm<VoucherFormValues>({
+    resolver: zodResolver(voucherFormSchema),
+    defaultValues: {
+      provider: "manual",
+      discount: { kind: "percentage" },
+      title: "",
+      description: "",
+      voucherTerms: "",
+      voucherValidFrom: undefined as unknown as Date,
+      voucherValidTo: undefined as unknown as Date,
+    },
+    mode: "onBlur",
+  });
+
+  const currentIndex = WIZARD_STEPS.indexOf(currentStep);
+  const isFirst = currentIndex === 0;
+  const isLast = currentIndex === WIZARD_STEPS.length - 1;
+
+  const validateStep = async (step: WizardStep): Promise<boolean> => {
+    if (step === "discount") {
+      const result = await form.trigger("discount" as any);
+      return result;
+    }
+
+    if (step === "details") {
+      const result = await form.trigger([
+        "title",
+        "description",
+        "voucherValidFrom",
+        "voucherValidTo",
+      ] as any);
+      return result;
+    }
+
+    return true;
+  };
+
+  const goNext = async () => {
+    const valid = await validateStep(currentStep);
+    if (!valid) return;
+    const nextIndex = currentIndex + 1;
+    if (nextIndex < WIZARD_STEPS.length) {
+      setCurrentStep(WIZARD_STEPS[nextIndex]!);
+    }
+  };
+
+  const goPrev = () => {
+    const prevIndex = currentIndex - 1;
+    if (prevIndex >= 0) {
+      setCurrentStep(WIZARD_STEPS[prevIndex]!);
+    }
+  };
+
+  const onSubmit = async (data: VoucherFormValues) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      // Convert fixed_amount from major units (UI) to minor units (domain)
+      const discount =
+        data.discount.kind === "fixed_amount" && data.discount.value != null
+          ? {
+              ...data.discount,
+              value: Math.round(data.discount.value * 100),
+              currency: data.discount.currency ?? "GBP",
+            }
+          : data.discount;
+
+      await createVoucher({
+        businessId,
+        provider: data.provider,
+        title: data.title,
+        description: data.description,
+        discount,
+        voucherTerms: data.voucherTerms || undefined,
+        voucherValidFrom: data.voucherValidFrom!.getTime(),
+        voucherValidTo: data.voucherValidTo!.getTime(),
+      });
+      toast.success("Voucher created");
+      onSuccess();
+    } catch {
+      toast.error("Failed to create voucher");
+      setIsSubmitting(false);
+    }
+  };
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case "discount":
+        return <VoucherDiscountKindStep form={form} />;
+      case "details":
+        return <VoucherDetailsStep form={form} />;
+      case "review":
+        return <VoucherReviewStep form={form} />;
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Stepper
+        value={currentStep}
+        onValueChange={(v) => setCurrentStep(v as WizardStep)}
+        activationMode="manual"
+      >
+        <StepperList>
+          {WIZARD_STEPS.map((step, idx) => (
+            <StepperItem key={step} value={step}>
+              <StepperTrigger disabled>
+                <StepperIndicator>
+                  {(state) =>
+                    state === "completed" ? <Check className="size-3" /> : idx + 1
+                  }
+                </StepperIndicator>
+                <div className="hidden sm:flex flex-col items-start">
+                  <StepperTitle>{STEP_LABELS[step]}</StepperTitle>
+                </div>
+              </StepperTrigger>
+              {idx < WIZARD_STEPS.length - 1 && <StepperSeparator />}
+            </StepperItem>
+          ))}
+        </StepperList>
+
+        <form
+          id="create-voucher-wizard"
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="mt-4"
+        >
+          <StepperContent value={currentStep}>
+            {renderStep()}
+          </StepperContent>
+        </form>
+      </Stepper>
+
+      <div className="flex justify-between items-center gap-3 pt-2 border-t">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={goPrev}
+          disabled={isFirst}
+          className="flex-1 sm:flex-none"
+        >
+          Back
+        </Button>
+
+        {isLast ? (
+          <Button
+            type="submit"
+            form="create-voucher-wizard"
+            size="sm"
+            disabled={isSubmitting}
+            className="flex-1 sm:flex-none"
+          >
+            {isSubmitting ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="size-3.5 animate-spin" />
+                Creating…
+              </span>
+            ) : (
+              "Create voucher"
+            )}
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            size="sm"
+            onClick={goNext}
+            className="flex-1 sm:flex-none"
+          >
+            Next
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ── Edit form (unchanged single-page experience) ──────────────────────────────
+
+interface EditFormProps {
+  editVoucherId: string;
+  onSuccess: () => void;
+}
+
+const EditForm = ({ editVoucherId, onSuccess }: EditFormProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const updateVoucher = useMutation(api.functions.vouchers.updateVoucher);
+
+  const editVoucherData = useQuery(
+    api.functions.vouchers.getVoucherByIdWithBusiness,
+    { voucherId: editVoucherId as Id<"vouchers"> }
+  );
+
+  const form = useForm<VoucherFormValues>({
+    resolver: zodResolver(voucherFormSchema),
+    defaultValues: {
+      provider: "manual",
+      discount: { kind: "custom", customText: "" },
+      title: "",
+      description: "",
+      voucherTerms: "",
+      voucherValidFrom: undefined as unknown as Date,
+      voucherValidTo: undefined as unknown as Date,
+    },
+    mode: "onBlur",
+  });
+
+  useEffect(() => {
+    if (editVoucherData) {
+      // Convert fixed_amount from minor units (domain) to major units (UI)
+      const discount =
+        editVoucherData.discount.kind === "fixed_amount" &&
+        editVoucherData.discount.value != null
+          ? { ...editVoucherData.discount, value: editVoucherData.discount.value / 100 }
+          : editVoucherData.discount;
+
+      form.reset({
+        provider: editVoucherData.provider,
+        title: editVoucherData.title,
+        description: editVoucherData.description,
+        discount,
+        voucherTerms: editVoucherData.voucherTerms || "",
+        voucherValidFrom: new Date(editVoucherData.voucherValidFrom),
+        voucherValidTo: new Date(editVoucherData.voucherValidTo),
+      });
+    }
+  }, [editVoucherData]);
+
+  const onSubmit = async (data: VoucherFormValues) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const discount =
+        data.discount.kind === "fixed_amount" && data.discount.value != null
+          ? {
+              ...data.discount,
+              value: Math.round(data.discount.value * 100),
+              currency: data.discount.currency ?? "GBP",
+            }
+          : data.discount;
+
+      await updateVoucher({
+        voucherId: editVoucherId as Id<"vouchers">,
+        title: data.title,
+        description: data.description,
+        discount,
+        voucherTerms: data.voucherTerms || undefined,
+        voucherValidFrom: data.voucherValidFrom!.getTime(),
+        voucherValidTo: data.voucherValidTo!.getTime(),
+      });
+      toast.success("Voucher updated");
+      onSuccess();
+    } catch {
+      toast.error("Failed to update voucher");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <form id="edit-voucher-form" onSubmit={form.handleSubmit(onSubmit)}>
+      <div className="grid gap-4 py-4">
+        <VoucherFormFields control={form.control} />
+        <VoucherDateRange control={form.control} />
+      </div>
+      <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+        <Button type="submit" form="edit-voucher-form" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <span className="flex items-center gap-2">
+              <Loader2 className="size-4 animate-spin" />
+              Updating…
+            </span>
+          ) : (
+            "Update voucher"
+          )}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+};
+
+// ── Modal shell ───────────────────────────────────────────────────────────────
 
 export const NewVoucherModal = () => {
   const { slug } = useParams({ strict: false }) as { slug?: string };
   const { isOpen, setIsOpen } = useAddVoucher();
   const { editVoucherId, setEditVoucherId } = useEditVoucher();
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isEditMode = !!editVoucherId;
 
@@ -38,153 +355,39 @@ export const NewVoucherModal = () => {
     slug ? { slug } : "skip"
   );
 
-  const editVoucherData = useQuery(
-    api.functions.vouchers.getVoucherByIdWithBusiness,
-    isEditMode && editVoucherId
-      ? { voucherId: editVoucherId as Id<"vouchers"> }
-      : "skip"
-  );
-
-  const createVoucher = useMutation(api.functions.vouchers.createVoucher);
-  const updateVoucher = useMutation(api.functions.vouchers.updateVoucher);
-
-  const form = useForm<VoucherFormValues>({
-    resolver: zodResolver(voucherFormSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      discount: { kind: "custom", customText: "" },
-      voucherTerms: "",
-      voucherValidFrom: undefined,
-      voucherValidTo: undefined,
-    },
-    mode: "onBlur",
-  });
-
-  useEffect(() => {
-    if (isEditMode && editVoucherData) {
-      form.reset({
-        title: editVoucherData.title,
-        description: editVoucherData.description,
-        discount: editVoucherData.discount,
-        voucherTerms: editVoucherData.voucherTerms || "",
-        voucherValidFrom: new Date(editVoucherData.voucherValidFrom),
-        voucherValidTo: new Date(editVoucherData.voucherValidTo),
-      });
-    } else if (!isEditMode) {
-      form.reset({
-        title: "",
-        description: "",
-        discount: { kind: "custom", customText: "" },
-        voucherTerms: "",
-        voucherValidFrom: undefined,
-        voucherValidTo: undefined,
-      });
-    }
-  }, [editVoucherData, isEditMode]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setEditVoucherId(null);
-      setIsSubmitting(false);
-    }
-  }, [isOpen]);
-
-  const onSubmit = async (data: VoucherFormValues) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-
-    try {
-      if (isEditMode && editVoucherId) {
-        await updateVoucher({
-          voucherId: editVoucherId as Id<"vouchers">,
-          title: data.title,
-          description: data.description,
-          discount: data.discount,
-          voucherTerms: data.voucherTerms || undefined,
-          voucherValidFrom: data.voucherValidFrom!.getTime(),
-          voucherValidTo: data.voucherValidTo!.getTime(),
-        });
-        toast.success("Voucher updated successfully");
-      } else {
-        if (!business?._id) {
-          toast.error("Business not loaded");
-          return;
-        }
-        await createVoucher({
-          businessId: business._id as Id<"businesses">,
-          provider: "manual",
-          title: data.title,
-          description: data.description,
-          discount: data.discount,
-          voucherTerms: data.voucherTerms || undefined,
-          voucherValidFrom: data.voucherValidFrom!.getTime(),
-          voucherValidTo: data.voucherValidTo!.getTime(),
-        });
-        toast.success("Voucher created successfully");
-      }
-      form.reset();
-      setEditVoucherId(null);
-      setIsOpen(false);
-    } catch {
-      toast.error(isEditMode ? "Failed to update voucher" : "Failed to create voucher");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSuccess = () => {
+    setIsOpen(false);
+    setEditVoucherId(null);
   };
 
-  const handleDialogOpenChange = (open: boolean) => {
+  const handleOpenChange = (open: boolean) => {
     setIsOpen(open);
-    if (!open) {
-      setEditVoucherId(null);
-      setIsSubmitting(false);
-    }
+    if (!open) setEditVoucherId(null);
   };
 
   return (
-    <Dialog open={isOpen || isEditMode} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="w-[calc(100vw-2rem)] max-w-[500px] max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen || isEditMode} onOpenChange={handleOpenChange}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditMode ? "Edit Voucher" : "Create New Voucher"}
+            {isEditMode ? "Edit voucher" : "Create voucher"}
           </DialogTitle>
           <DialogDescription>
             {isEditMode
-              ? "Update your voucher details"
-              : "Add a new voucher for your customers to use"}
+              ? "Update your voucher details."
+              : "Set up your offer in a few steps."}
           </DialogDescription>
         </DialogHeader>
 
-        <form id="create-voucher-form" onSubmit={form.handleSubmit(onSubmit)}>
-          <div className="grid gap-4 py-4">
-            <VoucherFormFields control={form.control} />
-            <VoucherDateRange control={form.control} />
-          </div>
-
-          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-              className="w-full sm:w-auto"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              form="create-voucher-form"
-              className="w-full sm:w-auto"
-              disabled={isSubmitting}
-            >
-              <div className="flex items-center gap-2 justify-center">
-                {isSubmitting && (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                )}
-                {isEditMode ? "Update" : "Create"} Voucher
-              </div>
-            </Button>
-          </DialogFooter>
-        </form>
+        {isEditMode && editVoucherId ? (
+          <EditForm editVoucherId={editVoucherId} onSuccess={handleSuccess} />
+        ) : business?._id ? (
+          <CreateWizard
+            key={isOpen ? "open" : "closed"}
+            businessId={business._id as Id<"businesses">}
+            onSuccess={handleSuccess}
+          />
+        ) : null}
       </DialogContent>
     </Dialog>
   );

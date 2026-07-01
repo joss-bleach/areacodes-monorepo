@@ -89,6 +89,10 @@ export {
   type IEmailPort,
   type AdminAddBusinessArgs,
 } from "./admin-business-service.js";
+export {
+  deriveVoucherCopy,
+  type VoucherCopy,
+} from "./voucher-copy.js";
 export * as FeedbackService from "./feedback-service.js";
 export {
   LLMPort,
