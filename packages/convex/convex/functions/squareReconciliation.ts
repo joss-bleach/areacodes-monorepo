@@ -227,6 +227,38 @@ export const pollSquareOrders = internalAction({
         ? new Date(connection.lastReconciledAt).toISOString()
         : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 
+      // SearchOrders requires location_ids — fetch the merchant's locations first.
+      let locationIds: string[];
+      try {
+        const locRes = await fetch(`${SQUARE_BASE_URL}/v2/locations`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Square-Version": "2024-01-17",
+          },
+        });
+
+        if (locRes.status === 401) {
+          await ctx.runMutation(internal.functions.posConnections.markConnectionExpiredOrRevoked, {
+            connectionId: connection._id,
+            status: "expired",
+          });
+          continue;
+        }
+
+        if (!locRes.ok) continue;
+
+        const locData = (await locRes.json()) as {
+          locations?: { id?: string }[];
+        };
+        locationIds = (locData.locations ?? [])
+          .map((l) => l.id)
+          .filter((id): id is string => id !== undefined);
+      } catch {
+        continue;
+      }
+
+      if (locationIds.length === 0) continue;
+
       let orders: Parameters<typeof mapSquareOrderToRedemptions>[0][];
       try {
         const res = await fetch(`${SQUARE_BASE_URL}/v2/orders/search`, {
@@ -237,11 +269,14 @@ export const pollSquareOrders = internalAction({
             "Square-Version": "2024-01-17",
           },
           body: JSON.stringify({
+            location_ids: locationIds,
             query: {
               filter: {
                 state_filter: { states: ["COMPLETED"] },
                 date_time_filter: { updated_at: { start_at: since } },
               },
+              // Square requires the sort field to match the date_time_filter field.
+              sort: { sort_field: "UPDATED_AT", sort_order: "ASC" },
             },
           }),
         });
