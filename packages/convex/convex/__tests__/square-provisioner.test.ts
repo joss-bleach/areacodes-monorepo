@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import schema from "../schema";
 import type { Doc, Id } from "../_generated/dataModel";
-import { api } from "../_generated/api";
+import { api, internal } from "../_generated/api";
 
 const modules = import.meta.glob("../../convex/**/*.{js,ts}", { eager: false });
 
@@ -298,6 +298,179 @@ describe("deprovision path — clear provisioning on delete/disconnect", () => {
     expect(conn?.status).toBe("revoked");
     expect(conn?.encryptedTokens).toBeUndefined();
     expect(voucher?.provisioning.status).toBe("not_required");
+  });
+});
+
+// ── Deprovision via real mutations (deleteVoucher / disconnectSquare) ──────────
+
+describe("deprovision — real mutation wiring", () => {
+  // Fake timers keep convex-test's runAfter(0) jobs from firing on real timers
+  // after the test instance is torn down (which would write to a dead db).
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  // Drain any runAfter(0) deprovision jobs so they complete inside the test.
+  async function drainScheduled(t: ReturnType<typeof convexTest>): Promise<void> {
+    for (let i = 0; i < 5; i++) {
+      await t.finishInProgressScheduledFunctions();
+      const pending = await t.run((ctx) =>
+        ctx.db
+          .system.query("_scheduled_functions")
+          .filter((q) => q.eq(q.field("state.kind"), "pending"))
+          .collect(),
+      );
+      if (pending.length === 0) break;
+    }
+  }
+
+  test("deleteVoucher clears provisioning when no active connection remains", async () => {
+    const t = convexTest(schema, modules);
+    const { businessId, connectionId } = await t.run(seedBusinessWithSquare);
+    const owner = t.withIdentity({ subject: "user_sp" });
+    const now = Date.now();
+
+    const voucherId = await t.run((ctx) =>
+      insertSquareVoucher(ctx, businessId, {
+        provisioning: {
+          status: "provisioned",
+          externalId: "cat-obj-del",
+          provisionedAt: now - 1000,
+        },
+      }),
+    );
+
+    // No active connection → deprovision falls back to an inline clear.
+    await t.run(async (ctx) => {
+      await ctx.db.patch(connectionId, {
+        status: "revoked",
+        encryptedTokens: undefined,
+        encryptionKeyVersion: undefined,
+      });
+    });
+
+    await owner.mutation(api.functions.vouchers.deleteVoucher, { voucherId });
+
+    const voucher = await t.run((ctx) => ctx.db.get(voucherId)) as Doc<"vouchers"> | null;
+    expect(voucher?.deletedAt).toBeDefined();
+    expect(voucher?.provisioning.status).toBe("not_required");
+    expect(voucher?.provisioning.externalId).toBeUndefined();
+  });
+
+  test("deleteVoucher soft-deletes and enqueues a deprovision job when a connection is live", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({}), { status: 200 })),
+    );
+
+    const t = convexTest(schema, modules);
+    const { businessId } = await t.run(seedBusinessWithSquare);
+    const owner = t.withIdentity({ subject: "user_sp" });
+    const now = Date.now();
+
+    const voucherId = await t.run((ctx) =>
+      insertSquareVoucher(ctx, businessId, {
+        provisioning: {
+          status: "provisioned",
+          externalId: "cat-obj-live-del",
+          provisionedAt: now - 1000,
+        },
+      }),
+    );
+
+    await owner.mutation(api.functions.vouchers.deleteVoucher, { voucherId });
+
+    // Soft-deleted; the CatalogDiscount removal + clear is deferred to the
+    // scheduled deprovisionVoucher action, so the record is not cleared inline.
+    const voucher = await t.run((ctx) => ctx.db.get(voucherId)) as Doc<"vouchers"> | null;
+    expect(voucher?.deletedAt).toBeDefined();
+    expect(voucher?.provisioning.externalId).toBe("cat-obj-live-del");
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(
+      scheduled.some((s) => s.name.includes("deprovisionVoucher")),
+    ).toBe(true);
+
+    await drainScheduled(t);
+  });
+
+  test("disconnectSquare revokes the connection and enqueues deprovision", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({}), { status: 200 })),
+    );
+
+    const t = convexTest(schema, modules);
+    const { businessId, connectionId } = await t.run(seedBusinessWithSquare);
+    const owner = t.withIdentity({ subject: "user_sp" });
+    const now = Date.now();
+
+    await t.run((ctx) =>
+      insertSquareVoucher(ctx, businessId, {
+        provisioning: {
+          status: "provisioned",
+          externalId: "cat-obj-disc",
+          provisionedAt: now - 1000,
+        },
+      }),
+    );
+
+    await owner.mutation(api.functions.posConnections.disconnectSquare, {
+      businessId,
+      connectionId,
+    });
+
+    const conn = await t.run((ctx) => ctx.db.get(connectionId)) as Doc<"posConnections"> | null;
+    expect(conn?.status).toBe("revoked");
+    expect(conn?.encryptedTokens).toBeUndefined();
+
+    const scheduled = await t.run((ctx) =>
+      ctx.db.system.query("_scheduled_functions").collect(),
+    );
+    expect(
+      scheduled.some((s) => s.name.includes("deprovisionAllForBusiness")),
+    ).toBe(true);
+
+    await drainScheduled(t);
+  });
+
+  test("deprovisionVoucher action clears provisioning best-effort even when the token cannot be used", async () => {
+    // Avoid any real network call; the seeded token is not decryptable so the
+    // action should fall back to clearing the record without a DELETE.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({}), { status: 200 })),
+    );
+
+    const t = convexTest(schema, modules);
+    const { businessId } = await t.run(seedBusinessWithSquare);
+    const now = Date.now();
+
+    const voucherId = await t.run((ctx) =>
+      insertSquareVoucher(ctx, businessId, {
+        provisioning: {
+          status: "provisioned",
+          externalId: "cat-obj-action",
+          provisionedAt: now - 1000,
+        },
+      }),
+    );
+
+    await t.action(internal.functions.squareProvisioner.deprovisionVoucher, {
+      voucherId,
+      catalogObjectId: "cat-obj-action",
+      encryptedTokens: "encrypted:test",
+    });
+
+    const voucher = await t.run((ctx) => ctx.db.get(voucherId)) as Doc<"vouchers"> | null;
+    expect(voucher?.provisioning.status).toBe("not_required");
+    expect(voucher?.provisioning.externalId).toBeUndefined();
   });
 });
 

@@ -224,8 +224,47 @@ export const deleteVoucher = mutation({
     const repo = makeConvexRepo(ctx);
     const layer = Layer.succeed(VoucherRepo, repo);
 
-    return await Effect.runPromise(
+    const result = await Effect.runPromise(
       Effect.provide(VoucherService.softDelete(userId, voucherId), layer),
     );
+
+    // Best-effort deprovision of the Square CatalogDiscount on delete.
+    const voucher = await ctx.db.get(voucherId);
+    if (voucher && voucher.provider === "square") {
+      const externalId = voucher.provisioning.externalId;
+      const conn = externalId
+        ? await ctx.db
+            .query("posConnections")
+            .withIndex("by_business", (q) =>
+              q.eq("businessId", voucher.businessId),
+            )
+            .filter((q) =>
+              q.and(
+                q.eq(q.field("provider"), "square"),
+                q.eq(q.field("status"), "connected"),
+              ),
+            )
+            .first()
+        : null;
+
+      if (externalId && conn?.encryptedTokens) {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.functions.squareProvisioner.deprovisionVoucher,
+          {
+            voucherId,
+            catalogObjectId: externalId,
+            encryptedTokens: conn.encryptedTokens,
+          },
+        );
+      } else {
+        // No catalog object or no active connection — just clear the record.
+        await ctx.db.patch(voucherId, {
+          provisioning: { status: "not_required" },
+        });
+      }
+    }
+
+    return result;
   },
 });

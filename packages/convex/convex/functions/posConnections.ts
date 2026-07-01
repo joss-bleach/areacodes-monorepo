@@ -62,30 +62,41 @@ export const disconnectSquare = mutation({
       throw new Error("Connection not found");
     }
 
+    // Capture the token before we wipe it — the deprovision action needs it to
+    // call Square's delete-catalog-object endpoint.
+    const encryptedTokens = conn.encryptedTokens;
+
     await ctx.db.patch(connectionId, {
       status: "revoked",
       encryptedTokens: undefined,
       encryptionKeyVersion: undefined,
     });
 
-    // Clear provisioning for all Square vouchers — best-effort synchronous clear.
-    // Square CatalogDiscount objects are left in the merchant's Square catalog
-    // (orphaned); a future cleanup mechanism can remove them.
-    const squareVouchers = await ctx.db
-      .query("vouchers")
-      .withIndex("by_business", (q) => q.eq("businessId", businessId))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("deletedAt"), undefined),
-          q.eq(q.field("provider"), "square"),
-        ),
-      )
-      .collect();
+    if (encryptedTokens) {
+      // Best-effort: delete each Square CatalogDiscount and clear provisioning.
+      await ctx.scheduler.runAfter(
+        0,
+        internal.functions.squareProvisioner.deprovisionAllForBusiness,
+        { businessId, encryptedTokens },
+      );
+    } else {
+      // No token to call Square with — just clear provisioning records.
+      const squareVouchers = await ctx.db
+        .query("vouchers")
+        .withIndex("by_business", (q) => q.eq("businessId", businessId))
+        .filter((q) =>
+          q.and(
+            q.eq(q.field("deletedAt"), undefined),
+            q.eq(q.field("provider"), "square"),
+          ),
+        )
+        .collect();
 
-    for (const voucher of squareVouchers) {
-      await ctx.db.patch(voucher._id, {
-        provisioning: { status: "not_required" },
-      });
+      for (const voucher of squareVouchers) {
+        await ctx.db.patch(voucher._id, {
+          provisioning: { status: "not_required" },
+        });
+      }
     }
   },
 });

@@ -1,6 +1,6 @@
 /// <reference types="vite/client" />
 import { convexTest } from "convex-test";
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import schema from "../schema";
 import { api } from "../_generated/api";
 
@@ -197,6 +197,16 @@ describe("getPosConnections", () => {
 // ── disconnectSquare ──────────────────────────────────────────────────────────
 
 describe("disconnectSquare", () => {
+  // disconnectSquare schedules a best-effort deprovision job (runAfter 0) when a
+  // token is present. Fake timers keep that job from firing on a real timer
+  // after the test instance is torn down.
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   test("throws for unauthenticated requests", async () => {
     const t = convexTest(schema, modules);
     const businessId = await seedBusiness(t);
