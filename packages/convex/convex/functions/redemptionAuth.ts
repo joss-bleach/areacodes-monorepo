@@ -48,9 +48,7 @@ export const getAuth = internalQuery({
   handler: async (ctx, { businessId }) => {
     return ctx.db
       .query("redemptionAuth")
-      .withIndex("by_business", (q) =>
-        q.eq("businessId", businessId as Id<"businesses">),
-      )
+      .withIndex("by_business", (q) => q.eq("businessId", businessId))
       .first();
   },
 });
@@ -71,9 +69,7 @@ export const storePin = internalMutation({
   handler: async (ctx, { businessId, redemptionPinHash, redemptionPinSetAt }) => {
     const existing = await ctx.db
       .query("redemptionAuth")
-      .withIndex("by_business", (q) =>
-        q.eq("businessId", businessId as Id<"businesses">),
-      )
+      .withIndex("by_business", (q) => q.eq("businessId", businessId))
       .first();
 
     if (existing) {
@@ -97,9 +93,7 @@ export const getRedemptionPinStatus = query({
     await requireBusinessOwner(ctx, businessId, ownerId);
     const record = await ctx.db
       .query("redemptionAuth")
-      .withIndex("by_business", (q) =>
-        q.eq("businessId", businessId as Id<"businesses">),
-      )
+      .withIndex("by_business", (q) => q.eq("businessId", businessId))
       .first();
 
     if (!record) return { isSet: false as const };

@@ -24,9 +24,9 @@ function RedemptionPinSection({ businessId }: { businessId: Id<"businesses"> }) 
   const status = useQuery(api.functions.redemptionAuth.getRedemptionPinStatus, {
     businessId,
   });
-  const setPin = useAction(api.functions.redemptionAuth.setRedemptionPin);
+  const savePin = useAction(api.functions.redemptionAuth.setRedemptionPin);
 
-  const [pin, setPin2] = useState("");
+  const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -52,9 +52,9 @@ function RedemptionPinSection({ businessId }: { businessId: Id<"businesses"> }) 
     }
     setIsSubmitting(true);
     try {
-      await setPin({ businessId, pin });
+      await savePin({ businessId, pin });
       toast.success(status?.isSet ? "Redemption PIN updated" : "Redemption PIN set");
-      setPin2("");
+      setPin("");
       setConfirmPin("");
     } catch {
       toast.error("Failed to save PIN. Please try again.");
@@ -101,7 +101,7 @@ function RedemptionPinSection({ businessId }: { businessId: Id<"businesses"> }) 
               id="pin"
               type="password"
               value={pin}
-              onChange={(e) => setPin2(e.target.value)}
+              onChange={(e) => setPin(e.target.value)}
               autoComplete="new-password"
               className="w-full bg-background border border-border px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-foreground"
               placeholder="Enter PIN"
