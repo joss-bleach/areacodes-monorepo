@@ -1,25 +1,30 @@
 import { Controller, type UseFormReturn } from "react-hook-form";
+import { Check } from "lucide-react";
 import { cn } from "@repo/ui";
 import type { VoucherFormValues } from "~/schemas/voucher-form-schema";
+import { SquareLogo } from "~/components/voucher-wizard/square-logo";
+import { MetaChip } from "~/components/voucher-wizard/meta-chip";
 
 type Provider = VoucherFormValues["provider"];
 
 interface ProviderOption {
   value: Provider;
   label: string;
-  hint: string;
+  description: string;
 }
 
 const PROVIDER_OPTIONS: ProviderOption[] = [
   {
     value: "square",
-    label: "Square",
-    hint: "Percentage off · Fixed amount — tappable at your till",
+    label: "Square POS",
+    description:
+      "Pushed to your till as a tappable discount. Redemptions reconcile automatically from real paid orders.",
   },
   {
     value: "manual",
-    label: "Manual",
-    hint: "All offer types — redeemed by QR scan",
+    label: "Manual redemption",
+    description:
+      "Staff scan the customer's voucher and confirm on our page. Works with any POS, and tracks each customer.",
   },
 ];
 
@@ -29,26 +34,19 @@ interface VoucherProviderStepProps {
 
 export const VoucherProviderStep = ({ form }: VoucherProviderStepProps) => {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h3 className="text-sm font-semibold">Where does this voucher run?</h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          Choose the provider — this determines which discount types are available.
-        </p>
-      </div>
-
-      <Controller
-        name="provider"
-        control={form.control}
-        render={({ field }) => (
-          <div className="grid grid-cols-1 gap-2">
-            {PROVIDER_OPTIONS.map((option) => (
+    <Controller
+      name="provider"
+      control={form.control}
+      render={({ field }) => (
+        <div className="flex w-full gap-4">
+          {PROVIDER_OPTIONS.map((option) => {
+            const selected = field.value === option.value;
+            return (
               <button
                 key={option.value}
                 type="button"
                 onClick={() => {
                   field.onChange(option.value);
-                  // Reset discount kind when switching provider
                   const caps =
                     option.value === "square"
                       ? ["percentage", "fixed_amount"]
@@ -62,29 +60,51 @@ export const VoucherProviderStep = ({ form }: VoucherProviderStepProps) => {
                   }
                 }}
                 className={cn(
-                  "flex items-center justify-between px-4 py-3 border text-left transition-colors",
+                  "flex grow basis-0 flex-col gap-4 border bg-card p-6 text-left transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  field.value === option.value
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border hover:border-foreground/50",
+                  selected ? "border-foreground" : "border-border hover:border-foreground/50",
                 )}
               >
-                <span className="text-sm font-medium">{option.label}</span>
-                <span
-                  className={cn(
-                    "text-xs max-w-[60%] text-right",
-                    field.value === option.value
-                      ? "text-background/70"
-                      : "text-muted-foreground",
+                <div className="flex items-center justify-between">
+                  {option.value === "square" ? (
+                    <SquareLogo className="size-11 text-foreground" />
+                  ) : (
+                    <div className="flex size-11 shrink-0 items-center justify-center bg-foreground">
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="7" stroke="#000000" strokeWidth="2" />
+                        <rect x="14" y="3" width="7" height="7" stroke="#000000" strokeWidth="2" />
+                        <rect x="3" y="14" width="7" height="7" stroke="#000000" strokeWidth="2" />
+                        <rect x="14" y="14" width="7" height="7" stroke="#000000" strokeWidth="2" />
+                      </svg>
+                    </div>
                   )}
-                >
-                  {option.hint}
-                </span>
+                  <div
+                    className={cn(
+                      "flex size-5 shrink-0 items-center justify-center border",
+                      selected ? "border-foreground bg-foreground" : "border-border",
+                    )}
+                  >
+                    {selected && <Check className="size-3" strokeWidth={3.5} color="#000000" />}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[15px] font-bold leading-4.5 tracking-[-0.02em] text-foreground">
+                      {option.label}
+                    </span>
+                    <MetaChip tone={option.value === "square" ? "success" : "neutral"}>
+                      {option.value === "square" ? "Connected" : "Always on"}
+                    </MetaChip>
+                  </div>
+                  <p className="text-xs leading-[150%] text-muted-foreground">
+                    {option.description}
+                  </p>
+                </div>
               </button>
-            ))}
-          </div>
-        )}
-      />
-    </div>
+            );
+          })}
+        </div>
+      )}
+    />
   );
 };

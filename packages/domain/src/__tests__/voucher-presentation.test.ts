@@ -5,7 +5,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const NOW = 1_700_000_000_000;
 
 describe("voucherStatus", () => {
-  test("returns 'active' when now is between validFrom and validTo with more than 30 days remaining", () => {
+  test("returns 'active' when now is between validFrom and validTo with more than 3 days remaining", () => {
     const result = voucherStatus(
       { voucherValidFrom: NOW - 10 * DAY, voucherValidTo: NOW + 60 * DAY },
       NOW
@@ -13,25 +13,25 @@ describe("voucherStatus", () => {
     expect(result).toBe("active");
   });
 
-  test("returns 'expiring' when validTo is within 30 days", () => {
+  test("returns 'expiring' when validTo is within 3 days", () => {
     const result = voucherStatus(
-      { voucherValidFrom: NOW - 10 * DAY, voucherValidTo: NOW + 15 * DAY },
+      { voucherValidFrom: NOW - 10 * DAY, voucherValidTo: NOW + 2 * DAY },
       NOW
     );
     expect(result).toBe("expiring");
   });
 
-  test("returns 'expiring' when validTo is exactly 30 days away", () => {
+  test("returns 'expiring' when validTo is exactly 3 days away", () => {
     const result = voucherStatus(
-      { voucherValidFrom: NOW - 10 * DAY, voucherValidTo: NOW + 30 * DAY },
+      { voucherValidFrom: NOW - 10 * DAY, voucherValidTo: NOW + 3 * DAY },
       NOW
     );
     expect(result).toBe("expiring");
   });
 
-  test("returns 'active' when validTo is more than 30 days away", () => {
+  test("returns 'active' when validTo is more than 3 days away", () => {
     const result = voucherStatus(
-      { voucherValidFrom: NOW - 10 * DAY, voucherValidTo: NOW + 30 * DAY + 1 },
+      { voucherValidFrom: NOW - 10 * DAY, voucherValidTo: NOW + 3 * DAY + 1 },
       NOW
     );
     expect(result).toBe("active");

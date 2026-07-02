@@ -50,11 +50,27 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
       return context.resolveRequest(context, `${dir}${subpath}`, platform);
     }
   }
-  return (defaultResolveRequest ?? context.resolveRequest)(
-    context,
-    moduleName,
-    platform,
-  );
+  const fallback = defaultResolveRequest ?? context.resolveRequest;
+
+  // Workspace TS packages (e.g. @areacodes/domain) are consumed as source and
+  // use NodeNext-style specifiers — relative imports carry an explicit ".js"
+  // extension even though the file on disk is ".ts" (tsc/Vite resolve this
+  // automatically in "Bundler" moduleResolution mode). Metro treats an
+  // explicit extension as literal and won't substitute ".ts"/".tsx", so retry
+  // with the TS extension when the literal ".js"/".jsx" request fails.
+  if (
+    (moduleName.startsWith("./") || moduleName.startsWith("../")) &&
+    /\.jsx?$/.test(moduleName)
+  ) {
+    try {
+      return fallback(context, moduleName, platform);
+    } catch (error) {
+      const tsModuleName = moduleName.replace(/\.jsx$/, ".tsx").replace(/\.js$/, ".ts");
+      return fallback(context, tsModuleName, platform);
+    }
+  }
+
+  return fallback(context, moduleName, platform);
 };
 
 module.exports = withNativeWind(config, { input: "./global.css" });

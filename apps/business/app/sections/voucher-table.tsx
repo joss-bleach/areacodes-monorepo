@@ -35,6 +35,24 @@ import { NewVoucherButton } from "~/components/new-voucher-button";
 import { useEditVoucher } from "~/hooks/use-edit-voucher";
 import { toast } from "sonner";
 
+const STATUS_STYLES: Record<VoucherStatus, string> = {
+  active: "bg-success-bg text-success-foreground border-success-border",
+  expiring: "bg-warning-bg text-warning-foreground border-warning-border",
+  expired: "bg-danger-bg text-danger-foreground border-danger-border",
+  scheduled: "bg-info-bg text-info-foreground border-info-border",
+};
+
+function VoucherStatusBadge({ status, label }: { status: VoucherStatus; label: string }) {
+  return (
+    <Badge
+      variant="outline"
+      className={`${STATUS_STYLES[status]} px-2 py-0.5 text-xs font-bold uppercase tracking-tight`}
+    >
+      {label}
+    </Badge>
+  );
+}
+
 type ProvisioningStatus = "not_required" | "pending" | "provisioned" | "failed";
 
 type ConvexVoucher = {
@@ -223,15 +241,7 @@ export const VoucherTable = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Badge
-                          variant={
-                            status === "active" || status === "expiring"
-                              ? "default"
-                              : "secondary"
-                          }
-                        >
-                          {statusLabel[status]}
-                        </Badge>
+                        <VoucherStatusBadge status={status} label={statusLabel[status]} />
                         <ProvisioningBadge voucher={voucher as ConvexVoucher} />
                       </div>
                     </TableCell>

@@ -6,6 +6,7 @@ import {
   View,
 } from "react-native";
 import { useState, useEffect } from "react";
+import { useRouter } from "expo-router";
 import { ScreenHeader } from "../components/screen-header";
 import { SkeletonBox } from "../components/skeleton-box";
 import { useQuery } from "convex/react";
@@ -170,8 +171,14 @@ export default function WalletScreen() {
   );
   const [cachedReveals, setCachedReveals] = useState<CachedReveal[]>([]);
   const [pastExpanded, setPastExpanded] = useState(false);
-  const { openReveal } = useVoucherSheet();
+  const router = useRouter();
+  const { setRevealEntry } = useVoucherSheet();
   const { openAuthSheet } = useAuthSheet();
+
+  function openVoucherPage(entry: RevealEntry) {
+    setRevealEntry(entry);
+    router.push(`/voucher/${entry.claimId}`);
+  }
 
   useEffect(() => {
     void posthog?.screen("Wallet");
@@ -211,7 +218,7 @@ export default function WalletScreen() {
                 key={reveal.claimId}
                 reveal={reveal}
                 onPress={() =>
-                  openReveal({
+                  openVoucherPage({
                     claimId: reveal.claimId,
                     voucherId: "",
                     businessId: null,
@@ -281,7 +288,7 @@ export default function WalletScreen() {
                   <VoucherCard
                     key={entry.claimId}
                     entry={entry}
-                    onPress={() => openReveal(walletEntryToRevealEntry(entry))}
+                    onPress={() => openVoucherPage(walletEntryToRevealEntry(entry))}
                   />
                 ))}
               </>
@@ -308,7 +315,7 @@ export default function WalletScreen() {
                     <VoucherCard
                       key={entry.claimId}
                       entry={entry}
-                      onPress={() => openReveal(walletEntryToRevealEntry(entry))}
+                      onPress={() => openVoucherPage(walletEntryToRevealEntry(entry))}
                     />
                   ))}
               </View>

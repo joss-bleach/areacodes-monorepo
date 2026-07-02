@@ -17,7 +17,7 @@ import type { Id } from "@repo/convex";
 import { deriveRedemptionUrl } from "@areacodes/domain";
 import { COLORS } from "../constants/colors";
 import { useVoucherSheet, type RevealEntry } from "../lib/voucher-sheet-context";
-import { AreacodesIcon } from "../components/icons/AreacodesIcon";
+import { AREACODES_ICON_SVG } from "../components/icons/AreacodesIcon";
 import { captureVoucherRevealed } from "../lib/analytics";
 import { loadRevealCache, upsertRevealCache } from "../lib/reveal-cache";
 import { tryReveal } from "../lib/mutation-effects";
@@ -144,7 +144,7 @@ function RevealBody({ entry }: { entry: RevealEntry }) {
             color: COLORS.white,
             fontFamily: "Poppins_700Bold",
             fontSize: 48,
-            lineHeight: 48,
+            lineHeight: 54,
             letterSpacing: -1.9,
             textTransform: "uppercase",
             textAlign: "center",
@@ -245,7 +245,7 @@ function RevealBody({ entry }: { entry: RevealEntry }) {
                   // High error correction so the centred brand mark can mask
                   // ~15% of modules without breaking the scan.
                   ecl="H"
-                  logoSVG={AreacodesIcon}
+                  logoSVG={AREACODES_ICON_SVG}
                   logoSize={38}
                   logoColor={COLORS.black}
                   logoBackgroundColor={COLORS.white}

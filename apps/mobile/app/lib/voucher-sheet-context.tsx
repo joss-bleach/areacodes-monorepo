@@ -25,16 +25,16 @@ export type RevealEntry = {
 
 type VoucherSheetMode =
   | { type: "claim"; voucherId: string; distanceMetres?: number }
-  | { type: "reveal"; entry: RevealEntry }
   | null;
 
 type VoucherSheetContextType = {
   mode: VoucherSheetMode;
   sheetRef: React.RefObject<BottomSheetModal | null>;
   openClaim: (voucherId: string, distanceMetres?: number) => void;
-  openReveal: (entry: RevealEntry) => void;
   close: () => void;
   clearMode: () => void;
+  revealEntry: RevealEntry | null;
+  setRevealEntry: (entry: RevealEntry | null) => void;
 };
 
 const VoucherSheetContext = createContext<VoucherSheetContextType | null>(null);
@@ -42,14 +42,10 @@ const VoucherSheetContext = createContext<VoucherSheetContextType | null>(null);
 export function VoucherSheetProvider({ children }: { children: ReactNode }) {
   const sheetRef = useRef<BottomSheetModal>(null);
   const [mode, setMode] = useState<VoucherSheetMode>(null);
+  const [revealEntry, setRevealEntry] = useState<RevealEntry | null>(null);
 
   function openClaim(voucherId: string, distanceMetres?: number) {
     setMode({ type: "claim", voucherId, distanceMetres });
-    sheetRef.current?.present();
-  }
-
-  function openReveal(entry: RevealEntry) {
-    setMode({ type: "reveal", entry });
     sheetRef.current?.present();
   }
 
@@ -63,7 +59,15 @@ export function VoucherSheetProvider({ children }: { children: ReactNode }) {
 
   return (
     <VoucherSheetContext.Provider
-      value={{ mode, sheetRef, openClaim, openReveal, close, clearMode }}
+      value={{
+        mode,
+        sheetRef,
+        openClaim,
+        close,
+        clearMode,
+        revealEntry,
+        setRevealEntry,
+      }}
     >
       {children}
     </VoucherSheetContext.Provider>

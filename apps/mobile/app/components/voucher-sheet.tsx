@@ -1,6 +1,5 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import {
-  Animated,
   ActivityIndicator,
   Image,
   Pressable,
@@ -19,24 +18,15 @@ import { COLORS } from "../constants/colors";
 import { authClient } from "../lib/auth-client";
 import { formatValidityWindow } from "../lib/voucher-utils";
 import { formatDistance } from "../lib/distance";
-import {
-  useVoucherSheet,
-  type RevealEntry,
-} from "../lib/voucher-sheet-context";
+import { useVoucherSheet } from "../lib/voucher-sheet-context";
 import { useWalletAnimation, type LayoutRect } from "../lib/wallet-animation-context";
 import { useAuthSheet } from "../lib/auth-sheet-context";
 import {
   captureVoucherClaimed,
-  captureVoucherRevealed,
   captureVoucherViewed,
 } from "../lib/analytics";
 import { SkeletonBox } from "./skeleton-box";
-import { TicketStub } from "./ticket-stub";
-import {
-  loadRevealCache,
-  upsertRevealCache,
-} from "../lib/reveal-cache";
-import { tryClaim, tryReveal, ClaimError } from "../lib/mutation-effects";
+import { tryClaim, ClaimError } from "../lib/mutation-effects";
 
 // --- Skeletons ---
 
@@ -277,152 +267,6 @@ function ClaimContent({
   );
 }
 
-// --- Reveal mode inner component ---
-
-function RevealContent({ entry }: { entry: RevealEntry }) {
-  const revealVoucher = useMutation(api.functions.claims.revealVoucher);
-  const [voucherCode, setVoucherCode] = useState<string | null>(entry.activeCode);
-  const [revealing, setRevealing] = useState(false);
-  const [revealError, setRevealError] = useState<string | null>(null);
-
-  // Reactively track the server-side burn so an open voucher flips to Redeemed
-  // live while the QR is on screen (no client-trust — driven by the event).
-  const redemptionEvent = useQuery(
-    api.functions.redemptionEvents.getRedemptionEventByClaim,
-    { claimId: entry.claimId as Id<"claims"> },
-  );
-  const isRedeemed = entry.isRedeemed || redemptionEvent != null;
-
-  function doReveal() {
-    return Effect.runPromise(
-      Effect.sync(() => { setRevealing(true); setRevealError(null); }).pipe(
-        Effect.flatMap(() =>
-          tryReveal(() => revealVoucher({ claimId: entry.claimId as Id<"claims"> })),
-        ),
-        Effect.tap(({ voucherCode: code, expiresAt }) =>
-          Effect.promise(async () => {
-            captureVoucherRevealed(entry.voucherId, entry.businessId ?? "");
-            await upsertRevealCache({
-              claimId: entry.claimId,
-              voucherCode: code,
-              expiresAt,
-              voucherTitle: entry.voucherTitle,
-              businessName: entry.businessName ?? undefined,
-            });
-            setVoucherCode(code);
-          }),
-        ),
-        Effect.tapError((err) => Effect.sync(() => setRevealError(err.message))),
-        Effect.ensuring(Effect.sync(() => setRevealing(false))),
-        Effect.ignore,
-      ),
-    );
-  }
-
-  useEffect(() => {
-    void (async () => {
-      if (isRedeemed) return;
-      if (entry.activeCode && entry.codeExpiresAt && entry.codeExpiresAt > Date.now()) {
-        setVoucherCode(entry.activeCode);
-        return;
-      }
-      const cached = await loadRevealCache();
-      const match = cached.find((r) => r.claimId === entry.claimId);
-      if (match && match.expiresAt > Date.now()) {
-        setVoucherCode(match.voucherCode);
-        return;
-      }
-      doReveal();
-    })();
-  }, [entry.claimId]);
-
-  return (
-    <BottomSheetScrollView>
-      <View className="px-4 pb-8">
-        {/* Business header */}
-        <View className="flex-row items-center mb-4">
-          {entry.businessLogoUrl ? (
-            <Image
-              source={{ uri: entry.businessLogoUrl }}
-              className="w-10 h-10 rounded-full mr-3 bg-gray-800"
-              accessibilityElementsHidden
-            />
-          ) : (
-            <View className="w-10 h-10 rounded-full mr-3 bg-gray-800" accessibilityElementsHidden />
-          )}
-          <View className="flex-1">
-            <Text className="text-white text-lg font-poppins-bold leading-snug">
-              {entry.businessName ?? ""}
-            </Text>
-          </View>
-        </View>
-
-        <View className="border-b border-gray-800 mb-4" />
-
-        <Text className="text-gray-400 text-xs uppercase tracking-wide mb-1">
-          Voucher
-        </Text>
-        <Text className="text-white text-base font-poppins-semibold mb-1">
-          {entry.voucherTitle}
-        </Text>
-        <Text className="text-gray-400 text-sm leading-relaxed mb-4">
-          {entry.voucherDescription}
-        </Text>
-
-        <View className="border-b border-gray-800 mb-5" />
-
-        {/* QR section */}
-        {revealing ? (
-          <View className="items-center py-12">
-            <ActivityIndicator color={COLORS.white} />
-            <Text className="text-gray-400 text-xs mt-3">
-              Loading your voucher code...
-            </Text>
-          </View>
-        ) : revealError ? (
-          <View className="items-center py-8">
-            <Text
-              className="text-red-400 text-sm mb-4"
-              accessibilityLiveRegion="polite"
-            >
-              {revealError}
-            </Text>
-            <Pressable
-              onPress={doReveal}
-              className="border border-white px-6 py-3"
-              accessibilityLabel="Try loading voucher code again"
-              accessibilityRole="button"
-            >
-              <Text className="text-white text-sm font-poppins-semibold">
-                Try again
-              </Text>
-            </Pressable>
-          </View>
-        ) : isRedeemed ? (
-          <TicketStub
-            voucherCode=""
-            voucherValidFrom={entry.voucherValidFrom}
-            voucherValidTo={entry.voucherValidTo}
-            provider={entry.provider as "manual" | "square" | undefined}
-            claimId={entry.claimId}
-            voucherId={entry.voucherId}
-            isRedeemed
-          />
-        ) : voucherCode ? (
-          <TicketStub
-            voucherCode={voucherCode}
-            voucherValidFrom={entry.voucherValidFrom}
-            voucherValidTo={entry.voucherValidTo}
-            provider={entry.provider as "manual" | "square" | undefined}
-            claimId={entry.claimId}
-            voucherId={entry.voucherId}
-          />
-        ) : null}
-      </View>
-    </BottomSheetScrollView>
-  );
-}
-
 // --- Main sheet ---
 
 export const VoucherSheet = forwardRef<BottomSheetModal>(
@@ -445,7 +289,6 @@ export const VoucherSheet = forwardRef<BottomSheetModal>(
             close={close}
           />
         )}
-        {mode?.type === "reveal" && <RevealContent entry={mode.entry} />}
       </BottomSheetModal>
     );
   },

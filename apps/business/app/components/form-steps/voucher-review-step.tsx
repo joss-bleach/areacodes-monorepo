@@ -1,21 +1,15 @@
 import type { UseFormReturn } from "react-hook-form";
-import { Separator } from "@repo/ui";
+import { AlertTriangle } from "lucide-react";
+import { cn } from "@repo/ui";
 import type { VoucherFormValues } from "~/schemas/voucher-form-schema";
-
-const KIND_LABELS: Record<VoucherFormValues["discount"]["kind"], string> = {
-  percentage: "Percentage off",
-  fixed_amount: "Fixed amount off",
-  free_item: "Free item",
-  bogof: "Buy one, get one free",
-  custom: "Custom offer",
-};
+import { MetaChip } from "~/components/voucher-wizard/meta-chip";
 
 function formatDiscountSummary(discount: VoucherFormValues["discount"]): string {
   switch (discount.kind) {
     case "percentage":
-      return `${discount.value ?? 0}% off`;
+      return `${discount.value ?? 0}% off the order`;
     case "fixed_amount":
-      return `£${(discount.value ?? 0).toFixed(2)} off`;
+      return `£${(discount.value ?? 0).toFixed(2)} off the order`;
     case "free_item":
       return `Free ${discount.itemName ?? "item"}`;
     case "bogof":
@@ -25,68 +19,103 @@ function formatDiscountSummary(discount: VoucherFormValues["discount"]): string 
   }
 }
 
+const KIND_SYMBOL: Record<VoucherFormValues["discount"]["kind"], string> = {
+  percentage: "%",
+  fixed_amount: "£",
+  free_item: "★",
+  bogof: "2·1",
+  custom: "✎",
+};
+
+const REDEMPTION_LABEL: Record<VoucherFormValues["provider"], string> = {
+  square: "Cashier taps at the till",
+  manual: "Staff scan and confirm on our page",
+};
+
 interface VoucherReviewStepProps {
   form: UseFormReturn<VoucherFormValues>;
 }
 
-const PROVIDER_LABELS: Record<VoucherFormValues["provider"], string> = {
-  square: "Square",
-  manual: "Manual",
-};
-
 export const VoucherReviewStep = ({ form }: VoucherReviewStepProps) => {
   const values = form.getValues();
-  const { provider, discount, title, description, voucherValidFrom, voucherValidTo, voucherTerms } = values;
+  const { provider, discount, title, description, voucherValidFrom, voucherValidTo } = values;
+
+  const validRange =
+    voucherValidFrom && voucherValidTo
+      ? `${voucherValidFrom.toLocaleDateString("en-GB", { day: "numeric", month: "short" })} — ${voucherValidTo.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+      : "—";
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h3 className="text-sm font-semibold">Review your voucher</h3>
-        <p className="text-xs text-muted-foreground mt-1">
-          Check the details before creating.
+    <div className="flex w-full flex-col gap-4">
+      <div className="flex flex-col border border-border bg-card">
+        <div className="flex items-center justify-between gap-4 border-b border-border px-6 py-5">
+          <div className="flex flex-col gap-1">
+            <span className="text-xl font-bold uppercase leading-6 tracking-[-0.025em] text-foreground">
+              {title}
+            </span>
+            <p className="text-xs leading-[150%] text-muted-foreground">{description}</p>
+          </div>
+          <div className="flex size-13 shrink-0 items-center justify-center bg-foreground">
+            <span className="font-mono text-[22px] font-bold leading-7 text-background">
+              {KIND_SYMBOL[discount.kind]}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col px-6 pb-5 pt-2">
+          <ReviewRow label="Runs on">
+            <div className="flex items-center gap-2">
+              <span className="text-[13px] font-bold leading-4 text-foreground">
+                {provider === "square" ? "Square POS" : "Manual"}
+              </span>
+              {provider === "square" && <MetaChip tone="success">Connected</MetaChip>}
+            </div>
+          </ReviewRow>
+          <ReviewRow label="Discount" value={formatDiscountSummary(discount)} />
+          <ReviewRow label="Valid" value={validRange} />
+          <ReviewRow label="Redemption" value={REDEMPTION_LABEL[provider]} last />
+        </div>
+      </div>
+
+      {provider === "square" ? (
+        <div className="flex items-start gap-2.5 border border-warning-border bg-warning-bg px-3.5 py-3">
+          <AlertTriangle
+            className="mt-px size-[15px] shrink-0 text-warning-foreground"
+            strokeWidth={2}
+          />
+          <p className="text-xs leading-[150%] text-warning-foreground">
+            This voucher publishes to your Square catalogue and becomes visible to customers once
+            it is live. That usually takes a few seconds — you will see its status update
+            automatically.
+          </p>
+        </div>
+      ) : (
+        <p className="text-xs leading-[150%] text-muted-foreground">
+          Manual vouchers are immediately visible to customers once created.
         </p>
-      </div>
-
-      <div className="border border-border">
-        <ReviewRow label="Provider" value={PROVIDER_LABELS[provider]} />
-        <Separator />
-        <ReviewRow label="Discount type" value={KIND_LABELS[discount.kind]} />
-        <Separator />
-        <ReviewRow label="Offer" value={formatDiscountSummary(discount)} />
-        <Separator />
-        <ReviewRow label="Title" value={title} />
-        <Separator />
-        <ReviewRow label="Description" value={description} />
-        <Separator />
-        <ReviewRow
-          label="Valid from"
-          value={voucherValidFrom ? voucherValidFrom.toLocaleDateString("en-GB") : "—"}
-        />
-        <Separator />
-        <ReviewRow
-          label="Valid to"
-          value={voucherValidTo ? voucherValidTo.toLocaleDateString("en-GB") : "—"}
-        />
-        {voucherTerms && (
-          <>
-            <Separator />
-            <ReviewRow label="Terms" value={voucherTerms} />
-          </>
-        )}
-      </div>
-
-      <p className="text-xs text-muted-foreground">
-        {provider === "square"
-          ? "Square vouchers are visible to customers once published to your Square catalog."
-          : "Manual vouchers are immediately visible to customers once created."}
-      </p>
+      )}
     </div>
   );
 };
 
-const ReviewRow = ({ label, value }: { label: string; value: string }) => (
-  <div className="flex items-start justify-between gap-4 px-4 py-3">
-    <span className="text-xs font-medium text-muted-foreground shrink-0 w-28">{label}</span>
-    <span className="text-xs text-right">{value}</span>
+const ReviewRow = ({
+  label,
+  value,
+  children,
+  last = false,
+}: {
+  label: string;
+  value?: string;
+  children?: React.ReactNode;
+  last?: boolean;
+}) => (
+  <div
+    className={cn(
+      "flex items-center justify-between py-3",
+      !last && "border-b border-border",
+    )}
+  >
+    <span className="text-xs leading-4 text-muted-foreground">{label}</span>
+    {children ?? <span className="text-[13px] leading-4 text-foreground">{value}</span>}
   </div>
 );

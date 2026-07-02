@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "convex/react";
 import { api } from "@repo/convex";
@@ -34,12 +34,12 @@ const STEP_LABELS: Record<WizardStep, string> = {
   review: "Review",
 };
 
-// Full-width content vs the narrower single-column steps.
+// All steps share the stepper's width so the body and progress bar align.
 const STEP_WIDTH: Record<WizardStep, number> = {
   provider: 720,
   discount: 720,
-  details: 560,
-  review: 560,
+  details: 720,
+  review: 720,
 };
 
 interface VoucherWizardProps {
@@ -76,7 +76,7 @@ export const VoucherWizard = ({
     mode: "onBlur",
   });
 
-  const provider = form.watch("provider");
+  const provider = useWatch({ control: form.control, name: "provider" });
   const currentIndex = steps.indexOf(currentStep);
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === steps.length - 1;
@@ -238,8 +238,9 @@ export const VoucherWizard = ({
 
           {isLast ? (
             <button
-              type="submit"
-              form="voucher-wizard-form"
+              key="create"
+              type="button"
+              onClick={form.handleSubmit(onSubmit)}
               disabled={isSubmitting}
               className="flex h-9 items-center gap-2 bg-foreground px-[22px] text-xs font-bold uppercase leading-4 tracking-[-0.025em] text-background outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
             >
@@ -252,6 +253,7 @@ export const VoucherWizard = ({
             </button>
           ) : (
             <button
+              key="continue"
               type="button"
               onClick={goNext}
               className="flex h-9 items-center bg-foreground px-[18px] text-xs font-bold uppercase leading-4 tracking-[-0.025em] text-background outline-none transition-opacity hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"

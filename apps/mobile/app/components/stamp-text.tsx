@@ -7,11 +7,16 @@ interface StampTextProps {
   style?: ViewStyle;
 }
 
+// lineHeight is set well above fontSize so Poppins Bold's cap-height and
+// accents never clip against the box edge. paddingTop is set higher than
+// paddingBottom to counter RN's extra leading, which lands below the
+// baseline rather than being split evenly — without the offset the block
+// reads bottom-heavy even though the padding values look symmetric.
 const SIZES = {
-  sm: { fontSize: 13, lineHeight: 14, px: 6, py: 2, letterSpacing: -0.2 },
-  md: { fontSize: 18, lineHeight: 20, px: 8, py: 3, letterSpacing: -0.3 },
-  lg: { fontSize: 24, lineHeight: 26, px: 10, py: 4, letterSpacing: -0.4 },
-  xl: { fontSize: 30, lineHeight: 32, px: 12, py: 5, letterSpacing: -0.5 },
+  sm: { fontSize: 13, lineHeight: 16, px: 6, pt: 4, pb: 2, letterSpacing: -0.2 },
+  md: { fontSize: 18, lineHeight: 22, px: 8, pt: 5, pb: 3, letterSpacing: -0.3 },
+  lg: { fontSize: 24, lineHeight: 29, px: 10, pt: 6, pb: 3, letterSpacing: -0.4 },
+  xl: { fontSize: 30, lineHeight: 36, px: 12, pt: 7, pb: 4, letterSpacing: -0.5 },
 };
 
 // Stamp chip: Paper White fill on dark surfaces, Pressroom Black text.
@@ -25,7 +30,8 @@ export function StampText({ children, size = "md", style }: StampTextProps) {
           backgroundColor: "#F9F9F9",
           alignSelf: "flex-start",
           paddingHorizontal: s.px,
-          paddingVertical: s.py,
+          paddingTop: s.pt,
+          paddingBottom: s.pb,
         },
         style,
       ]}
@@ -38,6 +44,7 @@ export function StampText({ children, size = "md", style }: StampTextProps) {
           lineHeight: s.lineHeight,
           letterSpacing: s.letterSpacing,
           textTransform: "uppercase",
+          includeFontPadding: false,
         }}
       >
         {children}
