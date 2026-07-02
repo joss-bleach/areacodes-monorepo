@@ -53,7 +53,7 @@ export const DashboardTop = () => {
 
   return (
     <div className="flex flex-col mb-6">
-      <h1 className="text-sm font-bold uppercase tracking-tight text-muted-foreground mb-2">
+      <h1 className="text-xs text-muted-foreground mb-2">
         {greeting}
       </h1>
       <div className="flex flex-wrap items-center gap-3">

@@ -1,5 +1,6 @@
 @theme {
   --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
 
   /* Radius: 0rem — sharp stamp/sticker/tag aesthetic */
   --radius: 0rem;
@@ -24,7 +25,7 @@
   --color-secondary: oklch(0.13 0 0);
   --color-secondary-foreground: oklch(0.985 0 0);
 
-  --color-muted: oklch(0.13 0 0);
+  --color-muted: oklch(0.17 0 0);
   --color-muted-foreground: oklch(0.65 0 0);
 
   --color-accent: oklch(0.13 0 0);
@@ -32,6 +33,22 @@
 
   --color-destructive: oklch(0.577 0.245 27.325);
   --color-destructive-foreground: oklch(0.985 0 0);
+
+  /* State colors — functional exception to monochrome (state indicators only, never decorative) */
+  --color-success-bg: oklch(0.2 0.06 145);
+  --color-success-border: oklch(0.45 0.14 145);
+  --color-success-foreground: oklch(0.75 0.17 145);
+
+  --color-warning-bg: oklch(0.22 0.06 80);
+  --color-warning-border: oklch(0.5 0.14 80);
+  --color-warning-foreground: oklch(0.8 0.16 80);
+
+  --color-neutral-bg: oklch(0.13 0 0);
+  --color-neutral-foreground: oklch(0.65 0 0);
+
+  --color-info-bg: oklch(0.22 0.05 255);
+  --color-info-border: oklch(0.48 0.12 255);
+  --color-info-foreground: oklch(0.75 0.13 255);
 
   --color-surface-raised: oklch(0.07 0 0);
 

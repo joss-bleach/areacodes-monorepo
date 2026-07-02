@@ -20,6 +20,8 @@ import { Route as DashboardBusinessesRouteImport } from './routes/dashboard/busi
 import { Route as DashboardAuditLogRouteImport } from './routes/dashboard/audit-log'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard/analytics'
 import { Route as ApiLocationRouteImport } from './routes/api/location'
+import { Route as DashboardBusinessesIndexRouteImport } from './routes/dashboard/businesses/index'
+import { Route as DashboardBusinessesNewRouteImport } from './routes/dashboard/businesses/new'
 
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
@@ -76,6 +78,17 @@ const ApiLocationRoute = ApiLocationRouteImport.update({
   path: '/api/location',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardBusinessesIndexRoute =
+  DashboardBusinessesIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => DashboardBusinessesRoute,
+  } as any)
+const DashboardBusinessesNewRoute = DashboardBusinessesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => DashboardBusinessesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -84,11 +97,13 @@ export interface FileRoutesByFullPath {
   '/api/location': typeof ApiLocationRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
-  '/dashboard/businesses': typeof DashboardBusinessesRoute
+  '/dashboard/businesses': typeof DashboardBusinessesRouteWithChildren
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/businesses/new': typeof DashboardBusinessesNewRoute
+  '/dashboard/businesses/': typeof DashboardBusinessesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -96,11 +111,12 @@ export interface FileRoutesByTo {
   '/api/location': typeof ApiLocationRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
-  '/dashboard/businesses': typeof DashboardBusinessesRoute
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/dashboard': typeof DashboardIndexRoute
+  '/dashboard/businesses/new': typeof DashboardBusinessesNewRoute
+  '/dashboard/businesses': typeof DashboardBusinessesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -110,11 +126,13 @@ export interface FileRoutesById {
   '/api/location': typeof ApiLocationRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/audit-log': typeof DashboardAuditLogRoute
-  '/dashboard/businesses': typeof DashboardBusinessesRoute
+  '/dashboard/businesses': typeof DashboardBusinessesRouteWithChildren
   '/dashboard/pilot-features': typeof DashboardPilotFeaturesRoute
   '/dashboard/vouchers': typeof DashboardVouchersRoute
   '/sign-in/$': typeof SignInSplatRoute
   '/dashboard/': typeof DashboardIndexRoute
+  '/dashboard/businesses/new': typeof DashboardBusinessesNewRoute
+  '/dashboard/businesses/': typeof DashboardBusinessesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,6 +148,8 @@ export interface FileRouteTypes {
     | '/dashboard/vouchers'
     | '/sign-in/$'
     | '/dashboard/'
+    | '/dashboard/businesses/new'
+    | '/dashboard/businesses/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -137,11 +157,12 @@ export interface FileRouteTypes {
     | '/api/location'
     | '/dashboard/analytics'
     | '/dashboard/audit-log'
-    | '/dashboard/businesses'
     | '/dashboard/pilot-features'
     | '/dashboard/vouchers'
     | '/sign-in/$'
     | '/dashboard'
+    | '/dashboard/businesses/new'
+    | '/dashboard/businesses'
   id:
     | '__root__'
     | '/'
@@ -155,6 +176,8 @@ export interface FileRouteTypes {
     | '/dashboard/vouchers'
     | '/sign-in/$'
     | '/dashboard/'
+    | '/dashboard/businesses/new'
+    | '/dashboard/businesses/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -243,13 +266,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLocationRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/businesses/': {
+      id: '/dashboard/businesses/'
+      path: '/'
+      fullPath: '/dashboard/businesses/'
+      preLoaderRoute: typeof DashboardBusinessesIndexRouteImport
+      parentRoute: typeof DashboardBusinessesRoute
+    }
+    '/dashboard/businesses/new': {
+      id: '/dashboard/businesses/new'
+      path: '/new'
+      fullPath: '/dashboard/businesses/new'
+      preLoaderRoute: typeof DashboardBusinessesNewRouteImport
+      parentRoute: typeof DashboardBusinessesRoute
+    }
   }
 }
+
+interface DashboardBusinessesRouteChildren {
+  DashboardBusinessesNewRoute: typeof DashboardBusinessesNewRoute
+  DashboardBusinessesIndexRoute: typeof DashboardBusinessesIndexRoute
+}
+
+const DashboardBusinessesRouteChildren: DashboardBusinessesRouteChildren = {
+  DashboardBusinessesNewRoute: DashboardBusinessesNewRoute,
+  DashboardBusinessesIndexRoute: DashboardBusinessesIndexRoute,
+}
+
+const DashboardBusinessesRouteWithChildren =
+  DashboardBusinessesRoute._addFileChildren(DashboardBusinessesRouteChildren)
 
 interface DashboardRouteChildren {
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardAuditLogRoute: typeof DashboardAuditLogRoute
-  DashboardBusinessesRoute: typeof DashboardBusinessesRoute
+  DashboardBusinessesRoute: typeof DashboardBusinessesRouteWithChildren
   DashboardPilotFeaturesRoute: typeof DashboardPilotFeaturesRoute
   DashboardVouchersRoute: typeof DashboardVouchersRoute
   DashboardIndexRoute: typeof DashboardIndexRoute
@@ -258,7 +308,7 @@ interface DashboardRouteChildren {
 const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardAuditLogRoute: DashboardAuditLogRoute,
-  DashboardBusinessesRoute: DashboardBusinessesRoute,
+  DashboardBusinessesRoute: DashboardBusinessesRouteWithChildren,
   DashboardPilotFeaturesRoute: DashboardPilotFeaturesRoute,
   DashboardVouchersRoute: DashboardVouchersRoute,
   DashboardIndexRoute: DashboardIndexRoute,

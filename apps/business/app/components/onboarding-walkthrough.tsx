@@ -4,7 +4,6 @@ import { useQuery } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
 import { Check, X } from "lucide-react";
-import { useAddVoucher } from "~/hooks/use-add-voucher";
 
 const storageKey = (businessId: string) => `walkthroughDismissed_${businessId}`;
 
@@ -49,8 +48,6 @@ function ChecklistItem({
 }
 
 function WalkthroughContent({ business }: { business: Business }) {
-  const { setIsOpen: openVoucherModal } = useAddVoucher();
-
   const [dismissed, setDismissed] = useState(() => {
     if (typeof window === "undefined") return true;
     return Boolean(localStorage.getItem(storageKey(business._id)));
@@ -127,12 +124,13 @@ function WalkthroughContent({ business }: { business: Business }) {
           label="Add your first voucher"
           description="Publish a deal that local customers can claim on Areacodes."
           action={
-            <button
-              onClick={() => openVoucherModal(true)}
+            <Link
+              to="/b/$slug/vouchers/new"
+              params={{ slug: business.slug }}
               className="text-xs font-bold uppercase tracking-tight text-foreground underline underline-offset-2 hover:text-muted-foreground transition-colors"
             >
               Create voucher
-            </button>
+            </Link>
           }
         />
         <ChecklistItem

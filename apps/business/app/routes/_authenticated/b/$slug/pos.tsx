@@ -2,18 +2,16 @@ import { createFileRoute, useParams, useRouterState } from "@tanstack/react-rout
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@repo/convex";
 import type { Id } from "@repo/convex";
+import { useState } from "react";
 import {
   Card,
-  CardTitle,
-  CardHeader,
-  CardDescription,
-  CardContent,
   Badge,
   Skeleton,
   Button,
+  Tabs,
+  TabsList,
+  TabsTrigger,
 } from "@repo/ui";
-import { CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { BusinessNavbar } from "~/components/business-navbar";
 import { BoundaryAlert } from "~/components/boundary-alert";
 
 export const Route = createFileRoute("/_authenticated/b/$slug/pos")({
@@ -23,47 +21,108 @@ export const Route = createFileRoute("/_authenticated/b/$slug/pos")({
 const CONVEX_SITE_URL = import.meta.env.VITE_CONVEX_SITE_URL as string;
 
 type SquareStatus = "connected" | "expired" | "revoked";
+type DisplayState = "connected" | "needs_reauth" | "not_connected" | "coming_soon";
 
-function SquareStatusBadge({ status }: { status: SquareStatus | undefined }) {
-  if (status === "connected") {
-    return (
-      <Badge
-        variant="default"
-        className="bg-green-100 text-green-800 border-green-200"
-      >
-        <CheckCircle className="h-3 w-3 mr-1" />
-        Connected
-      </Badge>
-    );
-  }
+const UPCOMING_PROVIDERS = [
+  {
+    key: "shopify",
+    name: "Shopify",
+    logo: "/pos/shopify.svg",
+    description:
+      "Connect your Shopify store to track in-store and online redemptions together.",
+  },
+  {
+    key: "epos-now",
+    name: "Epos Now",
+    logo: "/pos/epos.svg",
+    description: "Sync sales and voucher redemptions from Epos Now.",
+  },
+  {
+    key: "sumup",
+    name: "SumUp",
+    logo: "/pos/sum-up.svg",
+    description:
+      "Sync card transactions and reconcile voucher redemptions automatically.",
+  },
+  {
+    key: "zettle",
+    name: "Zettle",
+    logo: "/pos/zettle.svg",
+    description: "PayPal Zettle integration for in-person voucher redemption.",
+  },
+  {
+    key: "lightspeed",
+    name: "Lightspeed",
+    logo: "/pos/lightspeed.svg",
+    description: "Sync sales and voucher redemptions from Lightspeed.",
+  },
+] as const;
 
-  if (status === "expired" || status === "revoked") {
-    return (
-      <Badge
-        variant="default"
-        className="bg-amber-100 text-amber-800 border-amber-200"
-      >
-        <AlertCircle className="h-3 w-3 mr-1" />
-        {status === "expired" ? "Expired" : "Disconnected"}
-      </Badge>
-    );
-  }
+const STATUS_STYLES: Record<DisplayState, string> = {
+  connected: "bg-success-bg text-success-foreground border-success-border",
+  needs_reauth: "bg-warning-bg text-warning-foreground border-warning-border",
+  not_connected: "bg-neutral-bg text-neutral-foreground border-transparent",
+  coming_soon: "bg-info-bg text-info-foreground border-transparent",
+};
 
+const STATUS_LABELS: Record<DisplayState, string> = {
+  connected: "Connected",
+  needs_reauth: "Needs reauth",
+  not_connected: "Not connected",
+  coming_soon: "Coming soon",
+};
+
+function StatusBadge({ state }: { state: DisplayState }) {
   return (
-    <Badge variant="secondary">
-      <XCircle className="h-3 w-3 mr-1" />
-      Not connected
+    <Badge
+      variant="outline"
+      className={`${STATUS_STYLES[state]} px-2 py-0.5 text-xs font-bold uppercase tracking-tight`}
+    >
+      {STATUS_LABELS[state]}
     </Badge>
+  );
+}
+
+function ProviderCard({
+  logo,
+  name,
+  description,
+  state,
+  action,
+  note,
+}: {
+  logo: string;
+  name: string;
+  description: string;
+  state: DisplayState;
+  action: React.ReactNode;
+  note?: string;
+}) {
+  return (
+    <Card className="p-5 gap-3 bg-muted">
+      <div className="flex items-center justify-between">
+        <img
+          src={logo}
+          alt={`${name} logo`}
+          className="h-8 max-w-16 w-auto shrink-0"
+        />
+        <StatusBadge state={state} />
+      </div>
+      <span className="font-bold mt-1">{name}</span>
+      <p className="text-sm text-muted-foreground grow">{description}</p>
+      {note && <p className="text-sm text-warning-foreground">{note}</p>}
+      {action}
+    </Card>
   );
 }
 
 function PosSettingsPage() {
   const { slug } = useParams({ strict: false }) as { slug: string };
   const routerState = useRouterState();
-  const searchString = routerState.location.search;
-  const searchParams = new URLSearchParams(searchString);
+  const searchParams = new URLSearchParams(routerState.location.searchStr);
   const squareConnect = searchParams.get("square_connect");
   const squareError = searchParams.get("square_error");
+  const [filter, setFilter] = useState<"all" | "connected">("all");
 
   const business = useQuery(api.functions.businesses.getBusinessBySlug, {
     slug,
@@ -80,18 +139,21 @@ function PosSettingsPage() {
   );
 
   if (business === null) {
-    return (
-      <BoundaryAlert title="Error" description="Business not found." />
-    );
+    return <BoundaryAlert title="Error" description="Business not found." />;
   }
 
   const isLoading = business === undefined || connections === undefined;
 
   const squareConnection = connections?.find((c) => c.provider === "square");
-  const isConnected = squareConnection?.status === "connected";
-  const needsReauth =
-    squareConnection?.status === "expired" ||
-    squareConnection?.status === "revoked";
+  const squareStatus = squareConnection?.status as SquareStatus | undefined;
+  const isSquareConnected = squareStatus === "connected";
+  const squareNeedsReauth =
+    squareStatus === "expired" || squareStatus === "revoked";
+  const squareState: DisplayState = isSquareConnected
+    ? "connected"
+    : squareNeedsReauth
+      ? "needs_reauth"
+      : "not_connected";
 
   function buildSquareAuthUrl() {
     if (!businessId) return "#";
@@ -109,86 +171,118 @@ function PosSettingsPage() {
     });
   }
 
+  const showSquare = filter === "all" || isSquareConnected;
+  const showUpcoming = filter === "all";
+
   return (
-    <>
-      <BusinessNavbar />
-      <main className="w-screen py-6">
-        <div className="container-app">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-foreground">
-              POS Integration
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Connect your point-of-sale system to automatically track voucher
-              redemptions via Square OAuth.
-            </p>
-          </div>
-
-          {squareConnect === "success" && (
-            <div className="mb-4 rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
-              Square connected successfully.
-            </div>
-          )}
-
-          {squareError && (
-            <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              {squareError === "connect_failed"
-                ? "Square connection failed. Please try again."
-                : "Square authorization was cancelled."}
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="flex flex-col gap-4">
-              <Skeleton className="h-36 w-full" />
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-base font-semibold flex items-center gap-2">
-                        Square
-                        <SquareStatusBadge status={squareConnection?.status} />
-                      </CardTitle>
-                      <CardDescription className="mt-1">
-                        Connect your Square account to sync redemptions via
-                        OAuth.
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      {isConnected ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleDisconnect}
-                        >
-                          Disconnect
-                        </Button>
-                      ) : (
-                        <Button size="sm" asChild>
-                          <a href={buildSquareAuthUrl()}>
-                            {needsReauth ? "Re-authorize" : "Connect Square"}
-                          </a>
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                {needsReauth && (
-                  <CardContent>
-                    <p className="text-sm text-amber-700">
-                      Your Square connection needs to be re-authorized before
-                      redemptions can be reconciled.
-                    </p>
-                  </CardContent>
-                )}
-              </Card>
-            </div>
-          )}
+    <main className="py-6">
+      <div className="container-app">
+        <div className="mb-6">
+          <span className="inline-block bg-foreground text-background px-2 py-1 text-2xl font-bold uppercase tracking-tight leading-none">
+            POS Integrations
+          </span>
+          <p className="text-xs text-muted-foreground mt-2">
+            Connect your point-of-sale system to sync sales and voucher
+            redemptions automatically.
+          </p>
         </div>
-      </main>
-    </>
+
+        <Tabs
+          value={filter}
+          onValueChange={(v) => setFilter(v as "all" | "connected")}
+          className="mb-6"
+        >
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="connected">Connected</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        {squareConnect === "success" && (
+          <div className="mb-4 border border-success-border bg-success-bg px-4 py-3 text-sm text-success-foreground">
+            Square connected successfully.
+          </div>
+        )}
+
+        {squareError && (
+          <div className="mb-4 border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {squareError === "connect_failed"
+              ? "Square connection failed. Please try again."
+              : "Square authorization was cancelled."}
+          </div>
+        )}
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-40 w-full" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {showSquare && (
+              <ProviderCard
+                logo="/pos/square.svg"
+                name="Square"
+                description="Sync sales, items and customer data directly from your Square POS."
+                state={squareState}
+                note={
+                  squareNeedsReauth
+                    ? "Your Square connection needs to be re-authorized before redemptions can be reconciled."
+                    : undefined
+                }
+                action={
+                  isSquareConnected ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={handleDisconnect}
+                    >
+                      Disconnect
+                    </Button>
+                  ) : (
+                    <Button size="sm" className="w-full" asChild>
+                      <a href={buildSquareAuthUrl()}>
+                        {squareNeedsReauth ? "Re-authorize" : "Connect"}
+                      </a>
+                    </Button>
+                  )
+                }
+              />
+            )}
+
+            {showUpcoming &&
+              UPCOMING_PROVIDERS.map((provider) => (
+                <ProviderCard
+                  key={provider.key}
+                  logo={provider.logo}
+                  name={provider.name}
+                  description={provider.description}
+                  state="coming_soon"
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      disabled
+                    >
+                      Connect
+                    </Button>
+                  }
+                />
+              ))}
+
+            {filter === "connected" && !isSquareConnected && (
+              <div className="col-span-full border border-border p-12 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No connected POS providers yet.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </main>
   );
 }

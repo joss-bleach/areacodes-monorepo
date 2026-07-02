@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import { DashboardTop } from "~/sections/dashboard-top";
 import { VoucherTable } from "~/sections/voucher-table";
-import { NewVoucherModal } from "~/components/new-voucher-modal";
+import { EditVoucherModal } from "~/components/edit-voucher-modal";
 import { OnboardingWalkthrough } from "~/components/onboarding-walkthrough";
 
 export const Route = createFileRoute("/_authenticated/b/$slug/")({
@@ -42,7 +42,7 @@ function ActivityChart({ businessId }: { businessId: Id<"businesses"> }) {
     <section className="mb-8">
       <div className="flex items-baseline justify-between mb-3">
         <div className="flex items-baseline gap-3">
-          <span className="inline-block bg-foreground text-background px-2 py-1 text-sm font-bold uppercase tracking-tight leading-none">
+          <span className="text-sm font-bold uppercase tracking-tight text-muted-foreground leading-none">
             Activity
           </span>
           <span className="text-xs text-muted-foreground">
@@ -50,7 +50,7 @@ function ActivityChart({ businessId }: { businessId: Id<"businesses"> }) {
           </span>
         </div>
         <div className="text-right">
-          <span className="text-2xl font-bold">{totalThisMonth}</span>
+          <span className="text-2xl font-mono font-bold">{totalThisMonth}</span>
           <span className="text-xs text-muted-foreground ml-1">this month</span>
         </div>
       </div>
@@ -160,7 +160,7 @@ function QuickInsights({ businessId }: { businessId: Id<"businesses"> }) {
     return (
       <div className="grid grid-cols-3 gap-px bg-border mb-8">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="bg-surface-raised p-5">
+          <div key={i} className="bg-muted p-5">
             <Skeleton className="h-3 w-20 mb-4" />
             <Skeleton className="h-9 w-12 mb-2" />
             <Skeleton className="h-3 w-32" />
@@ -176,11 +176,11 @@ function QuickInsights({ businessId }: { businessId: Id<"businesses"> }) {
   return (
     <div className="grid grid-cols-3 gap-px bg-border mb-8 border border-border">
       {/* Vouchers */}
-      <div className="bg-surface-raised p-5">
-        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground mb-3">
+      <div className="bg-muted p-5">
+        <p className="text-xs text-muted-foreground mb-3">
           Vouchers
         </p>
-        <div className="text-4xl font-bold leading-none mb-1">
+        <div className="text-4xl font-mono font-bold leading-none mb-1">
           {activeVouchers?.length ?? 0}
         </div>
         <p className="text-xs text-muted-foreground mb-3">active</p>
@@ -192,23 +192,23 @@ function QuickInsights({ businessId }: { businessId: Id<"businesses"> }) {
       </div>
 
       {/* Customers */}
-      <div className="bg-surface-raised p-5">
-        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground mb-3">
+      <div className="bg-muted p-5">
+        <p className="text-xs text-muted-foreground mb-3">
           Customers
         </p>
-        <div className="text-4xl font-bold leading-none mb-1">
+        <div className="text-4xl font-mono font-bold leading-none mb-1">
           {totalRedemptions ?? 0}
         </div>
         <p className="text-xs text-muted-foreground mb-3">total redemptions</p>
         <div className="flex gap-4 text-xs text-muted-foreground">
           <span>
-            <span className="font-bold text-foreground">
+            <span className="font-mono font-bold text-foreground">
               {newCustomerCount ?? 0}
             </span>{" "}
             new
           </span>
           <span>
-            <span className="font-bold text-foreground">
+            <span className="font-mono font-bold text-foreground">
               {returnCustomerCount ?? 0}
             </span>{" "}
             returned
@@ -217,8 +217,8 @@ function QuickInsights({ businessId }: { businessId: Id<"businesses"> }) {
       </div>
 
       {/* Top Voucher */}
-      <div className="bg-surface-raised p-5">
-        <p className="text-xs font-bold uppercase tracking-tight text-muted-foreground mb-3">
+      <div className="bg-muted p-5">
+        <p className="text-xs text-muted-foreground mb-3">
           Top Voucher
         </p>
         {topVoucher ? (
@@ -228,13 +228,13 @@ function QuickInsights({ businessId }: { businessId: Id<"businesses"> }) {
             </p>
             <div className="flex gap-4 text-xs text-muted-foreground">
               <span>
-                <span className="font-bold text-foreground">
+                <span className="font-mono font-bold text-foreground">
                   {topVoucher.claimCount}
                 </span>{" "}
                 claims
               </span>
               <span>
-                <span className="font-bold text-foreground">
+                <span className="font-mono font-bold text-foreground">
                   {topVoucher.revealCount}
                 </span>{" "}
                 reveals
@@ -255,7 +255,7 @@ function DashboardContent({ businessId }: { businessId: Id<"businesses"> }) {
       <ActivityChart businessId={businessId} />
       <QuickInsights businessId={businessId} />
       <VoucherTable />
-      <NewVoucherModal />
+      <EditVoucherModal />
     </>
   );
 }
@@ -279,7 +279,7 @@ function DashboardPage() {
             <Skeleton className="w-full h-56" />
             <div className="grid grid-cols-3 gap-px bg-border border border-border">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-surface-raised p-5">
+                <div key={i} className="bg-muted p-5">
                   <Skeleton className="h-3 w-20 mb-4" />
                   <Skeleton className="h-9 w-12 mb-2" />
                   <Skeleton className="h-3 w-32" />

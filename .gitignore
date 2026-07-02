@@ -60,3 +60,7 @@ temporary-screenshots/
 .turbo
 .gstack/
 .vercel
+
+# Local tool artifacts
+.impeccable/
+.lavish/

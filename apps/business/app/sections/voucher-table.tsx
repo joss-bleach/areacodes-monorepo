@@ -33,7 +33,6 @@ import { BoundaryAlert } from "~/components/boundary-alert";
 import { ConfirmationDialog } from "~/components/confirmation-dialog";
 import { NewVoucherButton } from "~/components/new-voucher-button";
 import { useEditVoucher } from "~/hooks/use-edit-voucher";
-import { useAddVoucher } from "~/hooks/use-add-voucher";
 import { toast } from "sonner";
 
 type ProvisioningStatus = "not_required" | "pending" | "provisioned" | "failed";
@@ -87,12 +86,10 @@ const VoucherActionsDropdown = ({ voucher }: { voucher: ConvexVoucher }) => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { setEditVoucherId } = useEditVoucher();
-  const { setIsOpen: setIsModalOpen } = useAddVoucher();
   const deleteVoucher = useMutation(api.functions.vouchers.deleteVoucher);
 
   const handleEdit = () => {
     setEditVoucherId(voucher._id);
-    setIsModalOpen(true);
   };
 
   const handleDeleteConfirm = async () => {
@@ -172,11 +169,11 @@ export const VoucherTable = () => {
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div className="hidden md:block">
-            <CardTitle className="text-lg font-semibold leading-none">
-              All Vouchers
+          <div className="hidden md:flex items-baseline gap-3">
+            <CardTitle className="text-sm font-bold uppercase tracking-tight text-muted-foreground leading-none">
+              Vouchers
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs">
               View and manage your voucher codes
             </CardDescription>
           </div>
