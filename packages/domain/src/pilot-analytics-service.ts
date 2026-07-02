@@ -18,6 +18,11 @@ export interface BusinessLeaderboardEntry {
   hasZeroActivity: boolean;
 }
 
+export interface RedemptionSourceSplit {
+  square: number;
+  manual: number;
+}
+
 // ── Admin analytics repository interface ──────────────────────────────────────
 
 export interface IAdminAnalyticsRepo {
@@ -32,7 +37,7 @@ export interface IAdminAnalyticsRepo {
     Array<{ claimId: string; revealedAt: number }>
   >;
   readonly getAllRedemptionEvents: () => Effect.Effect<
-    Array<{ businessId: string; occurredAt: number }>
+    Array<{ businessId: string; occurredAt: number; source: "square" | "manual" }>
   >;
 }
 
@@ -233,6 +238,22 @@ export const getBusinessLeaderboard = (): Effect.Effect<
     });
 
     return entries.sort((a, b) => b.redemptionCount - a.redemptionCount);
+  });
+
+export const getRedemptionSourceSplit = (): Effect.Effect<
+  RedemptionSourceSplit,
+  never,
+  AdminAnalyticsRepo
+> =>
+  Effect.gen(function* () {
+    const repo = yield* AdminAnalyticsRepo;
+    const redemptionEvents = yield* repo.getAllRedemptionEvents();
+
+    const split: RedemptionSourceSplit = { square: 0, manual: 0 };
+    for (const event of redemptionEvents) {
+      split[event.source]++;
+    }
+    return split;
   });
 
 export const getCrossBusinessDiscoveryCount = (): Effect.Effect<

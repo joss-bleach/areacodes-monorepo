@@ -33,10 +33,89 @@ function AnalyticsPage() {
       </div>
       <div className="space-y-8">
         <CrossBusinessDiscovery />
+        <RedemptionSourceSplit />
         <CoreFunnelTable />
         <BusinessLeaderboard />
       </div>
     </main>
+  );
+}
+
+const SOURCE_COLORS = {
+  square: "var(--color-chart-1)",
+  manual: "var(--color-chart-2)",
+} as const;
+
+function RedemptionSourceSplit() {
+  const { isAuthenticated } = useConvexAuth();
+  const split = useQuery(
+    api.functions.adminAnalytics.getRedemptionSourceSplit,
+    isAuthenticated ? {} : "skip",
+  );
+
+  function renderBody() {
+    if (split === undefined) return <Skeleton className="h-8 w-full" />;
+    const total = split.square + split.manual;
+    if (total === 0) {
+      return (
+        <p className="text-muted-foreground text-sm">
+          No redemptions recorded yet.
+        </p>
+      );
+    }
+
+    const squarePct = (split.square / total) * 100;
+    const manualPct = (split.manual / total) * 100;
+    const segments = [
+      { key: "square", label: "POS (Square)", count: split.square, pct: squarePct },
+      { key: "manual", label: "Manual", count: split.manual, pct: manualPct },
+    ] as const;
+
+    return (
+      <div>
+        <div className="flex h-8 w-full gap-0.5" role="img" aria-label={`${squarePct.toFixed(0)}% POS, ${manualPct.toFixed(0)}% manual`}>
+          {segments
+            .filter((s) => s.count > 0)
+            .map((s) => (
+              <div
+                key={s.key}
+                className="flex items-center justify-center overflow-hidden text-xs font-medium text-background"
+                style={{
+                  width: `${s.pct}%`,
+                  backgroundColor: SOURCE_COLORS[s.key],
+                }}
+              >
+                {s.pct >= 12 ? `${s.pct.toFixed(0)}%` : null}
+              </div>
+            ))}
+        </div>
+        <div className="mt-3 flex gap-6">
+          {segments.map((s) => (
+            <div key={s.key} className="flex items-center gap-2 text-sm">
+              <span
+                className="h-2.5 w-2.5 shrink-0"
+                style={{ backgroundColor: SOURCE_COLORS[s.key] }}
+              />
+              <span className="text-muted-foreground">{s.label}</span>
+              <span className="font-medium">{s.count}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Redemption Source Split</CardTitle>
+        <CardDescription>
+          Share of redemptions completed via POS (Square) vs. approved manually,
+          across all Pilot Businesses.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>{renderBody()}</CardContent>
+    </Card>
   );
 }
 

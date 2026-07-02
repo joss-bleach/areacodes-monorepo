@@ -11,25 +11,21 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignUpRouteImport } from './routes/sign-up'
 import { Route as SignInRouteImport } from './routes/sign-in'
+import { Route as RedeemRouteImport } from './routes/redeem'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as RedeemRouteImport } from './routes/redeem'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as SignInSplatRouteImport } from './routes/sign-in.$'
 import { Route as ApiLocationRouteImport } from './routes/api/location'
 import { Route as AuthenticatedBCreateRouteImport } from './routes/_authenticated/b/create'
 import { Route as AuthenticatedBSlugRouteImport } from './routes/_authenticated/b/$slug'
 import { Route as AuthenticatedBSlugIndexRouteImport } from './routes/_authenticated/b/$slug/index'
+import { Route as AuthenticatedBSlugSettingsRouteImport } from './routes/_authenticated/b/$slug/settings'
 import { Route as AuthenticatedBSlugPosRouteImport } from './routes/_authenticated/b/$slug/pos'
 import { Route as AuthenticatedBSlugEditRouteImport } from './routes/_authenticated/b/$slug/edit'
 import { Route as AuthenticatedBSlugAnalyticsRouteImport } from './routes/_authenticated/b/$slug/analytics'
-import { Route as AuthenticatedBSlugSettingsRouteImport } from './routes/_authenticated/b/$slug/settings'
+import { Route as AuthenticatedBSlugVouchersNewRouteImport } from './routes/_authenticated/b/$slug/vouchers/new'
 
-const RedeemRoute = RedeemRouteImport.update({
-  id: '/redeem',
-  path: '/redeem',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SignUpRoute = SignUpRouteImport.update({
   id: '/sign-up',
   path: '/sign-up',
@@ -38,6 +34,11 @@ const SignUpRoute = SignUpRouteImport.update({
 const SignInRoute = SignInRouteImport.update({
   id: '/sign-in',
   path: '/sign-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RedeemRoute = RedeemRouteImport.update({
+  id: '/redeem',
+  path: '/redeem',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -79,6 +80,12 @@ const AuthenticatedBSlugIndexRoute = AuthenticatedBSlugIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedBSlugRoute,
 } as any)
+const AuthenticatedBSlugSettingsRoute =
+  AuthenticatedBSlugSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedBSlugRoute,
+  } as any)
 const AuthenticatedBSlugPosRoute = AuthenticatedBSlugPosRouteImport.update({
   id: '/pos',
   path: '/pos',
@@ -95,10 +102,10 @@ const AuthenticatedBSlugAnalyticsRoute =
     path: '/analytics',
     getParentRoute: () => AuthenticatedBSlugRoute,
   } as any)
-const AuthenticatedBSlugSettingsRoute =
-  AuthenticatedBSlugSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
+const AuthenticatedBSlugVouchersNewRoute =
+  AuthenticatedBSlugVouchersNewRouteImport.update({
+    id: '/vouchers/new',
+    path: '/vouchers/new',
     getParentRoute: () => AuthenticatedBSlugRoute,
   } as any)
 
@@ -117,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/b/$slug/settings': typeof AuthenticatedBSlugSettingsRoute
   '/b/$slug/': typeof AuthenticatedBSlugIndexRoute
+  '/b/$slug/vouchers/new': typeof AuthenticatedBSlugVouchersNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -132,12 +140,13 @@ export interface FileRoutesByTo {
   '/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/b/$slug/settings': typeof AuthenticatedBSlugSettingsRoute
   '/b/$slug': typeof AuthenticatedBSlugIndexRoute
+  '/b/$slug/vouchers/new': typeof AuthenticatedBSlugVouchersNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/redeem': typeof RedeemRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/redeem': typeof RedeemRoute
   '/sign-in': typeof SignInRouteWithChildren
   '/sign-up': typeof SignUpRouteWithChildren
   '/api/location': typeof ApiLocationRoute
@@ -150,6 +159,7 @@ export interface FileRoutesById {
   '/_authenticated/b/$slug/pos': typeof AuthenticatedBSlugPosRoute
   '/_authenticated/b/$slug/settings': typeof AuthenticatedBSlugSettingsRoute
   '/_authenticated/b/$slug/': typeof AuthenticatedBSlugIndexRoute
+  '/_authenticated/b/$slug/vouchers/new': typeof AuthenticatedBSlugVouchersNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/b/$slug/pos'
     | '/b/$slug/settings'
     | '/b/$slug/'
+    | '/b/$slug/vouchers/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -183,11 +194,12 @@ export interface FileRouteTypes {
     | '/b/$slug/pos'
     | '/b/$slug/settings'
     | '/b/$slug'
+    | '/b/$slug/vouchers/new'
   id:
     | '__root__'
     | '/'
-    | '/redeem'
     | '/_authenticated'
+    | '/redeem'
     | '/sign-in'
     | '/sign-up'
     | '/api/location'
@@ -200,12 +212,13 @@ export interface FileRouteTypes {
     | '/_authenticated/b/$slug/pos'
     | '/_authenticated/b/$slug/settings'
     | '/_authenticated/b/$slug/'
+    | '/_authenticated/b/$slug/vouchers/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  RedeemRoute: typeof RedeemRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  RedeemRoute: typeof RedeemRoute
   SignInRoute: typeof SignInRouteWithChildren
   SignUpRoute: typeof SignUpRouteWithChildren
   ApiLocationRoute: typeof ApiLocationRoute
@@ -225,6 +238,13 @@ declare module '@tanstack/react-router' {
       path: '/sign-in'
       fullPath: '/sign-in'
       preLoaderRoute: typeof SignInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/redeem': {
+      id: '/redeem'
+      path: '/redeem'
+      fullPath: '/redeem'
+      preLoaderRoute: typeof RedeemRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -255,13 +275,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignInSplatRouteImport
       parentRoute: typeof SignInRoute
     }
-    '/redeem': {
-      id: '/redeem'
-      path: '/redeem'
-      fullPath: '/redeem'
-      preLoaderRoute: typeof RedeemRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/location': {
       id: '/api/location'
       path: '/api/location'
@@ -290,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBSlugIndexRouteImport
       parentRoute: typeof AuthenticatedBSlugRoute
     }
+    '/_authenticated/b/$slug/settings': {
+      id: '/_authenticated/b/$slug/settings'
+      path: '/settings'
+      fullPath: '/b/$slug/settings'
+      preLoaderRoute: typeof AuthenticatedBSlugSettingsRouteImport
+      parentRoute: typeof AuthenticatedBSlugRoute
+    }
     '/_authenticated/b/$slug/pos': {
       id: '/_authenticated/b/$slug/pos'
       path: '/pos'
@@ -311,11 +331,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedBSlugAnalyticsRouteImport
       parentRoute: typeof AuthenticatedBSlugRoute
     }
-    '/_authenticated/b/$slug/settings': {
-      id: '/_authenticated/b/$slug/settings'
-      path: '/settings'
-      fullPath: '/b/$slug/settings'
-      preLoaderRoute: typeof AuthenticatedBSlugSettingsRouteImport
+    '/_authenticated/b/$slug/vouchers/new': {
+      id: '/_authenticated/b/$slug/vouchers/new'
+      path: '/vouchers/new'
+      fullPath: '/b/$slug/vouchers/new'
+      preLoaderRoute: typeof AuthenticatedBSlugVouchersNewRouteImport
       parentRoute: typeof AuthenticatedBSlugRoute
     }
   }
@@ -327,6 +347,7 @@ interface AuthenticatedBSlugRouteChildren {
   AuthenticatedBSlugPosRoute: typeof AuthenticatedBSlugPosRoute
   AuthenticatedBSlugSettingsRoute: typeof AuthenticatedBSlugSettingsRoute
   AuthenticatedBSlugIndexRoute: typeof AuthenticatedBSlugIndexRoute
+  AuthenticatedBSlugVouchersNewRoute: typeof AuthenticatedBSlugVouchersNewRoute
 }
 
 const AuthenticatedBSlugRouteChildren: AuthenticatedBSlugRouteChildren = {
@@ -335,6 +356,7 @@ const AuthenticatedBSlugRouteChildren: AuthenticatedBSlugRouteChildren = {
   AuthenticatedBSlugPosRoute: AuthenticatedBSlugPosRoute,
   AuthenticatedBSlugSettingsRoute: AuthenticatedBSlugSettingsRoute,
   AuthenticatedBSlugIndexRoute: AuthenticatedBSlugIndexRoute,
+  AuthenticatedBSlugVouchersNewRoute: AuthenticatedBSlugVouchersNewRoute,
 }
 
 const AuthenticatedBSlugRouteWithChildren =
@@ -378,8 +400,8 @@ const SignUpRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  RedeemRoute: RedeemRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  RedeemRoute: RedeemRoute,
   SignInRoute: SignInRouteWithChildren,
   SignUpRoute: SignUpRouteWithChildren,
   ApiLocationRoute: ApiLocationRoute,

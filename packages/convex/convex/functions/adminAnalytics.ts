@@ -62,6 +62,7 @@ function makeAdminRepo(ctx: QueryCtx): IAdminAnalyticsRepo {
         return events.map((e) => ({
           businessId: e.businessId as unknown as string,
           occurredAt: e.occurredAt,
+          source: e.source,
         }));
       }),
   };
@@ -96,6 +97,14 @@ export const getCrossBusinessDiscoveryCount = query({
   handler: async (ctx) => {
     await requireAdmin(ctx);
     return runAdminEffect(ctx, PilotAnalyticsService.getCrossBusinessDiscoveryCount());
+  },
+});
+
+export const getRedemptionSourceSplit = query({
+  args: {},
+  handler: async (ctx) => {
+    await requireAdmin(ctx);
+    return runAdminEffect(ctx, PilotAnalyticsService.getRedemptionSourceSplit());
   },
 });
 

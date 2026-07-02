@@ -22,14 +22,24 @@ function makeAdminTestRepo(data: {
   vouchers?: Array<{ id: string; businessId: string; deletedAt?: number }>;
   claims?: Array<{ claimId: string; customerId: string; voucherId: string; claimedAt: number }>;
   reveals?: Array<{ claimId: string; revealedAt: number }>;
-  redemptionEvents?: Array<{ businessId: string; occurredAt: number }>;
+  redemptionEvents?: Array<{
+    businessId: string;
+    occurredAt: number;
+    source?: "square" | "manual";
+  }>;
 } = {}) {
   const repo: IAdminAnalyticsRepo = {
     getAllBusinesses: () => Effect.succeed(data.businesses ?? []),
     getAllVouchers: () => Effect.succeed(data.vouchers ?? []),
     getAllClaims: () => Effect.succeed(data.claims ?? []),
     getAllReveals: () => Effect.succeed(data.reveals ?? []),
-    getAllRedemptionEvents: () => Effect.succeed(data.redemptionEvents ?? []),
+    getAllRedemptionEvents: () =>
+      Effect.succeed(
+        (data.redemptionEvents ?? []).map((e) => ({
+          ...e,
+          source: e.source ?? "manual",
+        })),
+      ),
   };
   return Layer.succeed(AdminAnalyticsRepo, repo);
 }
@@ -582,5 +592,35 @@ describe("PilotAnalyticsService.getCrossBusinessDiscoveryCount", () => {
     );
 
     expect(result).toBe(1);
+  });
+});
+
+// ── getRedemptionSourceSplit ───────────────────────────────────────────────────
+
+describe("PilotAnalyticsService.getRedemptionSourceSplit", () => {
+  test("returns zero counts when there are no redemption events", async () => {
+    const layer = makeAdminTestRepo();
+
+    const result = await Effect.runPromise(
+      Effect.provide(PilotAnalyticsService.getRedemptionSourceSplit(), layer),
+    );
+
+    expect(result).toEqual({ square: 0, manual: 0 });
+  });
+
+  test("tallies redemption events by source", async () => {
+    const layer = makeAdminTestRepo({
+      redemptionEvents: [
+        { businessId: "biz-a", occurredAt: 1000, source: "square" },
+        { businessId: "biz-a", occurredAt: 2000, source: "square" },
+        { businessId: "biz-b", occurredAt: 3000, source: "manual" },
+      ],
+    });
+
+    const result = await Effect.runPromise(
+      Effect.provide(PilotAnalyticsService.getRedemptionSourceSplit(), layer),
+    );
+
+    expect(result).toEqual({ square: 2, manual: 1 });
   });
 });
